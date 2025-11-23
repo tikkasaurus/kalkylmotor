@@ -65,9 +65,7 @@ export function CalculationsPage() {
             </div>
             <div className="flex gap-3">
               <ShimmerButton 
-                borderRadius="10px" 
                 onClick={() => setIsModalOpen(true)}
-                className="h-9"
               >
                 <span className="mr-2">+</span> Starta ny kalkyl
               </ShimmerButton>

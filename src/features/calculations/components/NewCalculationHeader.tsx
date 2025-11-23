@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { ShimmerButton } from '@/components/ui/shimmer-button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,10 +81,10 @@ export function NewCalculationHeader({ onClose, onExportCSV }: NewCalculationHea
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" className="ml-auto">
+          <ShimmerButton className="ml-auto">
             <Save className="w-4 h-4 mr-2" />
             Spara
-          </Button>
+          </ShimmerButton>
         </div>
       </div>
     </div>
