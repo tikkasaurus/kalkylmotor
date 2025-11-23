@@ -9,11 +9,16 @@ import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 
-export function NewCalculationPage({ template, onClose }: NewCalculationProps) {
+export function NewCalculationPage({ 
+  template, 
+  onClose,
+  initialCalculationName = 'Kalkylnamn',
+  initialProjectName = '',
+}: NewCalculationProps) {
   const state = useNewCalculationState(template)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
-  const [calculationName, setCalculationName] = useState('Kalkylnamn')
-  const [projectName, setProjectName] = useState('')
+  const [calculationName, setCalculationName] = useState(initialCalculationName)
+  const [projectName, setProjectName] = useState(initialProjectName)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sv-SE', {

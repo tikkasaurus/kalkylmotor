@@ -23,6 +23,7 @@ export function CalculationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+  const [selectedCalculation, setSelectedCalculation] = useState<{ name: string; project: string } | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
 
   // Debug logging
@@ -47,6 +48,7 @@ export function CalculationsPage() {
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId)
+    setSelectedCalculation(null)
     setIsModalOpen(false)
     setShowCalculationView(true)
   }
@@ -54,16 +56,37 @@ export function CalculationsPage() {
   const handleCloseCalculationView = () => {
     setShowCalculationView(false)
     setSelectedTemplate(null)
+    setSelectedCalculation(null)
   }
 
-  if (showCalculationView && selectedTemplate) {
-    const template = getTemplateById(selectedTemplate)
-    return (
-      <NewCalculationPage
-        template={template}
-        onClose={handleCloseCalculationView}
-      />
-    )
+  const handleCalculationClick = (calc: { id: number; name: string; project: string }) => {
+    setSelectedTemplate(null)
+    setSelectedCalculation({ name: calc.name, project: calc.project })
+    setShowCalculationView(true)
+  }
+
+  if (showCalculationView) {
+    // If a template was selected, use it; otherwise use empty template with calculation data
+    if (selectedTemplate) {
+      const template = getTemplateById(selectedTemplate)
+      return (
+        <NewCalculationPage
+          template={template}
+          onClose={handleCloseCalculationView}
+          initialCalculationName={selectedCalculation?.name}
+          initialProjectName={selectedCalculation?.project}
+        />
+      )
+    } else if (selectedCalculation) {
+      // Open with empty template but pre-filled calculation name and project
+      return (
+        <NewCalculationPage
+          onClose={handleCloseCalculationView}
+          initialCalculationName={selectedCalculation.name}
+          initialProjectName={selectedCalculation.project}
+        />
+      )
+    }
   }
 
   return (
@@ -160,7 +183,8 @@ export function CalculationsPage() {
                 calculations.map((calc) => (
                 <TableRow
                   key={calc.id}
-                  className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
+                  className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors cursor-pointer"
+                  onClick={() => handleCalculationClick(calc)}
                 >
                   <TableCell className="text-left">
                     <div className="font-medium">{calc.name}</div>
