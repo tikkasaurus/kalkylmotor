@@ -3,6 +3,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { CO2DatabaseModal } from './CO2DatabaseModal'
+import {
   Home,
   FileText,
   Upload,
@@ -13,35 +22,65 @@ import {
   ChevronDown,
   Calculator,
   X,
+  Search,
+  Plus,
 } from 'lucide-react'
+
+interface CalculationRow {
+  id: number
+  description: string
+  quantity: number
+  unit: string
+  pricePerUnit: number
+  co2: number
+  account: string
+  resource: string
+  note: string
+}
 
 interface CalculationSection {
   id: number
   name: string
   amount: number
   expanded?: boolean
+  rows?: CalculationRow[]
 }
 
 interface CalculationViewProps {
-  templateId: string
+  templateId?: string
   onClose: () => void
 }
 
 const initialSections: CalculationSection[] = [
-  { id: 1, name: 'Mark', amount: 5117400, expanded: false },
-  { id: 3, name: 'Stomme', amount: 19323900, expanded: false },
-  { id: 4, name: 'Yttertak', amount: 0, expanded: false },
-  { id: 5, name: 'Fasader', amount: 0, expanded: false },
-  { id: 6, name: 'Stomkompl./rumsbildn.', amount: 1261000, expanded: false },
-  { id: 7, name: 'Inv ytskikt/rumskompl.', amount: 0, expanded: false },
-  { id: 8, name: 'UE', amount: 10290000, expanded: false },
+  { 
+    id: 1, 
+    name: 'Mark', 
+    amount: 5117400, 
+    expanded: false,
+    rows: [
+      { id: 1, description: 'Markarbeten', quantity: 3400, unit: 'm2', pricePerUnit: 280, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
+      { id: 2, description: 'Betongplatta på mark', quantity: 3400, unit: 'm2', pricePerUnit: 890, co2: 0, account: '4010 -...', resource: 'Resurs...', note: 'Anteckning...' },
+      { id: 3, description: 'Schaktning', quantity: 2800, unit: 'm3', pricePerUnit: 145, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
+      { id: 4, description: 'Dränering', quantity: 420, unit: 'm', pricePerUnit: 320, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
+      { id: 5, description: 'Återfyllning', quantity: 1200, unit: 'm3', pricePerUnit: 95, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
+      { id: 6, description: 'VA-anslutningar', quantity: 1, unit: 'st', pricePerUnit: 485000, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
+    ]
+  },
+  { id: 3, name: 'Stomme', amount: 19323900, expanded: false, rows: [] },
+  { id: 4, name: 'Yttertak', amount: 0, expanded: false, rows: [] },
+  { id: 5, name: 'Fasader', amount: 0, expanded: false, rows: [] },
+  { id: 6, name: 'Stomkompl./rumsbildn.', amount: 1261000, expanded: false, rows: [] },
+  { id: 7, name: 'Inv ytskikt/rumskompl.', amount: 0, expanded: false, rows: [] },
+  { id: 8, name: 'UE', amount: 10290000, expanded: false, rows: [] },
 ]
 
-export function CalculationView({ templateId, onClose }: CalculationViewProps) {
+export function CalculationView({ onClose }: CalculationViewProps) {
   const [sections, setSections] = useState(initialSections)
   const [arvode, setArvode] = useState(8)
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
+  const [co2ModalOpen, setCo2ModalOpen] = useState(false)
+  const [selectedRowForCO2, setSelectedRowForCO2] = useState<{ sectionId: number; rowId: number } | null>(null)
 
   const toggleSection = (id: number) => {
     setSections(
@@ -57,6 +96,45 @@ export function CalculationView({ templateId, onClose }: CalculationViewProps) {
 
   const collapseAll = () => {
     setSections(sections.map((section) => ({ ...section, expanded: false })))
+  }
+
+  const openCO2Modal = (sectionId: number, rowId: number) => {
+    setSelectedRowForCO2({ sectionId, rowId })
+    setCo2ModalOpen(true)
+  }
+
+  const handleCO2Select = (item: { co2Varde: number }) => {
+    if (selectedRowForCO2) {
+      setSections(
+        sections.map((section) =>
+          section.id === selectedRowForCO2.sectionId
+            ? {
+                ...section,
+                rows: section.rows?.map((row) =>
+                  row.id === selectedRowForCO2.rowId
+                    ? { ...row, co2: item.co2Varde }
+                    : row
+                ),
+              }
+            : section
+        )
+      )
+    }
+  }
+
+  const updateRowCO2 = (sectionId: number, rowId: number, co2Value: number) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              rows: section.rows?.map((row) =>
+                row.id === rowId ? { ...row, co2: co2Value } : row
+              ),
+            }
+          : section
+      )
+    )
   }
 
   const budgetExclArvode = sections.reduce((sum, section) => sum + section.amount, 0)
@@ -245,10 +323,91 @@ export function CalculationView({ templateId, onClose }: CalculationViewProps) {
                   <span className="font-semibold">{formatCurrency(section.amount)}</span>
                 </button>
                 {section.expanded && (
-                  <div className="p-4 bg-muted/30 border-t">
-                    <p className="text-sm text-muted-foreground">
-                      Detaljerad information om {section.name}...
-                    </p>
+                  <div className="bg-muted/30 border-t">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[200px]">BENÄMNING</TableHead>
+                          <TableHead className="w-[100px] text-right">ANTAL</TableHead>
+                          <TableHead className="w-[120px]">ENHET</TableHead>
+                          <TableHead className="w-[120px] text-right">PRIS/ENHET</TableHead>
+                          <TableHead className="w-[80px] text-center">CO2</TableHead>
+                          <TableHead className="w-[130px] text-right">SUMMA</TableHead>
+                          <TableHead className="w-[150px]">KONTO</TableHead>
+                          <TableHead className="w-[120px]">RESURS</TableHead>
+                          <TableHead className="w-[150px]">ANTECKNING</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {section.rows?.map((row) => (
+                          <TableRow key={row.id}>
+                            <TableCell className="font-medium">{row.description}</TableCell>
+                            <TableCell className="text-right">
+                              <Input 
+                                type="number" 
+                                value={row.quantity} 
+                                className="h-8 text-right"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <select className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm">
+                                <option>{row.unit}</option>
+                                <option>m2</option>
+                                <option>m3</option>
+                                <option>m</option>
+                                <option>st</option>
+                              </select>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Input 
+                                type="number" 
+                                value={row.pricePerUnit} 
+                                className="h-8 text-right"
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center gap-1">
+                                <Input 
+                                  type="number" 
+                                  value={row.co2} 
+                                  onChange={(e) => updateRowCO2(section.id, row.id, Number(e.target.value))}
+                                  className="h-8 text-right w-20"
+                                  placeholder="0"
+                                />
+                                <button 
+                                  onClick={() => openCO2Modal(section.id, row.id)}
+                                  className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded flex-shrink-0"
+                                >
+                                  <Search className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              {formatCurrency(row.quantity * row.pricePerUnit)}
+                            </TableCell>
+                            <TableCell>
+                              <select className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm">
+                                <option>{row.account}</option>
+                                <option>4010 -...</option>
+                                <option>4020 -...</option>
+                              </select>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {row.resource}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {row.note}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <div className="p-4">
+                      <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        <Plus className="w-4 h-4" />
+                        Lägg till rad
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -256,6 +415,12 @@ export function CalculationView({ templateId, onClose }: CalculationViewProps) {
           </div>
         </div>
       </div>
+      
+      <CO2DatabaseModal 
+        open={co2ModalOpen} 
+        onOpenChange={setCo2ModalOpen}
+        onSelect={handleCO2Select}
+      />
     </div>
   )
 }
