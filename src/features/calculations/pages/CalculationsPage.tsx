@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -9,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { TextAnimate } from '@/components/ui/text-animate'
 import { NewCalculationPage } from './NewCalculationPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
 import { sampleCalculations } from '../api/queries'
@@ -47,15 +49,28 @@ export function CalculationsPage() {
         <div className="mb-8">
           <div className="flex items-start justify-between mb-6">
             <div className="text-left">
-              <h1 className="text-3xl font-bold mb-2">Kalkyler</h1>
-              <p className="text-muted-foreground">
+              <TextAnimate
+                as="h1"
+                className="text-3xl font-bold mb-2"
+              >
+                Kalkyler
+              </TextAnimate>
+              <TextAnimate
+                as="p"
+                className="text-muted-foreground"
+                delay={0.2}
+              >
                 Hantera och skapa projektkalkyler
-              </p>
+              </TextAnimate>
             </div>
             <div className="flex gap-3">
-              <Button onClick={() => setIsModalOpen(true)}>
+              <ShimmerButton 
+                borderRadius="10px" 
+                onClick={() => setIsModalOpen(true)}
+                className="h-9"
+              >
                 <span className="mr-2">+</span> Starta ny kalkyl
-              </Button>
+              </ShimmerButton>
               <Button variant="outline">Importera kalkyl till budget</Button>
             </div>
           </div>
