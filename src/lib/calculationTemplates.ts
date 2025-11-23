@@ -1,4 +1,4 @@
-import type { CalculationTemplate } from '@/components/CalculationView'
+import type { CalculationTemplate } from '@/features/calculations/api/types'
 
 export interface TemplateMetadata {
   id: string

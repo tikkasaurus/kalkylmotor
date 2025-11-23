@@ -1,4 +1,3 @@
-import './App.css'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,66 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { CalculationView } from '@/components/CalculationView'
-import { NewCalculationModal } from '@/components/NewCalculationModal'
+import { NewCalculationPage } from './NewCalculationPage'
+import { NewCalculationModal } from '../components/NewCalculationModal'
+import { sampleCalculations } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 
-// Sample data
-const calculations = [
-  {
-    id: 1,
-    name: 'Tosito, Nässjö: Centrallager Trafikverket',
-    url: '/projekt/tosito/huvudkalkyl',
-    project: 'Marcus Test',
-    status: 'Aktiv',
-    amount: '217 475 390 kr',
-    created: '2025-01-05',
-    createdBy: 'Gustaf',
-  },
-  {
-    id: 2,
-    name: 'Industri Norrköping',
-    revision: 'Rev 3',
-    url: '/projekt/industri/huvudkalkyl',
-    project: 'Industri Norrköping',
-    status: 'Aktiv',
-    amount: '145 890 000 kr',
-    created: '2025-01-10',
-    createdBy: 'Maria Johansson',
-  },
-  {
-    id: 3,
-    name: 'Villa Lindgren - Huvudkalkyl',
-    url: '/projekt/villa-lindgren/kalkyl',
-    project: 'Villa Lindgren',
-    status: 'Aktiv',
-    amount: '8 450 000 kr',
-    created: '2025-01-03',
-    createdBy: 'Anna Svensson',
-  },
-  {
-    id: 4,
-    name: 'Kontorsbyggnad AB - Anbud',
-    url: '/projekt/kontorsbyggnad/anbud',
-    project: 'Kontorsbyggnad',
-    status: 'Aktiv',
-    amount: '32 150 000 kr',
-    created: '2024-12-20',
-    createdBy: 'Erik Andersson',
-  },
-  {
-    id: 5,
-    name: 'Ombyggnad radhus',
-    url: '/projekt/radhus/ombyggnad',
-    project: 'Radhus Malmö',
-    status: 'Avslutad',
-    amount: '4 225 000 kr',
-    created: '2024-11-28',
-    createdBy: 'Peter Nilsson',
-  },
-]
-
-function App() {
+export function CalculationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
@@ -88,7 +33,7 @@ function App() {
   if (showCalculationView && selectedTemplate) {
     const template = getTemplateById(selectedTemplate)
     return (
-      <CalculationView
+      <NewCalculationPage
         template={template}
         onClose={handleCloseCalculationView}
       />
@@ -131,7 +76,7 @@ function App() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {calculations.map((calc) => (
+              {sampleCalculations.map((calc) => (
                 <TableRow key={calc.id}>
                   <TableCell>
                     <div className="font-medium">{calc.name}</div>
@@ -177,4 +122,3 @@ function App() {
   )
 }
 
-export default App

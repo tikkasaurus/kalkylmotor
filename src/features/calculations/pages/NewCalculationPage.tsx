@@ -16,7 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { CO2DatabaseModal } from './CO2DatabaseModal'
+import { CO2DatabaseModal } from '@/features/co2-database/components/CO2DatabaseModal'
+import type { CalculationTemplate } from '@/features/calculations/api/types'
 import {
   Home,
   FileText,
@@ -61,28 +62,7 @@ interface CalculationSection {
   rows?: CalculationRow[]
 }
 
-interface TemplateRow {
-  description: string
-  quantity: number
-  unit: string
-  pricePerUnit: number
-  co2?: number
-  account?: string
-  resource?: string
-  note?: string
-}
-
-interface TemplateSection {
-  name: string
-  rows?: TemplateRow[]
-}
-
-export interface CalculationTemplate {
-  name: string
-  sections: TemplateSection[]
-}
-
-interface CalculationViewProps {
+interface NewCalculationProps {
   template?: CalculationTemplate
   onClose: () => void
 }
@@ -114,14 +94,12 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
   })
 }
 
-export function CalculationView({ template, onClose }: CalculationViewProps) {
+export function NewCalculationPage({ template, onClose }: NewCalculationProps) {
   // Use template if provided, otherwise use empty default
   const defaultSections: CalculationSection[] = template 
     ? createSectionsFromTemplate(template)
     : [
         { id: 1, name: 'Section 1', amount: 0, expanded: false, rows: [] },
-        { id: 2, name: 'Section 2', amount: 0, expanded: false, rows: [] },
-        { id: 3, name: 'Section 3', amount: 0, expanded: false, rows: [] },
       ]
   
   const [sections, setSections] = useState(defaultSections)
