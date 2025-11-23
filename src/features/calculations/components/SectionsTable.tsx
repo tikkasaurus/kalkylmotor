@@ -1,0 +1,228 @@
+import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Calculator,
+  ChevronRight,
+  ChevronDown,
+  Search,
+  Plus,
+} from 'lucide-react'
+import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
+
+interface SectionsTableProps {
+  sections: CalculationSection[]
+  formatCurrency: (amount: number) => string
+  toggleSection: (id: number) => void
+  expandAll: () => void
+  collapseAll: () => void
+  addNewSection: () => void
+  addNewRow: (sectionId: number) => void
+  updateSectionName: (sectionId: number, name: string) => void
+  updateRowField: (sectionId: number, rowId: number, field: keyof CalculationRow, value: string | number) => void
+  updateRowCO2: (sectionId: number, rowId: number, value: number) => void
+  openCO2Modal: (sectionId: number, rowId: number) => void
+}
+
+export function SectionsTable({
+  sections,
+  formatCurrency,
+  toggleSection,
+  expandAll,
+  collapseAll,
+  addNewSection,
+  addNewRow,
+  updateSectionName,
+  updateRowField,
+  updateRowCO2,
+  openCO2Modal,
+}: SectionsTableProps) {
+  return (
+    <div className="bg-card border rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Calculator className="w-5 h-5" />
+          <h2 className="text-lg font-semibold">Kostnadskalkyl</h2>
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={expandAll}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Expandera alla
+          </button>
+          <button
+            onClick={collapseAll}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Kollapsa alla
+          </button>
+          <button 
+            onClick={addNewSection}
+            className="text-sm flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span>+</span> Lägg till avsnitt
+          </button>
+        </div>
+      </div>
+
+      {/* Sections List */}
+      <div className="space-y-2">
+        {sections.map((section) => (
+          <div key={section.id} className="border rounded-lg overflow-hidden">
+            <div className="w-full flex items-center justify-between p-4">
+              <div className="flex items-center gap-3 flex-1">
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="hover:bg-accent rounded p-1 transition-colors"
+                >
+                  {section.expanded ? (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+                <span className="text-muted-foreground w-6">{section.id}</span>
+                <Input
+                  type="text"
+                  value={section.name}
+                  onChange={(e) => updateSectionName(section.id, e.target.value)}
+                  className="h-8 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <span className="font-semibold">{formatCurrency(section.amount)}</span>
+            </div>
+            {section.expanded && (
+              <div className="bg-muted/30 border-t">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[200px]">BENÄMNING</TableHead>
+                      <TableHead className="w-[100px] text-right">ANTAL</TableHead>
+                      <TableHead className="w-[120px]">ENHET</TableHead>
+                      <TableHead className="w-[120px] text-right">PRIS/ENHET</TableHead>
+                      <TableHead className="w-[80px] text-center">CO2</TableHead>
+                      <TableHead className="w-[130px] text-right">SUMMA</TableHead>
+                      <TableHead className="w-[150px]">KONTO</TableHead>
+                      <TableHead className="w-[120px]">RESURS</TableHead>
+                      <TableHead className="w-[150px]">ANTECKNING</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {section.rows?.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell className="font-medium">
+                          <Input 
+                            type="text" 
+                            value={row.description} 
+                            onChange={(e) => updateRowField(section.id, row.id, 'description', e.target.value)}
+                            className="h-8"
+                            placeholder="Benämning"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input 
+                            type="number" 
+                            value={row.quantity} 
+                            onChange={(e) => updateRowField(section.id, row.id, 'quantity', Number(e.target.value))}
+                            className="h-8 text-right"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <select 
+                            value={row.unit}
+                            onChange={(e) => updateRowField(section.id, row.id, 'unit', e.target.value)}
+                            className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                          >
+                            <option value="m2">m2</option>
+                            <option value="m3">m3</option>
+                            <option value="m">m</option>
+                            <option value="st">st</option>
+                          </select>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input 
+                            type="number" 
+                            value={row.pricePerUnit} 
+                            onChange={(e) => updateRowField(section.id, row.id, 'pricePerUnit', Number(e.target.value))}
+                            className="h-8 text-right"
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center gap-1">
+                            <Input 
+                              type="number" 
+                              value={row.co2} 
+                              onChange={(e) => updateRowCO2(section.id, row.id, Number(e.target.value))}
+                              className="h-8 text-right w-20"
+                              placeholder="0"
+                            />
+                            <button 
+                              onClick={() => openCO2Modal(section.id, row.id)}
+                              className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded flex-shrink-0"
+                            >
+                              <Search className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {formatCurrency(row.quantity * row.pricePerUnit)}
+                        </TableCell>
+                        <TableCell>
+                          <select 
+                            value={row.account}
+                            onChange={(e) => updateRowField(section.id, row.id, 'account', e.target.value)}
+                            className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                          >
+                            <option value="Välj konto">Välj konto</option>
+                            <option value="4010 -...">4010 -...</option>
+                            <option value="4020 -...">4020 -...</option>
+                          </select>
+                        </TableCell>
+                        <TableCell>
+                          <Input 
+                            type="text" 
+                            value={row.resource} 
+                            onChange={(e) => updateRowField(section.id, row.id, 'resource', e.target.value)}
+                            className="h-8 text-sm"
+                            placeholder="Resurs..."
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input 
+                            type="text" 
+                            value={row.note} 
+                            onChange={(e) => updateRowField(section.id, row.id, 'note', e.target.value)}
+                            className="h-8 text-sm"
+                            placeholder="Anteckning..."
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="p-4">
+                  <button 
+                    onClick={() => addNewRow(section.id)}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Lägg till rad
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
