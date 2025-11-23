@@ -17,8 +17,8 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
       pricePerUnit: row.pricePerUnit,
       co2: row.co2 || 0,
       account: row.account || 'Välj konto',
-      resource: row.resource || 'Resurs...',
-      note: row.note || 'Anteckning...',
+      resource: row.resource || '',
+      note: row.note || '',
     }))
 
     const sectionAmount = rows.reduce((sum, row) => sum + (row.quantity * row.pricePerUnit), 0)
@@ -132,8 +132,8 @@ export function useNewCalculationState(template?: CalculationTemplate) {
             pricePerUnit: 0,
             co2: 0,
             account: 'Välj konto',
-            resource: 'Resurs...',
-            note: 'Anteckning...',
+            resource: '',
+            note: '',
           }
           return {
             ...section,
@@ -149,7 +149,7 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     const newSectionId = Math.max(...sections.map(s => s.id)) + 1
     const newSection: CalculationSection = {
       id: newSectionId,
-      name: `Avsnitt ${newSectionId}`,
+      name: `Sektion ${newSectionId}`,
       amount: 0,
       expanded: true,
       rows: [],
