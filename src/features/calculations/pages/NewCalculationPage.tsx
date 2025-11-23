@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { CO2DatabaseModal } from '@/features/co2-database/components/CO2DatabaseModal'
 import type { NewCalculationProps } from '@/features/calculations/api/types'
 import { useNewCalculationState } from '@/features/calculations/hooks/useNewCalculationState'
 import { NewCalculationHeader } from '@/features/calculations/components/NewCalculationHeader'
+import { SaveCalculationDialog } from '@/features/calculations/components/SaveCalculationDialog'
 import { RateSection } from '@/features/calculations/components/RateSection'
 import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
@@ -9,6 +11,9 @@ import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 
 export function NewCalculationPage({ template, onClose }: NewCalculationProps) {
   const state = useNewCalculationState(template)
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const [calculationName, setCalculationName] = useState('Kalkylnamn')
+  const [projectName, setProjectName] = useState('')
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -50,16 +55,33 @@ export function NewCalculationPage({ template, onClose }: NewCalculationProps) {
     const url = URL.createObjectURL(blob)
     
     link.setAttribute('href', url)
-    link.setAttribute('download', 'Tosito__Nässjö__Centrallager_Trafikverket_budget.csv')
+    link.setAttribute('download', `${calculationName}_budget.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
+  const handleSave = (calcName: string, projName: string) => {
+    setCalculationName(calcName)
+    setProjectName(projName)
+    setIsSaveDialogOpen(true)
+  }
+
+  const handleSaveSuccess = () => {
+    // Optionally show a success message or navigate back
+    onClose()
+  }
+
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
-      <NewCalculationHeader onClose={onClose} onExportCSV={exportToCSV} />
+      <NewCalculationHeader 
+        onClose={onClose} 
+        onExportCSV={exportToCSV}
+        onSave={handleSave}
+        initialCalculationName={calculationName}
+        initialProjectName={projectName}
+      />
 
       <div className="max-w-[1400px] mx-auto px-6 py-8">
         <RateSection
@@ -107,6 +129,17 @@ export function NewCalculationPage({ template, onClose }: NewCalculationProps) {
         open={state.co2ModalOpen} 
         onOpenChange={state.setCo2ModalOpen}
         onSelect={state.handleCO2Select}
+      />
+
+      <SaveCalculationDialog
+        open={isSaveDialogOpen}
+        onOpenChange={setIsSaveDialogOpen}
+        bidAmount={state.bidAmount}
+        formatCurrency={formatCurrency}
+        onSuccess={handleSaveSuccess}
+        hasSections={state.sections.length > 0}
+        calculationName={calculationName}
+        projectName={projectName}
       />
     </div>
   )

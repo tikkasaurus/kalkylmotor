@@ -1,73 +1,183 @@
-# React + TypeScript + Vite
+# Kalkylmodul
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A cost calculation management application built with React, TypeScript, Vite, Node.js, Express, and PostgreSQL.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `src/` - Frontend React application
+- `server/` - Backend Node.js/Express API server
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js (v18 or higher)
+- Docker and Docker Compose (recommended for database)
+- OR PostgreSQL (v12 or higher) if running database manually
+- npm or yarn
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Frontend Setup
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+```bash
+# Install dependencies
+npm install
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The frontend will run on `http://localhost:5173` by default.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 2. Database Setup with Docker Compose (Recommended)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Start PostgreSQL database
+docker-compose up -d
+
+# Verify database is running
+docker-compose ps
 ```
+
+The database will be available at `localhost:5432` with:
+- Database: `kalkylmodul`
+- User: `postgres`
+- Password: `postgres`
+
+To stop the database:
+```bash
+docker-compose down
+```
+
+To stop and remove all data:
+```bash
+docker-compose down -v
+```
+
+### 3. Backend Setup
+
+```bash
+# Navigate to server directory
+cd server
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# The default .env values work with Docker Compose setup
+
+# Run database migration (creates tables and inserts sample data)
+npm run db:migrate
+
+# Start development server
+npm run dev
+```
+
+The backend API will run on `http://localhost:3000` by default.
+
+**Alternative: Manual Database Setup**
+
+If you prefer to run PostgreSQL locally without Docker:
+
+```bash
+# Create PostgreSQL database
+createdb kalkylmodul
+# Or using psql:
+# psql -U postgres
+# CREATE DATABASE kalkylmodul;
+```
+
+### 4. Configure Frontend API URL
+
+Make sure the frontend is configured to connect to the backend. The default API URL is `http://localhost:3000/api`. You can override this by setting the `VITE_API_URL` environment variable in a `.env` file:
+
+```bash
+# Create .env file in the root directory
+echo "VITE_API_URL=http://localhost:3000/api" > .env
+```
+
+## Database Schema
+
+The database includes a `calculations` table with the following structure:
+
+- `id` - Primary key (SERIAL)
+- `name` - Calculation name (VARCHAR)
+- `project` - Project name (VARCHAR)
+- `status` - Status ('Aktiv' or 'Avslutad')
+- `amount` - Total amount (VARCHAR)
+- `created` - Creation date (DATE)
+- `created_by` - Creator name (VARCHAR)
+- `revision` - Revision identifier (VARCHAR, nullable)
+- `created_at` - Timestamp (TIMESTAMP)
+- `updated_at` - Timestamp (TIMESTAMP)
+
+## API Endpoints
+
+- `GET /api/calculations` - Get all calculations
+- `GET /api/calculations/:id` - Get a single calculation
+- `POST /api/calculations` - Create a new calculation
+- `PUT /api/calculations/:id` - Update a calculation
+- `DELETE /api/calculations/:id` - Delete a calculation
+
+## Quick Start
+
+1. Start the database: `docker-compose up -d`
+2. Set up backend: `cd server && npm install && cp .env.example .env && npm run db:migrate && npm run dev`
+3. Set up frontend: `npm install && npm run dev`
+
+## Development
+
+### Frontend
+
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run preview  # Preview production build
+npm run lint     # Run ESLint
+```
+
+### Backend
+
+```bash
+cd server
+npm run dev      # Start development server with hot reload
+npm run build    # Build TypeScript to JavaScript
+npm start        # Start production server
+npm run db:migrate # Run database migration
+```
+
+## Environment Variables
+
+### Frontend (.env)
+- `VITE_API_URL` - Backend API URL (default: `http://localhost:3000/api`)
+
+### Backend (server/.env)
+- `DB_HOST` - Database host (default: `localhost`)
+- `DB_PORT` - Database port (default: `5432`)
+- `DB_NAME` - Database name (default: `kalkylmodul`)
+- `DB_USER` - Database user (default: `postgres`)
+- `DB_PASSWORD` - Database password (default: `postgres`)
+- `PORT` - Server port (default: `3000`)
+- `NODE_ENV` - Environment (default: `development`)
+
+## Technologies Used
+
+### Frontend
+- React 19
+- TypeScript
+- Vite
+- TanStack Query
+- Tailwind CSS
+- Motion (Framer Motion)
+- Lucide React
+
+### Backend
+- Node.js
+- Express
+- TypeScript
+- PostgreSQL
+- pg (PostgreSQL client)
+
+## License
+
+Private project

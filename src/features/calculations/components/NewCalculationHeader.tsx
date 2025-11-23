@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +21,26 @@ import {
 interface NewCalculationHeaderProps {
   onClose: () => void
   onExportCSV: () => void
+  onSave?: (calculationName: string, projectName: string) => void
+  initialCalculationName?: string
+  initialProjectName?: string
 }
 
-export function NewCalculationHeader({ onClose, onExportCSV }: NewCalculationHeaderProps) {
+export function NewCalculationHeader({ 
+  onClose, 
+  onExportCSV, 
+  onSave,
+  initialCalculationName = 'Kalkylnamn',
+  initialProjectName = '',
+}: NewCalculationHeaderProps) {
+  const [calculationName, setCalculationName] = useState(initialCalculationName)
+  const [projectName, setProjectName] = useState(initialProjectName)
+
+  const handleSave = () => {
+    if (onSave) {
+      onSave(calculationName, projectName)
+    }
+  }
   return (
     <div className="border-b bg-card">
       <div className="max-w-[1400px] mx-auto px-6 py-4">
@@ -31,13 +50,23 @@ export function NewCalculationHeader({ onClose, onExportCSV }: NewCalculationHea
             <div className="w-16 h-16 bg-orange-600 rounded flex items-center justify-center">
               <span className="text-white font-bold text-xl">BRA</span>
             </div>
-            {/* Project Info */}
-            <div className="text-left">
-              <h1 className="text-xl font-semibold">
-                Tosito, Nässjö: Centrallager Trafikverket
-              </h1>
-              <p className="text-sm text-muted-foreground">2025-05-10</p>
-            </div>
+            <div className="text-left flex-1">
+              <Input
+                value={calculationName}
+                required
+                onChange={(e) => setCalculationName(e.target.value)}
+                className="text-xxl font-semibold h-auto py-1 px-2 border-0 bg-transparent hover:bg-accent/50 focus:bg-background focus:border focus:border-input rounded-md mb-2 -ml-2 w-[400px] max-w-none"
+                placeholder="Kalkylnamn"
+              />
+              <Input
+                value={projectName}
+                required
+                onChange={(e) => setProjectName(e.target.value)}
+                className="text-sm text-muted-foreground h-auto py-0.5 px-2 border-0 bg-transparent hover:bg-accent/50 focus:bg-background focus:border focus:border-input rounded-md max-w-xs -ml-2 mb-2"
+                placeholder="Projektnamn"
+              />
+              <p className="text-sm text-muted-foreground">{new Date().toISOString().split('T')[0]}</p>
+            </div>  
           </div>
 
           {/* Close Button */}
@@ -81,7 +110,7 @@ export function NewCalculationHeader({ onClose, onExportCSV }: NewCalculationHea
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <ShimmerButton className="ml-auto">
+          <ShimmerButton className="ml-auto" onClick={handleSave}>
             <Save className="w-4 h-4 mr-2" />
             Spara
           </ShimmerButton>

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
+  TableBody,
   TableCell,
   TableHead,
   TableHeader,
@@ -14,13 +15,35 @@ import { TextAnimate } from '@/components/ui/text-animate'
 import { Highlighter } from '@/components/ui/highlighter'
 import { NewCalculationPage } from './NewCalculationPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { sampleCalculations } from '../api/queries'
+import { useCalculationsQuery } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 
 export function CalculationsPage() {
+  const { data: calculations = [], isLoading, error } = useCalculationsQuery()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+  const [animationKey, setAnimationKey] = useState(0)
+
+  // Debug logging
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching calculations:', error)
+    }
+    if (calculations) {
+      console.log('Calculations data:', calculations)
+    }
+  }, [error, calculations])
+
+  // Re-trigger animation while loading
+  useEffect(() => {
+    if (isLoading) {
+      const interval = setInterval(() => {
+        setAnimationKey((prev) => prev + 1)
+      }, 2000) // Re-animate every 2 seconds
+      return () => clearInterval(interval)
+    }
+  }, [isLoading])
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId)
@@ -87,35 +110,56 @@ export function CalculationsPage() {
                 <TableHead className="text-left">Skapad av</TableHead>
               </TableRow>
             </TableHeader>
-            <motion.tbody
-              initial="hidden"
-              animate="show"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.03,
-                    delayChildren: 0.1,
-                  },
-                },
-              }}
-              className="[&_tr:last-child]:border-0"
-            >
-              {sampleCalculations.map((calc) => (
-                <motion.tr
+            <TableBody>
+              {isLoading ? (
+                <motion.tr>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <motion.div
+                      animate={{
+                        opacity: [1, 0.6, 1],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <TextAnimate
+                        key={animationKey}
+                        by="character"
+                        animation="blurIn"
+                        startOnView={false}
+                        once={false}
+                      >
+                        Laddar kalkyler...
+                      </TextAnimate>
+                    </motion.div>
+                  </TableCell>
+                </motion.tr>
+              ) : error ? (
+                <motion.tr>
+                  <TableCell colSpan={6} className="text-center text-destructive py-8">
+                    <div>
+                      <p className="font-medium">Fel vid hämtning av kalkyler</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {error instanceof Error ? error.message : 'Okänt fel'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Kontrollera att backend-servern körs på http://localhost:3000
+                      </p>
+                    </div>
+                  </TableCell>
+                </motion.tr>
+              ) : calculations.length === 0 ? (
+                <motion.tr>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    Inga kalkyler hittades
+                  </TableCell>
+                </motion.tr>
+              ) : (
+                calculations.map((calc) => (
+                <TableRow
                   key={calc.id}
-                  variants={{
-                    hidden: { opacity: 0, y: 10 },
-                    show: {
-                      opacity: 1,
-                      y: 0,
-                      transition: {
-                        duration: 0.3,
-                        ease: [0.22, 1, 0.36, 1],
-                      },
-                    },
-                  }}
                   className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
                 >
                   <TableCell className="text-left">
@@ -143,9 +187,10 @@ export function CalculationsPage() {
                   <TableCell className="text-left text-muted-foreground">
                     {calc.createdBy}
                   </TableCell>
-                </motion.tr>
-              ))}
-            </motion.tbody>
+                </TableRow>
+                ))
+              )}
+            </TableBody>
           </Table>
         </div>
       </div>
