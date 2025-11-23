@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Search,
   Plus,
+  X,
 } from 'lucide-react'
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,8 @@ interface SectionsTableProps {
   updateRowField: (sectionId: number, rowId: number, field: keyof CalculationRow, value: string | number) => void
   updateRowCO2: (sectionId: number, rowId: number, value: number) => void
   openCO2Modal: (sectionId: number, rowId: number) => void
+  deleteSection: (sectionId: number) => void
+  deleteRow: (sectionId: number, rowId: number) => void
 }
 
 export function SectionsTable({
@@ -43,6 +46,8 @@ export function SectionsTable({
   updateRowField,
   updateRowCO2,
   openCO2Modal,
+  deleteSection,
+  deleteRow,
 }: SectionsTableProps) {
   return (
     <div className="bg-card border rounded-lg p-6">
@@ -99,7 +104,19 @@ export function SectionsTable({
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
-              <span className="font-semibold">{formatCurrency(section.amount)}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">{formatCurrency(section.amount)}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    deleteSection(section.id)
+                  }}
+                  className="h-6 w-6 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive rounded transition-colors"
+                  title="Ta bort sektion"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             {section.expanded && (
               <div className="bg-card border-t">
@@ -115,6 +132,7 @@ export function SectionsTable({
                       <TableHead className="w-[150px]">KONTO</TableHead>
                       <TableHead className="w-[120px]">RESURS</TableHead>
                       <TableHead className="w-[150px]">ANTECKNING</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -205,6 +223,15 @@ export function SectionsTable({
                             className="h-8 text-sm"
                             placeholder="Anteckning..."
                           />
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            onClick={() => deleteRow(section.id, row.id)}
+                            className="h-8 w-8 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive rounded transition-colors"
+                            title="Ta bort rad"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </TableCell>
                       </TableRow>
                     ))}

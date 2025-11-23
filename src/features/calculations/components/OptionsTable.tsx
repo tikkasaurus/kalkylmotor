@@ -44,7 +44,7 @@ export function OptionsTable({
         </TableHeader>
         <TableBody>
           {options.map((option) => (
-            <TableRow key={option.id}>
+            <TableRow key={option.id} className="hover:bg-card">
               <TableCell>
                 <Input 
                   type="text" 

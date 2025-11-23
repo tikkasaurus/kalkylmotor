@@ -91,6 +91,8 @@ export function NewCalculationPage({ template, onClose }: NewCalculationProps) {
           updateRowField={state.updateRowField}
           updateRowCO2={state.updateRowCO2}
           openCO2Modal={state.openCO2Modal}
+          deleteSection={state.deleteSection}
+          deleteRow={state.deleteRow}
         />
 
         <OptionsTable

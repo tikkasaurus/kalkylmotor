@@ -146,7 +146,7 @@ export function useNewCalculationState(template?: CalculationTemplate) {
   }
 
   const addNewSection = () => {
-    const newSectionId = Math.max(...sections.map(s => s.id)) + 1
+    const newSectionId = Math.max(0, ...sections.map(s => s.id)) + 1
     const newSection: CalculationSection = {
       id: newSectionId,
       name: `Sektion ${newSectionId}`,
@@ -161,6 +161,23 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     setSections(
       sections.map((section) =>
         section.id === sectionId ? { ...section, name: newName } : section
+      )
+    )
+  }
+
+  const deleteSection = (sectionId: number) => {
+    setSections(sections.filter((section) => section.id !== sectionId))
+  }
+
+  const deleteRow = (sectionId: number, rowId: number) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              rows: section.rows?.filter((row) => row.id !== rowId) || [],
+            }
+          : section
       )
     )
   }
@@ -196,8 +213,13 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     })
   }, [sections])
 
-  // Derived values
-  const budgetExclRate = sectionsWithAmounts.reduce((sum, section) => sum + section.amount, 0)
+  // Calculate options total
+  const optionsTotal = useMemo(() => {
+    return options.reduce((sum, option) => sum + (option.quantity * option.pricePerUnit), 0)
+  }, [options])
+
+  // Derived values - includes both sections and options
+  const budgetExclRate = sectionsWithAmounts.reduce((sum, section) => sum + section.amount, 0) + optionsTotal
   const fixedRate = budgetExclRate * (rate / 100)
   const bidAmount = budgetExclRate + fixedRate
 
@@ -225,6 +247,8 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     updateOptionField,
     openCO2Modal,
     handleCO2Select,
+    deleteSection,
+    deleteRow,
     budgetExclRate,
     fixedRate,
     bidAmount,
