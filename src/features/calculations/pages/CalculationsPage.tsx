@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
+import confetti from 'canvas-confetti'
 import { Button } from '@/components/ui/button'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { Badge } from '@/components/ui/badge'
@@ -64,6 +65,17 @@ export function CalculationsPage() {
     setSelectedCalculation({ name: calc.name, project: calc.project })
     setShowCalculationView(true)
   }
+  
+
+  const handleSaveSuccess = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x: 0.5, y: 0 },
+      gravity: 1.5,
+      colors: ['#0099FF', '#00FF99', '#FF9900', '#FF0099', '#9900FF'],
+    })
+  }
 
   if (showCalculationView) {
     // If a template was selected, use it; otherwise use empty template with calculation data
@@ -73,6 +85,7 @@ export function CalculationsPage() {
         <NewCalculationPage
           template={template}
           onClose={handleCloseCalculationView}
+          onSaveSuccess={handleSaveSuccess}
           initialCalculationName={selectedCalculation?.name}
           initialProjectName={selectedCalculation?.project}
         />
@@ -82,6 +95,7 @@ export function CalculationsPage() {
       return (
         <NewCalculationPage
           onClose={handleCloseCalculationView}
+          onSaveSuccess={handleSaveSuccess}
           initialCalculationName={selectedCalculation.name}
           initialProjectName={selectedCalculation.project}
         />

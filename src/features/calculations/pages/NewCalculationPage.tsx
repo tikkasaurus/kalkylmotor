@@ -12,6 +12,7 @@ import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 export function NewCalculationPage({ 
   template, 
   onClose,
+  onSaveSuccess,
   initialCalculationName = 'Kalkylnamn',
   initialProjectName = '',
 }: NewCalculationProps) {
@@ -74,8 +75,12 @@ export function NewCalculationPage({
   }
 
   const handleSaveSuccess = () => {
-    // Optionally show a success message or navigate back
-    onClose()
+    // Trigger confetti animation before closing
+    onSaveSuccess?.()
+    // Small delay to ensure confetti is visible before closing
+    setTimeout(() => {
+      onClose()
+    }, 100)
   }
 
   return (

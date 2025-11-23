@@ -61,6 +61,7 @@ export interface CalculationSection {
 export interface NewCalculationProps {
   template?: CalculationTemplate
   onClose: () => void
+  onSaveSuccess?: () => void
   initialCalculationName?: string
   initialProjectName?: string
 }
