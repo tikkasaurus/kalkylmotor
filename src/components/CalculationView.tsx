@@ -137,6 +137,47 @@ export function CalculationView({ onClose }: CalculationViewProps) {
     )
   }
 
+  const updateRowField = (sectionId: number, rowId: number, field: keyof CalculationRow, value: string | number) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              rows: section.rows?.map((row) =>
+                row.id === rowId ? { ...row, [field]: value } : row
+              ),
+            }
+          : section
+      )
+    )
+  }
+
+  const addNewRow = (sectionId: number) => {
+    setSections(
+      sections.map((section) => {
+        if (section.id === sectionId) {
+          const newRowId = Math.max(0, ...(section.rows?.map(r => r.id) || [])) + 1
+          const newRow: CalculationRow = {
+            id: newRowId,
+            description: '',
+            quantity: 0,
+            unit: 'm2',
+            pricePerUnit: 0,
+            co2: 0,
+            account: 'Välj konto',
+            resource: 'Resurs...',
+            note: 'Anteckning...',
+          }
+          return {
+            ...section,
+            rows: [...(section.rows || []), newRow],
+          }
+        }
+        return section
+      })
+    )
+  }
+
   const budgetExclArvode = sections.reduce((sum, section) => sum + section.amount, 0)
   const fastArvode = budgetExclArvode * (arvode / 100)
   const anbudssumma = budgetExclArvode + fastArvode
@@ -341,27 +382,40 @@ export function CalculationView({ onClose }: CalculationViewProps) {
                       <TableBody>
                         {section.rows?.map((row) => (
                           <TableRow key={row.id}>
-                            <TableCell className="font-medium">{row.description}</TableCell>
+                            <TableCell className="font-medium">
+                              <Input 
+                                type="text" 
+                                value={row.description} 
+                                onChange={(e) => updateRowField(section.id, row.id, 'description', e.target.value)}
+                                className="h-8"
+                                placeholder="Benämning"
+                              />
+                            </TableCell>
                             <TableCell className="text-right">
                               <Input 
                                 type="number" 
                                 value={row.quantity} 
+                                onChange={(e) => updateRowField(section.id, row.id, 'quantity', Number(e.target.value))}
                                 className="h-8 text-right"
                               />
                             </TableCell>
                             <TableCell>
-                              <select className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm">
-                                <option>{row.unit}</option>
-                                <option>m2</option>
-                                <option>m3</option>
-                                <option>m</option>
-                                <option>st</option>
+                              <select 
+                                value={row.unit}
+                                onChange={(e) => updateRowField(section.id, row.id, 'unit', e.target.value)}
+                                className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                              >
+                                <option value="m2">m2</option>
+                                <option value="m3">m3</option>
+                                <option value="m">m</option>
+                                <option value="st">st</option>
                               </select>
                             </TableCell>
                             <TableCell className="text-right">
                               <Input 
                                 type="number" 
                                 value={row.pricePerUnit} 
+                                onChange={(e) => updateRowField(section.id, row.id, 'pricePerUnit', Number(e.target.value))}
                                 className="h-8 text-right"
                               />
                             </TableCell>
@@ -386,24 +440,43 @@ export function CalculationView({ onClose }: CalculationViewProps) {
                               {formatCurrency(row.quantity * row.pricePerUnit)}
                             </TableCell>
                             <TableCell>
-                              <select className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm">
-                                <option>{row.account}</option>
-                                <option>4010 -...</option>
-                                <option>4020 -...</option>
+                              <select 
+                                value={row.account}
+                                onChange={(e) => updateRowField(section.id, row.id, 'account', e.target.value)}
+                                className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                              >
+                                <option value="Välj konto">Välj konto</option>
+                                <option value="4010 -...">4010 -...</option>
+                                <option value="4020 -...">4020 -...</option>
                               </select>
                             </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {row.resource}
+                            <TableCell>
+                              <Input 
+                                type="text" 
+                                value={row.resource} 
+                                onChange={(e) => updateRowField(section.id, row.id, 'resource', e.target.value)}
+                                className="h-8 text-sm"
+                                placeholder="Resurs..."
+                              />
                             </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {row.note}
+                            <TableCell>
+                              <Input 
+                                type="text" 
+                                value={row.note} 
+                                onChange={(e) => updateRowField(section.id, row.id, 'note', e.target.value)}
+                                className="h-8 text-sm"
+                                placeholder="Anteckning..."
+                              />
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                     <div className="p-4">
-                      <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <button 
+                        onClick={() => addNewRow(section.id)}
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
                         <Plus className="w-4 h-4" />
                         Lägg till rad
                       </button>
