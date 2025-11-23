@@ -1,7 +1,6 @@
 export interface Calculation {
   id: number
   name: string
-  url: string
   project: string
   status: 'Aktiv' | 'Avslutad'
   amount: string

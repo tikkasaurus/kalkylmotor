@@ -5,7 +5,6 @@ export const sampleCalculations: Calculation[] = [
   {
     id: 1,
     name: 'Tosito, Nässjö: Centrallager Trafikverket',
-    url: '/projekt/tosito/huvudkalkyl',
     project: 'Marcus Test',
     status: 'Aktiv',
     amount: '217 475 390 kr',
@@ -16,7 +15,6 @@ export const sampleCalculations: Calculation[] = [
     id: 2,
     name: 'Industri Norrköping',
     revision: 'Rev 3',
-    url: '/projekt/industri/huvudkalkyl',
     project: 'Industri Norrköping',
     status: 'Aktiv',
     amount: '145 890 000 kr',
@@ -26,7 +24,6 @@ export const sampleCalculations: Calculation[] = [
   {
     id: 3,
     name: 'Villa Lindgren - Huvudkalkyl',
-    url: '/projekt/villa-lindgren/kalkyl',
     project: 'Villa Lindgren',
     status: 'Aktiv',
     amount: '8 450 000 kr',
@@ -36,7 +33,6 @@ export const sampleCalculations: Calculation[] = [
   {
     id: 4,
     name: 'Kontorsbyggnad AB - Anbud',
-    url: '/projekt/kontorsbyggnad/anbud',
     project: 'Kontorsbyggnad',
     status: 'Aktiv',
     amount: '32 150 000 kr',
@@ -46,7 +42,6 @@ export const sampleCalculations: Calculation[] = [
   {
     id: 5,
     name: 'Ombyggnad radhus',
-    url: '/projekt/radhus/ombyggnad',
     project: 'Radhus Malmö',
     status: 'Avslutad',
     amount: '4 225 000 kr',

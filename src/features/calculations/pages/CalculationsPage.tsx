@@ -66,19 +66,18 @@ export function CalculationsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Kalkyl</TableHead>
-                <TableHead>URL</TableHead>
-                <TableHead>Projekt</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Kalkylsumma</TableHead>
-                <TableHead>Skapad</TableHead>
-                <TableHead>Skapad av</TableHead>
+                <TableHead className="text-left">Kalkyl</TableHead>
+                <TableHead className="text-left">Projekt</TableHead>
+                <TableHead className="text-left">Status</TableHead>
+                <TableHead className="text-left">Kalkylsumma</TableHead>
+                <TableHead className="text-left">Skapad</TableHead>
+                <TableHead className="text-left">Skapad av</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sampleCalculations.map((calc) => (
                 <TableRow key={calc.id}>
-                  <TableCell>
+                  <TableCell className="text-left">
                     <div className="font-medium">{calc.name}</div>
                     {calc.revision && (
                       <div className="text-sm text-muted-foreground">
@@ -86,11 +85,8 @@ export function CalculationsPage() {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {calc.url}
-                  </TableCell>
-                  <TableCell>{calc.project}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-left">{calc.project}</TableCell>
+                  <TableCell className="text-left">
                     <Badge
                       variant={
                         calc.status === 'Aktiv' ? 'default' : 'secondary'
@@ -99,11 +95,11 @@ export function CalculationsPage() {
                       {calc.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-medium">{calc.amount}</TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-left font-medium">{calc.amount}</TableCell>
+                  <TableCell className="text-left text-muted-foreground">
                     {calc.created}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-left text-muted-foreground">
                     {calc.createdBy}
                   </TableCell>
                 </TableRow>
