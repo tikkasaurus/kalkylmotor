@@ -17,6 +17,8 @@ import {
   X,
   FileSpreadsheet,
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 
 interface NewCalculationHeaderProps {
   onClose: () => void
@@ -112,10 +114,13 @@ export function NewCalculationHeader({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <ShimmerButton className="ml-auto" onClick={handleSave}>
-            <Save className="w-4 h-4 mr-2" />
-            Spara
-          </ShimmerButton>
+          <div className="ml-auto flex items-center gap-3">
+            <AnimatedThemeToggler />
+            <ShimmerButton onClick={handleSave}>
+              <Save className="w-4 h-4 mr-2" />
+              Spara
+            </ShimmerButton>
+          </div>
         </div>
       </div>
     </div>

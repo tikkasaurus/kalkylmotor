@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table'
 import { TextAnimate } from '@/components/ui/text-animate'
 import { Highlighter } from '@/components/ui/highlighter'
+import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
 import { useCalculationsQuery } from '../api/queries'
@@ -112,7 +113,7 @@ export function CalculationsPage() {
             <div className="text-left">
               <h1 className="text-3xl font-bold mb-2">
                 <Highlighter action="underline" color="#0099FF">
-                  Kalkyler
+                  Kalkylmodul
                 </Highlighter>
               </h1>
               <TextAnimate
@@ -124,6 +125,7 @@ export function CalculationsPage() {
               </TextAnimate>
             </div>
             <div className="flex gap-3">
+              <AnimatedThemeToggler />
               <ShimmerButton 
                 onClick={() => setIsModalOpen(true)}
               >
