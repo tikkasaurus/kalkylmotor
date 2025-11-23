@@ -15,6 +15,7 @@ import {
   Plus,
 } from 'lucide-react'
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
+import { Button } from '@/components/ui/button'
 
 interface SectionsTableProps {
   sections: CalculationSection[]
@@ -63,12 +64,13 @@ export function SectionsTable({
           >
             Kollapsa alla
           </button>
-          <button 
+          <Button 
             onClick={addNewSection}
+            variant="outline"
             className="text-sm flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <span>+</span> Lägg till avsnitt
-          </button>
+          </Button>
         </div>
       </div>
 
