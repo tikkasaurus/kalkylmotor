@@ -76,7 +76,7 @@ export function SectionsTable({
       <div className="space-y-2">
         {sections.map((section) => (
           <div key={section.id} className="border rounded-lg overflow-hidden">
-            <div className="w-full flex items-center justify-between p-4">
+            <div className="w-full flex items-center justify-between p-4 bg-muted/50">
               <div className="flex items-center gap-3 flex-1">
                 <button
                   onClick={() => toggleSection(section.id)}
@@ -100,7 +100,7 @@ export function SectionsTable({
               <span className="font-semibold">{formatCurrency(section.amount)}</span>
             </div>
             {section.expanded && (
-              <div className="bg-muted/30 border-t">
+              <div className="bg-card border-t">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -117,7 +117,7 @@ export function SectionsTable({
                   </TableHeader>
                   <TableBody>
                     {section.rows?.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow key={row.id} className="hover:bg-card">
                         <TableCell className="font-medium">
                           <Input 
                             type="text" 
