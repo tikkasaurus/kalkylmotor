@@ -46,36 +46,70 @@ interface CalculationSection {
   rows?: CalculationRow[]
 }
 
+interface TemplateRow {
+  description: string
+  quantity: number
+  unit: string
+  pricePerUnit: number
+  co2?: number
+  account?: string
+  resource?: string
+  note?: string
+}
+
+interface TemplateSection {
+  name: string
+  rows?: TemplateRow[]
+}
+
+export interface CalculationTemplate {
+  name: string
+  sections: TemplateSection[]
+}
+
 interface CalculationViewProps {
-  templateId?: string
+  template?: CalculationTemplate
   onClose: () => void
 }
 
-const initialSections: CalculationSection[] = [
-  { 
-    id: 1, 
-    name: 'Mark', 
-    amount: 5117400, 
-    expanded: false,
-    rows: [
-      { id: 1, description: 'Markarbeten', quantity: 3400, unit: 'm2', pricePerUnit: 280, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
-      { id: 2, description: 'Betongplatta på mark', quantity: 3400, unit: 'm2', pricePerUnit: 890, co2: 0, account: '4010 -...', resource: 'Resurs...', note: 'Anteckning...' },
-      { id: 3, description: 'Schaktning', quantity: 2800, unit: 'm3', pricePerUnit: 145, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
-      { id: 4, description: 'Dränering', quantity: 420, unit: 'm', pricePerUnit: 320, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
-      { id: 5, description: 'Återfyllning', quantity: 1200, unit: 'm3', pricePerUnit: 95, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
-      { id: 6, description: 'VA-anslutningar', quantity: 1, unit: 'st', pricePerUnit: 485000, co2: 0, account: 'Välj konto', resource: 'Resurs...', note: 'Anteckning...' },
-    ]
-  },
-  { id: 3, name: 'Stomme', amount: 19323900, expanded: false, rows: [] },
-  { id: 4, name: 'Yttertak', amount: 0, expanded: false, rows: [] },
-  { id: 5, name: 'Fasader', amount: 0, expanded: false, rows: [] },
-  { id: 6, name: 'Stomkompl./rumsbildn.', amount: 1261000, expanded: false, rows: [] },
-  { id: 7, name: 'Inv ytskikt/rumskompl.', amount: 0, expanded: false, rows: [] },
-  { id: 8, name: 'UE', amount: 10290000, expanded: false, rows: [] },
-]
+// Factory function to create sections from template
+function createSectionsFromTemplate(template: CalculationTemplate): CalculationSection[] {
+  return template.sections.map((section, index) => {
+    const rows: CalculationRow[] = (section.rows || []).map((row, rowIndex) => ({
+      id: rowIndex + 1,
+      description: row.description,
+      quantity: row.quantity,
+      unit: row.unit,
+      pricePerUnit: row.pricePerUnit,
+      co2: row.co2 || 0,
+      account: row.account || 'Välj konto',
+      resource: row.resource || 'Resurs...',
+      note: row.note || 'Anteckning...',
+    }))
 
-export function CalculationView({ onClose }: CalculationViewProps) {
-  const [sections, setSections] = useState(initialSections)
+    const sectionAmount = rows.reduce((sum, row) => sum + (row.quantity * row.pricePerUnit), 0)
+
+    return {
+      id: index + 1,
+      name: section.name,
+      amount: sectionAmount,
+      expanded: false,
+      rows,
+    }
+  })
+}
+
+export function CalculationView({ template, onClose }: CalculationViewProps) {
+  // Use template if provided, otherwise use empty default
+  const defaultSections: CalculationSection[] = template 
+    ? createSectionsFromTemplate(template)
+    : [
+        { id: 1, name: 'Section 1', amount: 0, expanded: false, rows: [] },
+        { id: 2, name: 'Section 2', amount: 0, expanded: false, rows: [] },
+        { id: 3, name: 'Section 3', amount: 0, expanded: false, rows: [] },
+      ]
+  
+  const [sections, setSections] = useState(defaultSections)
   const [arvode, setArvode] = useState(8)
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)

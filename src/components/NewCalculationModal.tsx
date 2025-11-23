@@ -6,13 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { FileText, ChevronRight } from 'lucide-react'
-
-interface Template {
-  id: string
-  title: string
-  description: string
-  popular: boolean
-}
+import { getAllTemplateMetadata } from '@/lib/calculationTemplates'
 
 interface NewCalculationModalProps {
   isOpen: boolean
@@ -20,44 +14,13 @@ interface NewCalculationModalProps {
   onTemplateSelect: (templateId: string) => void
 }
 
-const calculationTemplates: Template[] = [
-  {
-    id: 'empty',
-    title: 'Tom kalkyl',
-    description: 'Starta från en tom kalkyl och bygg upp ditt projekt från grunden',
-    popular: false,
-  },
-  {
-    id: 'industrial',
-    title: 'Industribyggnad',
-    description: 'Mall för industribyggnader med kompletta sektioner och standardvärden',
-    popular: true,
-  },
-  {
-    id: 'residential',
-    title: 'Bostäder flerfamiljshus',
-    description: 'Optimerad för bostadsprojekt med standardrum och installationer',
-    popular: true,
-  },
-  {
-    id: 'office',
-    title: 'Kontorsbyggnad',
-    description: 'Mall för kontorsprojekt med fokus på inredning och tekniska system',
-    popular: false,
-  },
-  {
-    id: 'renovation',
-    title: 'Renovering & ombyggnad',
-    description: 'Anpassad för renoveringsprojekt med rivning och befintliga konstruktioner',
-    popular: false,
-  },
-]
-
 export function NewCalculationModal({
   isOpen,
   onClose,
   onTemplateSelect,
 }: NewCalculationModalProps) {
+  const templates = getAllTemplateMetadata()
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -65,7 +28,7 @@ export function NewCalculationModal({
           <DialogTitle>Skapa ny kalkyl</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3 mt-4">
-          {calculationTemplates.map((template) => (
+          {templates.map((template) => (
             <button
               key={template.id}
               onClick={() => onTemplateSelect(template.id)}

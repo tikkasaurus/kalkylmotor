@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table'
 import { CalculationView } from '@/components/CalculationView'
 import { NewCalculationModal } from '@/components/NewCalculationModal'
+import { getTemplateById } from '@/lib/calculationTemplates'
 
 // Sample data
 const calculations = [
@@ -85,9 +86,10 @@ function App() {
   }
 
   if (showCalculationView && selectedTemplate) {
+    const template = getTemplateById(selectedTemplate)
     return (
       <CalculationView
-        templateId={selectedTemplate}
+        template={template}
         onClose={handleCloseCalculationView}
       />
     )
