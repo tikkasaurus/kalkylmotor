@@ -202,6 +202,10 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     )
   }
 
+  const deleteOption = (optionId: number) => {
+    setOptions(options.filter((option) => option.id !== optionId))
+  }
+
   // Recalculate section amounts based on rows
   const sectionsWithAmounts = useMemo(() => {
     return sections.map((section) => {
@@ -249,6 +253,7 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     handleCO2Select,
     deleteSection,
     deleteRow,
+    deleteOption,
     budgetExclRate,
     fixedRate,
     bidAmount,

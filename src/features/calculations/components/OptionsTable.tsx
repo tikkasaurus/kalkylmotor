@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Calculator, Plus } from 'lucide-react'
+import { Calculator, Plus, X } from 'lucide-react'
 import type { OptionRow } from '@/features/calculations/api/types'
 
 interface OptionsTableProps {
@@ -15,6 +15,7 @@ interface OptionsTableProps {
   formatCurrency: (amount: number) => string
   addNewOption: () => void
   updateOptionField: (optionId: number, field: keyof OptionRow, value: string | number) => void
+  deleteOption: (optionId: number) => void
 }
 
 export function OptionsTable({
@@ -22,6 +23,7 @@ export function OptionsTable({
   formatCurrency,
   addNewOption,
   updateOptionField,
+  deleteOption,
 }: OptionsTableProps) {
   return (
     <div className="bg-card border rounded-lg p-6 mt-6">
@@ -40,6 +42,7 @@ export function OptionsTable({
             <TableHead className="w-[150px]">ENHET</TableHead>
             <TableHead className="w-[150px] text-right">PRIS/ENHET</TableHead>
             <TableHead className="w-[150px] text-right">SUMMA</TableHead>
+            <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -84,6 +87,15 @@ export function OptionsTable({
               </TableCell>
               <TableCell className="text-right font-semibold">
                 {formatCurrency(option.quantity * option.pricePerUnit)}
+              </TableCell>
+              <TableCell>
+                <button
+                  onClick={() => deleteOption(option.id)}
+                  className="h-8 w-8 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive rounded transition-colors"
+                  title="Ta bort option"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </TableCell>
             </TableRow>
           ))}

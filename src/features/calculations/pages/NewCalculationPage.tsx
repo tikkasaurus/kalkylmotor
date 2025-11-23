@@ -8,6 +8,7 @@ import { RateSection } from '@/features/calculations/components/RateSection'
 import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
+import { exportToPDF } from '@/features/calculations/utils/pdfExport'
 
 export function NewCalculationPage({ 
   template, 
@@ -68,6 +69,22 @@ export function NewCalculationPage({
     document.body.removeChild(link)
   }
 
+  const handleExportPDF = () => {
+    exportToPDF({
+      calculationName,
+      projectName,
+      date: new Date().toISOString().split('T')[0],
+      rate: state.rate,
+      area: state.area,
+      co2Budget: state.co2Budget,
+      budgetExclRate: state.budgetExclRate,
+      fixedRate: state.fixedRate,
+      bidAmount: state.bidAmount,
+      sections: state.sections.map(section => ({ ...section, expanded: true })), // All sections expanded
+      options: state.options,
+    })
+  }
+
   const handleSave = (calcName: string, projName: string) => {
     setCalculationName(calcName)
     setProjectName(projName)
@@ -88,6 +105,7 @@ export function NewCalculationPage({
       <NewCalculationHeader 
         onClose={onClose} 
         onExportCSV={exportToCSV}
+        onExportPDF={handleExportPDF}
         onSave={handleSave}
         initialCalculationName={calculationName}
         initialProjectName={projectName}
@@ -132,6 +150,7 @@ export function NewCalculationPage({
           formatCurrency={formatCurrency}
           addNewOption={state.addNewOption}
           updateOptionField={state.updateOptionField}
+          deleteOption={state.deleteOption}
         />
       </div>
       

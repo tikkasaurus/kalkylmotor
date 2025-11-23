@@ -21,6 +21,7 @@ import {
 interface NewCalculationHeaderProps {
   onClose: () => void
   onExportCSV: () => void
+  onExportPDF?: () => void
   onSave?: (calculationName: string, projectName: string) => void
   initialCalculationName?: string
   initialProjectName?: string
@@ -28,7 +29,8 @@ interface NewCalculationHeaderProps {
 
 export function NewCalculationHeader({ 
   onClose, 
-  onExportCSV, 
+  onExportCSV,
+  onExportPDF,
   onSave,
   initialCalculationName = 'Kalkylnamn',
   initialProjectName = '',
@@ -100,7 +102,7 @@ export function NewCalculationHeader({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={onExportPDF}>
                 <FileText className="w-4 h-4" />
                 Exportera som PDF
               </DropdownMenuItem>
