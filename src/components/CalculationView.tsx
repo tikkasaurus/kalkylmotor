@@ -10,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { CO2DatabaseModal } from './CO2DatabaseModal'
 import {
   Home,
@@ -24,6 +30,7 @@ import {
   X,
   Search,
   Plus,
+  FileSpreadsheet,
 } from 'lucide-react'
 
 interface CalculationRow {
@@ -36,6 +43,14 @@ interface CalculationRow {
   account: string
   resource: string
   note: string
+}
+
+interface OptionRow {
+  id: number
+  description: string
+  quantity: number
+  unit: string
+  pricePerUnit: number
 }
 
 interface CalculationSection {
@@ -110,6 +125,7 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
       ]
   
   const [sections, setSections] = useState(defaultSections)
+  const [options, setOptions] = useState<OptionRow[]>([])
   const [arvode, setArvode] = useState(8)
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
@@ -212,6 +228,46 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
     )
   }
 
+  const addNewSection = () => {
+    const newSectionId = Math.max(...sections.map(s => s.id)) + 1
+    const newSection: CalculationSection = {
+      id: newSectionId,
+      name: `Avsnitt ${newSectionId}`,
+      amount: 0,
+      expanded: true,
+      rows: [],
+    }
+    setSections([...sections, newSection])
+  }
+
+  const updateSectionName = (sectionId: number, newName: string) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId ? { ...section, name: newName } : section
+      )
+    )
+  }
+
+  const addNewOption = () => {
+    const newOptionId = Math.max(0, ...options.map(o => o.id)) + 1
+    const newOption: OptionRow = {
+      id: newOptionId,
+      description: '',
+      quantity: 0,
+      unit: 'm2',
+      pricePerUnit: 0,
+    }
+    setOptions([...options, newOption])
+  }
+
+  const updateOptionField = (optionId: number, field: keyof OptionRow, value: string | number) => {
+    setOptions(
+      options.map((option) =>
+        option.id === optionId ? { ...option, [field]: value } : option
+      )
+    )
+  }
+
   const budgetExclArvode = sections.reduce((sum, section) => sum + section.amount, 0)
   const fastArvode = budgetExclArvode * (arvode / 100)
   const anbudssumma = budgetExclArvode + fastArvode
@@ -222,6 +278,45 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount) + ' kr'
+  }
+
+  const formatNumberForCSV = (num: number) => {
+    return new Intl.NumberFormat('sv-SE', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num)
+  }
+
+  const exportToCSV = () => {
+    // CSV header
+    let csvContent = 'Avsnitt,Benämning,Antal,Enhet,Pris/enhet,Summa\n'
+
+    sections.forEach((section) => {
+      // Section row
+      const sectionTotal = `"${formatNumberForCSV(section.amount)} kr"`
+      csvContent += `${section.id},${section.name},,,${sectionTotal}\n`
+
+      // Section rows
+      if (section.rows && section.rows.length > 0) {
+        section.rows.forEach((row) => {
+          const rowTotal = row.quantity * row.pricePerUnit
+          csvContent += `,${row.description},${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+        })
+      }
+    })
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    
+    link.setAttribute('href', url)
+    link.setAttribute('download', 'Tosito__Nässjö__Centrallager_Trafikverket_budget.csv')
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -236,7 +331,7 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
                 <span className="text-white font-bold text-xl">BRA</span>
               </div>
               {/* Project Info */}
-              <div>
+              <div className="text-left">
                 <h1 className="text-xl font-semibold">
                   Tosito, Nässjö: Centrallager Trafikverket
                 </h1>
@@ -260,21 +355,31 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
               Hem
             </button>
             <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
-              <FileText className="w-4 h-4" />
-              General Contracting
-            </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
               <Upload className="w-4 h-4" />
-              Importera CO2 data
+              Importera CO2-data
             </button>
             <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
               <Settings className="w-4 h-4" />
               Inställningar
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
-              <Download className="w-4 h-4" />
-              Exportera
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
+                  <Download className="w-4 h-4" />
+                  Exportera
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <FileText className="w-4 h-4" />
+                  Exportera som PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToCSV}>
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Exportera som Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button size="sm" className="ml-auto">
               <Save className="w-4 h-4 mr-2" />
               Spara
@@ -357,7 +462,7 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Calculator className="w-5 h-5" />
-              <h2 className="text-lg font-semibold">Cost Calculation</h2>
+              <h2 className="text-lg font-semibold">Kostnadskalkyl</h2>
             </div>
             <div className="flex items-center gap-4">
               <button
@@ -370,9 +475,12 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
                 onClick={collapseAll}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Kollaps alla
+                Kollapsa alla
               </button>
-              <button className="text-sm flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+              <button 
+                onClick={addNewSection}
+                className="text-sm flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <span>+</span> Lägg till avsnitt
               </button>
             </div>
@@ -382,21 +490,29 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
           <div className="space-y-2">
             {sections.map((section) => (
               <div key={section.id} className="border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-accent transition-colors text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    {section.expanded ? (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    )}
+                <div className="w-full flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3 flex-1">
+                    <button
+                      onClick={() => toggleSection(section.id)}
+                      className="hover:bg-accent rounded p-1 transition-colors"
+                    >
+                      {section.expanded ? (
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </button>
                     <span className="text-muted-foreground w-6">{section.id}</span>
-                    <span className="font-medium">{section.name}</span>
+                    <Input
+                      type="text"
+                      value={section.name}
+                      onChange={(e) => updateSectionName(section.id, e.target.value)}
+                      className="h-8 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
                   <span className="font-semibold">{formatCurrency(section.amount)}</span>
-                </button>
+                </div>
                 {section.expanded && (
                   <div className="bg-muted/30 border-t">
                     <Table>
@@ -519,6 +635,83 @@ export function CalculationView({ template, onClose }: CalculationViewProps) {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="bg-card border rounded-lg p-6 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Calculator className="w-5 h-5" />
+              <h2 className="text-lg font-semibold">Option</h2>
+            </div>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[300px]">BENÄMNING</TableHead>
+                <TableHead className="w-[150px] text-right">ANTAL</TableHead>
+                <TableHead className="w-[150px]">ENHET</TableHead>
+                <TableHead className="w-[150px] text-right">PRIS/ENHET</TableHead>
+                <TableHead className="w-[150px] text-right">SUMMA</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {options.map((option) => (
+                <TableRow key={option.id}>
+                  <TableCell>
+                    <Input 
+                      type="text" 
+                      value={option.description} 
+                      onChange={(e) => updateOptionField(option.id, 'description', e.target.value)}
+                      className="h-8"
+                      placeholder="Lägg till option..."
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Input 
+                      type="number" 
+                      value={option.quantity} 
+                      onChange={(e) => updateOptionField(option.id, 'quantity', Number(e.target.value))}
+                      className="h-8 text-right"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <select 
+                      value={option.unit}
+                      onChange={(e) => updateOptionField(option.id, 'unit', e.target.value)}
+                      className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    >
+                      <option value="m2">m2</option>
+                      <option value="m3">m3</option>
+                      <option value="m">m</option>
+                      <option value="st">st</option>
+                    </select>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Input 
+                      type="number" 
+                      value={option.pricePerUnit} 
+                      onChange={(e) => updateOptionField(option.id, 'pricePerUnit', Number(e.target.value))}
+                      className="h-8 text-right"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(option.quantity * option.pricePerUnit)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          <div className="mt-4">
+            <button 
+              onClick={addNewOption}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Lägg till option
+            </button>
           </div>
         </div>
       </div>
