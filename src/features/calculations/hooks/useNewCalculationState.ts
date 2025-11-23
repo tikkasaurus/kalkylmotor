@@ -43,7 +43,7 @@ export function useNewCalculationState(template?: CalculationTemplate) {
   
   const [sections, setSections] = useState(defaultSections)
   const [options, setOptions] = useState<OptionRow[]>([])
-  const [arvode, setArvode] = useState(8)
+  const [rate, setRate] = useState(8)
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
   const [co2ModalOpen, setCo2ModalOpen] = useState(false)
@@ -197,19 +197,19 @@ export function useNewCalculationState(template?: CalculationTemplate) {
   }, [sections])
 
   // Derived values
-  const budgetExclArvode = sectionsWithAmounts.reduce((sum, section) => sum + section.amount, 0)
-  const fastArvode = budgetExclArvode * (arvode / 100)
-  const anbudssumma = budgetExclArvode + fastArvode
+  const budgetExclRate = sectionsWithAmounts.reduce((sum, section) => sum + section.amount, 0)
+  const fixedRate = budgetExclRate * (rate / 100)
+  const bidAmount = budgetExclRate + fixedRate
 
   return {
     sections: sectionsWithAmounts,
     options,
-    arvode,
+    rate,
     area,
     co2Budget,
     co2ModalOpen,
     selectedRowForCO2,
-    setArvode,
+    setRate,
     setArea,
     setCo2Budget,
     setCo2ModalOpen,
@@ -225,9 +225,9 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     updateOptionField,
     openCO2Modal,
     handleCO2Select,
-    budgetExclArvode,
-    fastArvode,
-    anbudssumma,
+    budgetExclRate,
+    fixedRate,
+    bidAmount,
   }
 }
 

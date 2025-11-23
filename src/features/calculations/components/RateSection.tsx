@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-interface ArvodeSectionProps {
+interface RateSectionProps {
   rate: number
   area: number
   co2Budget: number
@@ -10,17 +10,17 @@ interface ArvodeSectionProps {
   onChangeCo2Budget: (value: number) => void
 }
 
-export function ArvodeSection({
+export function RateSection({
   rate,
   area,
   co2Budget,
   onChangeRate,
   onChangeArea,
   onChangeCo2Budget,
-}: ArvodeSectionProps) {
+}: RateSectionProps) {
   return (
     <div className="bg-card border rounded-lg p-6 mb-6">
-      <h2 className="text-lg font-semibold mb-4">Arvode</h2>
+      <h2 className="text-lg font-semibold mb-4 text-left">Arvode</h2>
       <div className="grid grid-cols-3 gap-6 mb-4">
         <div>
           <Label htmlFor="arvode">Arvode (%)</Label>
@@ -62,7 +62,7 @@ export function ArvodeSection({
           </div>
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground text-left">
         Procentuellt arvode på totalkostnaden
       </p>
     </div>

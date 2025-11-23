@@ -2,7 +2,7 @@ import { CO2DatabaseModal } from '@/features/co2-database/components/CO2Database
 import type { NewCalculationProps } from '@/features/calculations/api/types'
 import { useNewCalculationState } from '@/features/calculations/hooks/useNewCalculationState'
 import { NewCalculationHeader } from '@/features/calculations/components/NewCalculationHeader'
-import { ArvodeSection } from '@/features/calculations/components/ArvodeSection'
+import { RateSection } from '@/features/calculations/components/RateSection'
 import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
@@ -62,20 +62,20 @@ export function NewCalculationPage({ template, onClose }: NewCalculationProps) {
       <NewCalculationHeader onClose={onClose} onExportCSV={exportToCSV} />
 
       <div className="max-w-[1400px] mx-auto px-6 py-8">
-        <ArvodeSection
-          arvode={state.arvode}
+        <RateSection
+          rate={state.rate}
           area={state.area}
           co2Budget={state.co2Budget}
-          onChangeArvode={state.setArvode}
+          onChangeRate={state.setRate}
           onChangeArea={state.setArea}
           onChangeCo2Budget={state.setCo2Budget}
         />
 
         <SummaryCards
-          budgetExclArvode={state.budgetExclArvode}
-          fastArvode={state.fastArvode}
-          anbudssumma={state.anbudssumma}
-          arvode={state.arvode}
+          budgetExclRate={state.budgetExclRate}
+          fixedRate={state.fixedRate}
+          bidAmount={state.bidAmount}
+          rate={state.rate}
           formatCurrency={formatCurrency}
         />
 
