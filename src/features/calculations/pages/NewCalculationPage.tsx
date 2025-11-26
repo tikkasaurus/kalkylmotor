@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import { CO2DatabaseModal } from '@/features/co2-database/components/CO2DatabaseModal'
 import type { NewCalculationProps } from '@/features/calculations/api/types'
 import { useNewCalculationState } from '@/features/calculations/hooks/useNewCalculationState'
@@ -101,75 +102,93 @@ export function NewCalculationPage({
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 overflow-auto">
-      <NewCalculationHeader 
-        onClose={onClose} 
-        onExportCSV={exportToCSV}
-        onExportPDF={handleExportPDF}
-        onSave={handleSave}
-        initialCalculationName={calculationName}
-        initialProjectName={projectName}
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+        onClick={onClose}
       />
-
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
-        <RateSection
-          rate={state.rate}
-          area={state.area}
-          co2Budget={state.co2Budget}
-          onChangeRate={state.setRate}
-          onChangeArea={state.setArea}
-          onChangeCo2Budget={state.setCo2Budget}
-        />
-
-        <SummaryCards
-          budgetExclRate={state.budgetExclRate}
-          fixedRate={state.fixedRate}
-          bidAmount={state.bidAmount}
-          rate={state.rate}
-          formatCurrency={formatCurrency}
-        />
-
-        <SectionsTable
-          sections={state.sections}
-          formatCurrency={formatCurrency}
-          toggleSection={state.toggleSection}
-          expandAll={state.expandAll}
-          collapseAll={state.collapseAll}
-          addNewSection={state.addNewSection}
-          addNewRow={state.addNewRow}
-          updateSectionName={state.updateSectionName}
-          updateRowField={state.updateRowField}
-          updateRowCO2={state.updateRowCO2}
-          openCO2Modal={state.openCO2Modal}
-          deleteSection={state.deleteSection}
-          deleteRow={state.deleteRow}
-        />
-
-        <OptionsTable
-          options={state.options}
-          formatCurrency={formatCurrency}
-          addNewOption={state.addNewOption}
-          updateOptionField={state.updateOptionField}
-          deleteOption={state.deleteOption}
-        />
-      </div>
       
-      <CO2DatabaseModal 
-        open={state.co2ModalOpen} 
-        onOpenChange={state.setCo2ModalOpen}
-        onSelect={state.handleCO2Select}
-      />
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed inset-0 bg-background z-50 overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+          <NewCalculationHeader 
+            onClose={onClose} 
+            onExportCSV={exportToCSV}
+            onExportPDF={handleExportPDF}
+            onSave={handleSave}
+            initialCalculationName={calculationName}
+            initialProjectName={projectName}
+          />
 
-      <SaveCalculationDialog
-        open={isSaveDialogOpen}
-        onOpenChange={setIsSaveDialogOpen}
-        bidAmount={state.bidAmount}
-        formatCurrency={formatCurrency}
-        onSuccess={handleSaveSuccess}
-        hasSections={state.sections.length > 0}
-        calculationName={calculationName}
-        projectName={projectName}
-      />
-    </div>
+          <div className="max-w-[1400px] mx-auto px-6 py-8">
+            <RateSection
+              rate={state.rate}
+              area={state.area}
+              co2Budget={state.co2Budget}
+              onChangeRate={state.setRate}
+              onChangeArea={state.setArea}
+              onChangeCo2Budget={state.setCo2Budget}
+            />
+
+            <SummaryCards
+              budgetExclRate={state.budgetExclRate}
+              fixedRate={state.fixedRate}
+              bidAmount={state.bidAmount}
+              rate={state.rate}
+              formatCurrency={formatCurrency}
+            />
+
+            <SectionsTable
+              sections={state.sections}
+              formatCurrency={formatCurrency}
+              toggleSection={state.toggleSection}
+              expandAll={state.expandAll}
+              collapseAll={state.collapseAll}
+              addNewSection={state.addNewSection}
+              addNewRow={state.addNewRow}
+              updateSectionName={state.updateSectionName}
+              updateRowField={state.updateRowField}
+              updateRowCO2={state.updateRowCO2}
+              openCO2Modal={state.openCO2Modal}
+              deleteSection={state.deleteSection}
+              deleteRow={state.deleteRow}
+            />
+
+            <OptionsTable
+              options={state.options}
+              formatCurrency={formatCurrency}
+              addNewOption={state.addNewOption}
+              updateOptionField={state.updateOptionField}
+              deleteOption={state.deleteOption}
+            />
+          </div>
+          
+          <CO2DatabaseModal 
+            open={state.co2ModalOpen} 
+            onOpenChange={state.setCo2ModalOpen}
+            onSelect={state.handleCO2Select}
+          />
+
+          <SaveCalculationDialog
+            open={isSaveDialogOpen}
+            onOpenChange={setIsSaveDialogOpen}
+            bidAmount={state.bidAmount}
+            formatCurrency={formatCurrency}
+            onSuccess={handleSaveSuccess}
+            hasSections={state.sections.length > 0}
+            calculationName={calculationName}
+            projectName={projectName}
+          />
+      </motion.div>
+    </>
   )
 }

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'motion/react'
+import { useState, useEffect, useRef } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import confetti from 'canvas-confetti'
 import { Button } from '@/components/ui/button'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
@@ -19,6 +19,7 @@ import { NewCalculationPage } from './NewCalculationPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
 import { useCalculationsQuery } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
+import { FileText } from 'lucide-react'
 
 export function CalculationsPage() {
   const { data: calculations = [], isLoading, error } = useCalculationsQuery()
@@ -27,6 +28,18 @@ export function CalculationsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [selectedCalculation, setSelectedCalculation] = useState<{ name: string; project: string } | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
+  const [contextMenu, setContextMenu] = useState<{
+    open: boolean
+    x: number
+    y: number
+    calculation: { id: number; name: string; project: string } | null
+  }>({
+    open: false,
+    x: 0,
+    y: 0,
+    calculation: null,
+  })
+  const contextMenuRef = useRef<HTMLDivElement>(null)
 
   // Debug logging
   useEffect(() => {
@@ -66,7 +79,48 @@ export function CalculationsPage() {
     setSelectedCalculation({ name: calc.name, project: calc.project })
     setShowCalculationView(true)
   }
-  
+
+  const handleContextMenu = (e: React.MouseEvent, calc: { id: number; name: string; project: string }) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({
+      open: true,
+      x: e.clientX,
+      y: e.clientY,
+      calculation: calc,
+    })
+  }
+
+  const handleCreateTemplate = () => {
+    if (contextMenu.calculation) {
+      console.log('Creating template from calculation:', contextMenu.calculation.id);
+      setContextMenu({ open: false, x: 0, y: 0, calculation: null })
+    }
+  }
+
+  // Close context menu when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        setContextMenu({ open: false, x: 0, y: 0, calculation: null })
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setContextMenu({ open: false, x: 0, y: 0, calculation: null })
+      }
+    }
+
+    if (contextMenu.open) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [contextMenu.open])
 
   const handleSaveSuccess = () => {
     confetti({
@@ -78,34 +132,9 @@ export function CalculationsPage() {
     })
   }
 
-  if (showCalculationView) {
-    // If a template was selected, use it; otherwise use empty template with calculation data
-    if (selectedTemplate) {
-      const template = getTemplateById(selectedTemplate)
-      return (
-        <NewCalculationPage
-          template={template}
-          onClose={handleCloseCalculationView}
-          onSaveSuccess={handleSaveSuccess}
-          initialCalculationName={selectedCalculation?.name}
-          initialProjectName={selectedCalculation?.project}
-        />
-      )
-    } else if (selectedCalculation) {
-      // Open with empty template but pre-filled calculation name and project
-      return (
-        <NewCalculationPage
-          onClose={handleCloseCalculationView}
-          onSaveSuccess={handleSaveSuccess}
-          initialCalculationName={selectedCalculation.name}
-          initialProjectName={selectedCalculation.project}
-        />
-      )
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-background p-8">
+    <>
+      <div className="min-h-screen bg-background p-8">
       <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -201,6 +230,7 @@ export function CalculationsPage() {
                   key={calc.id}
                   className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors cursor-pointer"
                   onClick={() => handleCalculationClick(calc)}
+                  onContextMenu={(e) => handleContextMenu(e, calc)}
                 >
                   <TableCell className="text-left">
                     <div className="font-medium">{calc.name}</div>
@@ -240,7 +270,53 @@ export function CalculationsPage() {
         onClose={() => setIsModalOpen(false)}
         onTemplateSelect={handleTemplateSelect}
       />
-    </div>
+      </div>
+
+      {/* NewCalculationPage as modal overlay */}
+      <AnimatePresence mode="wait">
+        {showCalculationView && (
+          selectedTemplate ? (
+            <NewCalculationPage
+              key="template"
+              template={getTemplateById(selectedTemplate)}
+              onClose={handleCloseCalculationView}
+              onSaveSuccess={handleSaveSuccess}
+              initialCalculationName={selectedCalculation?.name}
+              initialProjectName={selectedCalculation?.project}
+            />
+          ) : selectedCalculation ? (
+            <NewCalculationPage
+              key="calculation"
+              onClose={handleCloseCalculationView}
+              onSaveSuccess={handleSaveSuccess}
+              initialCalculationName={selectedCalculation.name}
+              initialProjectName={selectedCalculation.project}
+            />
+          ) : null
+        )}
+      </AnimatePresence>
+
+      {/* Context Menu */}
+      {contextMenu.open && (
+        <div
+          ref={contextMenuRef}
+          className="fixed z-50 min-w-[12rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={handleCreateTemplate}
+            className="relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+          >
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            Skapa mall från denna kalkyl
+          </button>
+        </div>
+      )}
+    </>
   )
 }
 

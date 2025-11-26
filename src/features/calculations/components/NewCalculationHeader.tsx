@@ -84,17 +84,12 @@ export function NewCalculationHeader({
 
         {/* Navigation */}
         <div className="flex items-center gap-6 mt-4">
-          <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
+          <button 
+          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors"
+          onClick={onClose}
+          >
             <Home className="w-4 h-4" />
             Hem
-          </button>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
-            <Upload className="w-4 h-4" />
-            Importera CO2-data
-          </button>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
-            <Settings className="w-4 h-4" />
-            Inställningar
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
