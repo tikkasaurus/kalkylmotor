@@ -173,30 +173,48 @@ export function exportToPDF(data: PDFExportData) {
 
     yPos += 10
 
-    // Section rows table
-    if (section.rows && section.rows.length > 0) {
-      const tableData = section.rows.map((row) => [
-        row.description || '',
-        formatNumber(row.quantity),
-        row.unit,
-        formatNumber(row.pricePerUnit),
-        formatNumber(row.co2 || 0),
-        formatCurrency(row.quantity * row.pricePerUnit),
-        row.account || '',
-        row.resource || '',
-        row.note || '',
-      ])
+    // Subsections
+    if (section.subsections && section.subsections.length > 0) {
+      section.subsections.forEach((subsection) => {
+        // Check if we need a new page
+        if (yPos > pageHeight - 40) {
+          doc.addPage()
+          yPos = margin + 20
+        }
 
-      const tableWidth = pageWidth - 2 * margin
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(doc as any).autoTable({
-        startY: yPos,
-        head: [['BENÄMNING', 'ANTAL', 'ENHET', 'PRIS/ENHET', 'CO2', 'SUMMA', 'KONTO', 'RESURS', 'ANTECKNING']],
-        body: tableData,
-        margin: { left: margin, right: margin },
-        tableWidth: 'auto',
-        styles: {
-          fontSize: 8,
+        // Subsection header
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(10)
+        doc.text(`${section.id}.${subsection.id} ${subsection.name}`, margin, yPos)
+        
+        doc.setFont('helvetica', 'bold')
+        doc.text(formatCurrency(subsection.amount), pageWidth - margin - 5, yPos, { align: 'right' })
+
+        yPos += 8
+
+        // Subsection rows table
+        if (subsection.rows && subsection.rows.length > 0) {
+          const tableData = subsection.rows.map((row) => [
+            row.description || '',
+            formatNumber(row.quantity),
+            row.unit,
+            formatNumber(row.pricePerUnit),
+            formatNumber(row.co2 || 0),
+            formatCurrency(row.quantity * row.pricePerUnit),
+            row.account || '',
+            row.resource || '',
+            row.note || '',
+          ])
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(doc as any).autoTable({
+            startY: yPos,
+            head: [['BENÄMNING', 'ANTAL', 'ENHET', 'PRIS/ENHET', 'CO2', 'SUMMA', 'KONTO', 'RESURS', 'ANTECKNING']],
+            body: tableData,
+            margin: { left: margin, right: margin },
+            tableWidth: 'auto',
+            styles: {
+              fontSize: 8,
           cellPadding: 2,
         },
         headStyles: {
@@ -210,22 +228,25 @@ export function exportToPDF(data: PDFExportData) {
           textColor: [0, 0, 0],
           lineColor: [200, 200, 200],
         },
-        columnStyles: {
-          0: { cellWidth: tableWidth * 0.20 }, // BENÄMNING
-          1: { cellWidth: tableWidth * 0.08, halign: 'right' }, // ANTAL
-          2: { cellWidth: tableWidth * 0.08 }, // ENHET
-          3: { cellWidth: tableWidth * 0.10, halign: 'right' }, // PRIS/ENHET
-          4: { cellWidth: tableWidth * 0.06, halign: 'center' }, // CO2
-          5: { cellWidth: tableWidth * 0.10, halign: 'right' }, // SUMMA
-          6: { cellWidth: tableWidth * 0.12 }, // KONTO
-          7: { cellWidth: tableWidth * 0.10 }, // RESURS
-          8: { cellWidth: tableWidth * 0.16 }, // ANTECKNING
-        },
-        theme: 'grid',
-      })
+            columnStyles: {
+              0: { cellWidth: (pageWidth - 2 * margin) * 0.20 }, // BENÄMNING
+              1: { cellWidth: (pageWidth - 2 * margin) * 0.08, halign: 'right' }, // ANTAL
+              2: { cellWidth: (pageWidth - 2 * margin) * 0.08 }, // ENHET
+              3: { cellWidth: (pageWidth - 2 * margin) * 0.10, halign: 'right' }, // PRIS/ENHET
+              4: { cellWidth: (pageWidth - 2 * margin) * 0.06, halign: 'center' }, // CO2
+              5: { cellWidth: (pageWidth - 2 * margin) * 0.10, halign: 'right' }, // SUMMA
+              6: { cellWidth: (pageWidth - 2 * margin) * 0.12 }, // KONTO
+              7: { cellWidth: (pageWidth - 2 * margin) * 0.10 }, // RESURS
+              8: { cellWidth: (pageWidth - 2 * margin) * 0.18 }, // ANTECKNING
+            },
+            theme: 'grid',
+          })
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      yPos = (doc as any).lastAutoTable.finalY + 5
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          yPos = (doc as any).lastAutoTable.finalY + 5
+        }
+        yPos += 5 // Add spacing between subsections
+      })
     }
 
     // Add spacing between sections

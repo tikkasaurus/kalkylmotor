@@ -41,18 +41,27 @@ export function NewCalculationPage({
 
   const exportToCSV = () => {
     // CSV header
-    let csvContent = 'Avsnitt,Benämning,Antal,Enhet,Pris/enhet,Summa\n'
+    let csvContent = 'Avsnitt,Undersektion,Benämning,Antal,Enhet,Pris/enhet,Summa\n'
 
     state.sections.forEach((section) => {
       // Section row
       const sectionTotal = `"${formatNumberForCSV(section.amount)} kr"`
-      csvContent += `${section.id},${section.name},,,${sectionTotal}\n`
+      csvContent += `${section.id},${section.name},,,,${sectionTotal}\n`
 
-      // Section rows
-      if (section.rows && section.rows.length > 0) {
-        section.rows.forEach((row) => {
-          const rowTotal = row.quantity * row.pricePerUnit
-          csvContent += `,${row.description},${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+      // Subsections
+      if (section.subsections && section.subsections.length > 0) {
+        section.subsections.forEach((subsection) => {
+          // Subsection row
+          const subsectionTotal = `"${formatNumberForCSV(subsection.amount)} kr"`
+          csvContent += `,${subsection.id},${subsection.name},,,${subsectionTotal}\n`
+
+          // Subsection rows
+          if (subsection.rows && subsection.rows.length > 0) {
+            subsection.rows.forEach((row) => {
+              const rowTotal = row.quantity * row.pricePerUnit
+              csvContent += `,,${row.description},${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+            })
+          }
         })
       }
     })
@@ -147,21 +156,25 @@ export function NewCalculationPage({
               formatCurrency={formatCurrency}
             />
 
-            <SectionsTable
-              sections={state.sections}
-              formatCurrency={formatCurrency}
-              toggleSection={state.toggleSection}
-              expandAll={state.expandAll}
-              collapseAll={state.collapseAll}
-              addNewSection={state.addNewSection}
-              addNewRow={state.addNewRow}
-              updateSectionName={state.updateSectionName}
-              updateRowField={state.updateRowField}
-              updateRowCO2={state.updateRowCO2}
-              openCO2Modal={state.openCO2Modal}
-              deleteSection={state.deleteSection}
-              deleteRow={state.deleteRow}
-            />
+        <SectionsTable
+          sections={state.sections}
+          formatCurrency={formatCurrency}
+          toggleSection={state.toggleSection}
+          toggleSubsection={state.toggleSubsection}
+          expandAll={state.expandAll}
+          collapseAll={state.collapseAll}
+          addNewSection={state.addNewSection}
+          addNewSubsection={state.addNewSubsection}
+          addNewRow={state.addNewRow}
+          updateSectionName={state.updateSectionName}
+          updateSubsectionName={state.updateSubsectionName}
+          updateRowField={state.updateRowField}
+          updateRowCO2={state.updateRowCO2}
+          openCO2Modal={state.openCO2Modal}
+          deleteSection={state.deleteSection}
+          deleteSubsection={state.deleteSubsection}
+          deleteRow={state.deleteRow}
+        />
 
             <OptionsTable
               options={state.options}

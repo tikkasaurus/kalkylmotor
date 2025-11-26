@@ -50,12 +50,20 @@ export interface OptionRow {
   pricePerUnit: number
 }
 
-export interface CalculationSection {
+export interface CalculationSubsection {
   id: number
   name: string
   amount: number
   expanded?: boolean
   rows?: CalculationRow[]
+}
+
+export interface CalculationSection {
+  id: number
+  name: string
+  amount: number
+  expanded?: boolean
+  subsections?: CalculationSubsection[]
 }
 
 export interface NewCalculationProps {
