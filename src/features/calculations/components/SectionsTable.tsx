@@ -83,18 +83,18 @@ export function SectionsTable({
       <div className="space-y-2">
         {sections.map((section) => (
           <div key={section.id} className="border rounded-lg overflow-hidden">
-            <div className="w-full flex items-center justify-between p-4 bg-muted/50">
+            <div 
+              className="w-full flex items-center justify-between p-4 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
+              onClick={() => toggleSection(section.id)}
+            >
               <div className="flex items-center gap-3 flex-1">
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className="hover:bg-accent rounded p-1 transition-colors"
-                >
+                <div className="hover:bg-accent rounded p-1 transition-colors pointer-events-none">
                   {section.expanded ? (
                     <ChevronDown className="w-5 h-5 text-muted-foreground" />
                   ) : (
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   )}
-                </button>
+                </div>
                 <span className="text-muted-foreground w-6">{section.id}</span>
                 <Input
                   type="text"
