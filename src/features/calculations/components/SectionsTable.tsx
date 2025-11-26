@@ -58,7 +58,7 @@ export function SectionsTable({
   deleteRow,
 }: SectionsTableProps) {
   return (
-    <div className="bg-card border rounded-lg p-6">
+    <div className="bg-card border p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calculator className="w-5 h-5" />
@@ -90,13 +90,13 @@ export function SectionsTable({
       {/* Sections List */}
       <div className="space-y-2">
         {sections.map((section) => (
-          <div key={section.id} className="border rounded-lg overflow-hidden">
+          <div key={section.id} className="border overflow-hidden">
             <div 
               className="w-full flex items-center justify-between p-4 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
               onClick={() => toggleSection(section.id)}
             >
               <div className="flex items-center gap-3 flex-1">
-                <div className="hover:bg-accent rounded p-1 transition-colors pointer-events-none">
+                <div className="hover:bg-accent p-1 transition-colors pointer-events-none">
                   {section.expanded ? (
                     <ChevronDown className="w-5 h-5 text-muted-foreground" />
                   ) : (
@@ -119,7 +119,7 @@ export function SectionsTable({
                     e.stopPropagation()
                     deleteSection(section.id)
                   }}
-                  className="h-6 w-6 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive rounded transition-colors"
+                  className="h-6 w-6 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                   title="Ta bort sektion"
                 >
                   <X className="w-4 h-4" />
@@ -136,7 +136,7 @@ export function SectionsTable({
                       onClick={() => toggleSubsection(section.id, subsection.id)}
                     >
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="hover:bg-accent rounded p-1 transition-colors pointer-events-none">
+                        <div className="hover:bg-accent p-1 transition-colors pointer-events-none">
                           {subsection.expanded ? (
                             <ChevronDown className="w-4 h-4 text-muted-foreground" />
                           ) : (
@@ -158,7 +158,7 @@ export function SectionsTable({
                             e.stopPropagation()
                             deleteSubsection(section.id, subsection.id)
                           }}
-                          className="h-5 w-5 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive rounded transition-colors"
+                          className="h-5 w-5 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                           title="Ta bort undersektion"
                         >
                           <X className="w-3 h-3" />
@@ -208,7 +208,7 @@ export function SectionsTable({
                                   <select 
                                     value={row.unit}
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'unit', e.target.value)}
-                                    className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                    className="h-8 w-full border border-input bg-background px-3 py-1 text-sm"
                                   >
                                     <option value="m2">m2</option>
                                     <option value="m3">m3</option>
@@ -235,7 +235,7 @@ export function SectionsTable({
                                     />
                                     <button 
                                       onClick={() => openCO2Modal(section.id, subsection.id, row.id)}
-                                      className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded flex-shrink-0"
+                                      className="h-8 w-8 flex items-center justify-center hover:bg-accent flex-shrink-0"
                                     >
                                       <Search className="w-4 h-4" />
                                     </button>
@@ -248,7 +248,7 @@ export function SectionsTable({
                                   <select 
                                     value={row.account}
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'account', e.target.value)}
-                                    className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                    className="h-8 w-full border border-input bg-background px-3 py-1 text-sm"
                                   >
                                     <option value="Välj konto">Välj konto</option>
                                     <option value="4010 -...">4010 -...</option>
@@ -276,7 +276,7 @@ export function SectionsTable({
                                 <TableCell>
                                   <button
                                     onClick={() => deleteRow(section.id, subsection.id, row.id)}
-                                    className="h-8 w-8 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive rounded transition-colors"
+                                    className="h-8 w-8 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                                     title="Ta bort rad"
                                   >
                                     <X className="w-4 h-4" />

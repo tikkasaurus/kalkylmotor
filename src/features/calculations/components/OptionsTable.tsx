@@ -26,7 +26,7 @@ export function OptionsTable({
   deleteOption,
 }: OptionsTableProps) {
   return (
-    <div className="bg-card border rounded-lg p-6 mt-6">
+    <div className="bg-card border p-6 mt-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calculator className="w-5 h-5" />
@@ -69,7 +69,7 @@ export function OptionsTable({
                 <select 
                   value={option.unit}
                   onChange={(e) => updateOptionField(option.id, 'unit', e.target.value)}
-                  className="h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  className="h-8 w-full border border-input bg-background px-3 py-1 text-sm"
                 >
                   <option value="m2">m2</option>
                   <option value="m3">m3</option>
@@ -91,7 +91,7 @@ export function OptionsTable({
               <TableCell>
                 <button
                   onClick={() => deleteOption(option.id)}
-                  className="h-8 w-8 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive rounded transition-colors"
+                  className="h-8 w-8 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                   title="Ta bort option"
                 >
                   <X className="w-4 h-4" />

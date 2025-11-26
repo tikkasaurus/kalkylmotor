@@ -19,7 +19,7 @@ export function RateSection({
   onChangeCo2Budget,
 }: RateSectionProps) {
   return (
-    <div className="bg-card border rounded-lg p-6 mb-6">
+    <div className="bg-card border p-6 mb-6">
       <h2 className="text-lg font-semibold mb-4 text-left">Arvode</h2>
       <div className="grid grid-cols-3 gap-6 mb-4">
         <div>

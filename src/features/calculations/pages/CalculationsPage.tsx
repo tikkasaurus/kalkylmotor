@@ -166,7 +166,7 @@ export function CalculationsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-card rounded-lg border">
+        <div className="bg-card border">
           <Table>
             <TableHeader>
               <TableRow>
