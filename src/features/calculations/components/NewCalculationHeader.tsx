@@ -23,7 +23,6 @@ interface NewCalculationHeaderProps {
   onExportPDF?: () => void
   onSave?: (calculationName: string) => void
   initialCalculationName?: string
-  initialProjectName?: string
 }
 
 export function NewCalculationHeader({ 
@@ -98,7 +97,6 @@ export function NewCalculationHeader({
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="ml-auto flex items-center gap-3">
-            <AnimatedThemeToggler />
             <ShimmerButton onClick={handleSave}>
               <Save className="w-4 h-4 mr-2" />
               Spara

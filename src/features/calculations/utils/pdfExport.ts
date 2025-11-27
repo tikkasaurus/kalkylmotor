@@ -4,7 +4,6 @@ import type { CalculationSection, OptionRow } from '@/features/calculations/api/
 
 interface PDFExportData {
   calculationName: string
-  projectName: string
   date: string
   rate: number
   area: number
@@ -52,20 +51,17 @@ export function exportToPDF(data: PDFExportData) {
   doc.setFont('helvetica', 'bold')
   doc.text('BRA', margin + 8, yPos + 10, { align: 'center' })
 
-  // Calculation name and project
+  // Calculation name and date
   doc.setTextColor(0, 0, 0)
   doc.setFontSize(18)
   doc.setFont('helvetica', 'bold')
   const calcNameX = margin + 20
   doc.text(data.calculationName, calcNameX, yPos + 8)
   
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.text(data.projectName, calcNameX, yPos + 14)
-  
   doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
   doc.setTextColor(100, 100, 100)
-  doc.text(data.date, calcNameX, yPos + 19)
+  doc.text(data.date, calcNameX, yPos + 14)
 
   yPos += 30
 

@@ -28,13 +28,13 @@ export function CalculationsPage() {
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
-  const [selectedCalculation, setSelectedCalculation] = useState<{ name: string; project: string } | null>(null)
+  const [selectedCalculation, setSelectedCalculation] = useState<{ name: string } | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
   const [contextMenu, setContextMenu] = useState<{
     open: boolean
     x: number
     y: number
-    calculation: { id: number; name: string; project: string } | null
+    calculation: { id: number; name: string } | null
   }>({
     open: false,
     x: 0,
@@ -80,13 +80,13 @@ export function CalculationsPage() {
     setShowBudgetOverview(false)
   }
 
-  const handleCalculationClick = (calc: { id: number; name: string; project: string }) => {
+  const handleCalculationClick = (calc: { id: number; name: string }) => {
     setSelectedTemplate(null)
-    setSelectedCalculation({ name: calc.name, project: calc.project })
+    setSelectedCalculation({ name: calc.name })
     setShowCalculationView(true)
   }
 
-  const handleContextMenu = (e: React.MouseEvent, calc: { id: number; name: string; project: string }) => {
+  const handleContextMenu = (e: React.MouseEvent, calc: { id: number; name: string }) => {
     e.preventDefault()
     e.stopPropagation()
     setContextMenu({
@@ -187,7 +187,6 @@ export function CalculationsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-left">Kalkyl</TableHead>
-                <TableHead className="text-left">Projekt</TableHead>
                 <TableHead className="text-left">Status</TableHead>
                 <TableHead className="text-left">Kalkylsumma</TableHead>
                 <TableHead className="text-left">Skapad</TableHead>
@@ -197,7 +196,7 @@ export function CalculationsPage() {
             <TableBody>
               {isLoading ? (
                 <motion.tr>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     <motion.div
                       animate={{
                         opacity: [1, 0.6, 1],
@@ -222,7 +221,7 @@ export function CalculationsPage() {
                 </motion.tr>
               ) : error ? (
                 <motion.tr>
-                  <TableCell colSpan={6} className="text-center text-destructive py-8">
+                  <TableCell colSpan={5} className="text-center text-destructive py-8">
                     <div>
                       <p className="font-medium">Fel vid hämtning av kalkyler</p>
                       <p className="text-sm text-muted-foreground mt-1">
@@ -236,7 +235,7 @@ export function CalculationsPage() {
                 </motion.tr>
               ) : calculations.length === 0 ? (
                 <motion.tr>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     Inga kalkyler hittades
                   </TableCell>
                 </motion.tr>
@@ -256,7 +255,6 @@ export function CalculationsPage() {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="text-left">{calc.project}</TableCell>
                   <TableCell className="text-left">
                     <Badge
                       variant={
@@ -304,7 +302,6 @@ export function CalculationsPage() {
                 onClose={handleCloseCalculationView}
                 onSaveSuccess={handleSaveSuccess}
                 initialCalculationName={selectedCalculation?.name}
-                initialProjectName={selectedCalculation?.project}
               />
             ) : selectedCalculation ? (
               <NewCalculationPage
@@ -312,7 +309,6 @@ export function CalculationsPage() {
                 onClose={handleCloseCalculationView}
                 onSaveSuccess={handleSaveSuccess}
                 initialCalculationName={selectedCalculation.name}
-                initialProjectName={selectedCalculation.project}
               />
             ) : null
           )}

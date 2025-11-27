@@ -16,12 +16,10 @@ export function NewCalculationPage({
   onClose,
   onSaveSuccess,
   initialCalculationName = 'Kalkylnamn',
-  initialProjectName = '',
 }: NewCalculationProps) {
   const state = useNewCalculationState(template)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [calculationName, setCalculationName] = useState(initialCalculationName)
-  const [projectName, _] = useState(initialProjectName)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -82,7 +80,6 @@ export function NewCalculationPage({
   const handleExportPDF = () => {
     exportToPDF({
       calculationName,
-      projectName,
       date: new Date().toISOString().split('T')[0],
       rate: state.rate,
       area: state.area,
@@ -134,7 +131,6 @@ export function NewCalculationPage({
             onExportPDF={handleExportPDF}
             onSave={handleSave}
             initialCalculationName={calculationName}
-            initialProjectName={projectName}
           />
 
           <div className="max-w-[1400px] mx-auto px-6 py-8">
@@ -198,7 +194,6 @@ export function NewCalculationPage({
             onSuccess={handleSaveSuccess}
             hasSections={state.sections.length > 0}
             calculationName={calculationName}
-            projectName={projectName}
           />
       </motion.div>
     </>

@@ -71,6 +71,5 @@ export interface NewCalculationProps {
   onClose: () => void
   onSaveSuccess?: () => void
   initialCalculationName?: string
-  initialProjectName?: string
 }
 

@@ -17,7 +17,6 @@ import { useCreateCalculation } from '../api/queries'
 
 const saveCalculationSchema = z.object({
   calculationName: z.string().min(1, 'Kalkylnamn är obligatoriskt'),
-  projectName: z.string().min(1, 'Projektnamn är obligatoriskt'),
 })
 
 type SaveCalculationFormData = z.infer<typeof saveCalculationSchema>
@@ -30,7 +29,6 @@ interface SaveCalculationDialogProps {
   onSuccess?: () => void
   hasSections?: boolean
   calculationName: string
-  projectName: string
 }
 
 export function SaveCalculationDialog({
@@ -41,7 +39,6 @@ export function SaveCalculationDialog({
   onSuccess,
   hasSections = true,
   calculationName: initialCalculationName,
-  projectName: initialProjectName,
 }: SaveCalculationDialogProps) {
   const createCalculation = useCreateCalculation()
   const [error, setError] = useState<string | null>(null)
@@ -56,22 +53,19 @@ export function SaveCalculationDialog({
     resolver: zodResolver(saveCalculationSchema),
     defaultValues: {
       calculationName: initialCalculationName,
-      projectName: initialProjectName,
     },
   })
 
   const calculationNameValue = watch('calculationName')
-  const projectNameValue = watch('projectName')
 
   useEffect(() => {
     if (open) {
       setError(null)
       reset({
         calculationName: initialCalculationName,
-        projectName: initialProjectName,
       })
     }
-  }, [open, initialCalculationName, initialProjectName, reset])
+  }, [open, initialCalculationName, reset])
 
   const onSubmit = async (data: SaveCalculationFormData) => {
     try {
@@ -90,7 +84,7 @@ export function SaveCalculationDialog({
       
       const calculationData = {
         name: data.calculationName.trim(),
-        project: data.projectName.trim(),
+        project: '', // Project will be set later in BudgetOverviewPage
         status: 'Aktiv' as const,
         amount: formatCurrency(bidAmount),
         created: new Date().toISOString().split('T')[0],
@@ -147,21 +141,6 @@ export function SaveCalculationDialog({
             />
             {errors.calculationName && (
               <p className="text-sm text-destructive">{errors.calculationName.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="projectName">
-              Projektnamn <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="projectName"
-              {...register('projectName')}
-              placeholder="T.ex. Marcus Test"
-              aria-invalid={errors.projectName ? 'true' : 'false'}
-            />
-            {errors.projectName && (
-              <p className="text-sm text-destructive">{errors.projectName.message}</p>
             )}
           </div>
 
