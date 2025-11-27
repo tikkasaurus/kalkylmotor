@@ -67,20 +67,20 @@ export function SectionsTable({
         <div className="flex items-center gap-4">
           <button
             onClick={expandAll}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm text-gray-600 font-medium hover:text-foreground transition-colors"
           >
             Expandera alla
           </button>
           <button
             onClick={collapseAll}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm text-gray-600 font-medium hover:text-foreground transition-colors"
           >
             Kollapsa alla
           </button>
           <Button 
             onClick={addNewSection}
             variant="outline"
-            className="text-sm flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm flex items-center gap-1 text-gray-600 hover:text-foreground transition-colors"
           >
             <span>+</span> Lägg till avsnitt
           </Button>
@@ -301,13 +301,14 @@ export function SectionsTable({
                   </div>
                 ))}
                 <div className="p-4 border-t pl-8">
-                  <button 
+                  <Button 
                     onClick={() => addNewSubsection(section.id)}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    variant="outline"
+                    className="flex items-center gap-2 text-sm hover:text-foreground"
                   >
                     <Plus className="w-4 h-4" />
                     Lägg till undersektion
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
