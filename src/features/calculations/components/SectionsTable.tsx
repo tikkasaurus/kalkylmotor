@@ -169,46 +169,46 @@ export function SectionsTable({
                     {/* Subsection Rows */}
                     {subsection.expanded && (
                       <div className="bg-card pl-8">
-                        <Table>
+                        <Table className="border border-border">
                           <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[200px]">BENÄMNING</TableHead>
-                              <TableHead className="w-[100px] text-right">ANTAL</TableHead>
-                              <TableHead className="w-[120px]">ENHET</TableHead>
-                              <TableHead className="w-[120px] text-right">PRIS/ENHET</TableHead>
-                              <TableHead className="w-[80px] text-center">CO2</TableHead>
-                              <TableHead className="w-[130px] text-right">SUMMA</TableHead>
-                              <TableHead className="w-[150px]">KONTO</TableHead>
-                              <TableHead className="w-[120px]">RESURS</TableHead>
-                              <TableHead className="w-[150px]">ANTECKNING</TableHead>
-                              <TableHead className="w-[50px]"></TableHead>
+                            <TableRow className="border-b border-border">
+                              <TableHead className="text-gray-600 w-[200px] border-r border-border bg-muted/50 font-semibold">BENÄMNING</TableHead>
+                              <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">ANTAL</TableHead>
+                              <TableHead className="text-gray-600 w-[120px] border-r border-border bg-muted/50 font-semibold">ENHET</TableHead>
+                              <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
+                              <TableHead className="text-gray-600 w-[80px] text-center border-r border-border bg-muted/50 font-semibold">CO2</TableHead>
+                              <TableHead className="text-gray-600 w-[130px] text-right border-r border-border bg-muted/50 font-semibold">SUMMA</TableHead>
+                              <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
+                              <TableHead className="text-gray-600 w-[120px] border-r border-border bg-muted/50 font-semibold">RESURS</TableHead>
+                              <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
+                              <TableHead className="w-[50px] bg-muted/50 font-semibold"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {subsection.rows?.map((row) => (
-                              <TableRow key={row.id} className="hover:bg-card">
-                                <TableCell className="font-medium">
+                              <TableRow key={row.id} className="hover:bg-muted/30 border-b border-border">
+                                <TableCell className="font-medium border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="text" 
                                     value={row.description} 
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'description', e.target.value)}
-                                    className="h-8"
+                                    className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Benämning"
                                   />
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="number" 
                                     value={row.quantity} 
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'quantity', Number(e.target.value))}
-                                    className="h-8 text-right"
+                                    className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <select 
                                     value={row.unit}
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'unit', e.target.value)}
-                                    className="h-8 w-full border border-input bg-background px-3 py-1 text-sm"
+                                    className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                                   >
                                     <option value="m2">m2</option>
                                     <option value="m3">m3</option>
@@ -216,21 +216,21 @@ export function SectionsTable({
                                     <option value="st">st</option>
                                   </select>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="number" 
                                     value={row.pricePerUnit} 
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'pricePerUnit', Number(e.target.value))}
-                                    className="h-8 text-right"
+                                    className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
-                                <TableCell className="text-center">
-                                  <div className="flex items-center gap-1">
+                                <TableCell className="text-center border-r border-border p-0 h-10 align-middle">
+                                  <div className="flex items-center gap-1 h-10 px-2">
                                     <Input 
                                       type="number" 
                                       value={row.co2} 
                                       onChange={(e) => updateRowCO2(section.id, subsection.id, row.id, Number(e.target.value))}
-                                      className="h-8 text-right w-20"
+                                      className="!h-10 text-right w-20 border-0 rounded-none focus:bg-accent focus:outline-none !py-0"
                                       placeholder="0"
                                     />
                                     <button 
@@ -241,42 +241,42 @@ export function SectionsTable({
                                     </button>
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-right font-semibold">
+                                <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
                                   {formatCurrency(row.quantity * row.pricePerUnit)}
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <select 
                                     value={row.account}
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'account', e.target.value)}
-                                    className="h-8 w-full border border-input bg-background px-3 py-1 text-sm"
+                                    className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                                   >
                                     <option value="Välj konto">Välj konto</option>
                                     <option value="4010 -...">4010 -...</option>
                                     <option value="4020 -...">4020 -...</option>
                                   </select>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="text" 
                                     value={row.resource} 
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'resource', e.target.value)}
-                                    className="h-8 text-sm"
+                                    className="!h-10 w-full text-sm border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Resurs..."
                                   />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="text" 
                                     value={row.note} 
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'note', e.target.value)}
-                                    className="h-8 text-sm"
+                                    className="!h-10 w-full text-sm border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Anteckning..."
                                   />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="p-0 h-10 align-middle">
                                   <button
                                     onClick={() => deleteRow(section.id, subsection.id, row.id)}
-                                    className="h-8 w-8 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                    className="h-full w-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                                     title="Ta bort rad"
                                   >
                                     <X className="w-4 h-4" />
@@ -286,14 +286,15 @@ export function SectionsTable({
                             ))}
                           </TableBody>
                         </Table>
-                        <div className="p-4">
-                          <button 
+                        <div className="py-4">
+                          <Button 
                             onClick={() => addNewRow(section.id, subsection.id)}
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            variant="outline"
+                            className="flex items-center gap-2 text-sm hover:text-foreground"
                           >
                             <Plus className="w-4 h-4" />
                             Lägg till rad
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
