@@ -129,10 +129,10 @@ export function SectionsTable({
             {section.expanded && (
               <div className="bg-card border-t">
                 {section.subsections?.map((subsection) => (
-                  <div key={subsection.id} className="border-b last:border-b-0">
+                  <div key={subsection.id} className="border-b last:border-b-0 border-l-4 border-l-primary/20">
                     {/* Subsection Header */}
                     <div 
-                      className="w-full flex items-center justify-between p-3 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors pl-8"
+                      className="w-full flex items-center justify-between p-3 bg-background cursor-pointer hover:bg-muted/30 transition-colors pl-8"
                       onClick={() => toggleSubsection(section.id, subsection.id)}
                     >
                       <div className="flex items-center gap-3 flex-1">
