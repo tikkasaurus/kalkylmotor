@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 import type { CalculationSection, OptionRow } from '@/features/calculations/api/types'
 
 interface PDFExportData {
@@ -206,8 +206,7 @@ export function exportToPDF(data: PDFExportData) {
             row.note || '',
           ])
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(doc as any).autoTable({
+          autoTable(doc, {
             startY: yPos,
             head: [['BENÄMNING', 'ANTAL', 'ENHET', 'PRIS/ENHET', 'CO2', 'SUMMA', 'KONTO', 'RESURS', 'ANTECKNING']],
             body: tableData,
@@ -215,19 +214,19 @@ export function exportToPDF(data: PDFExportData) {
             tableWidth: 'auto',
             styles: {
               fontSize: 8,
-          cellPadding: 2,
-        },
-        headStyles: {
-          fillColor: [255, 255, 255],
-          textColor: [0, 0, 0],
-          fontStyle: 'bold',
-          lineColor: [200, 200, 200],
-        },
-        bodyStyles: {
-          fillColor: [255, 255, 255],
-          textColor: [0, 0, 0],
-          lineColor: [200, 200, 200],
-        },
+              cellPadding: 2,
+            },
+            headStyles: {
+              fillColor: [255, 255, 255],
+              textColor: [0, 0, 0],
+              fontStyle: 'bold',
+              lineColor: [200, 200, 200],
+            },
+            bodyStyles: {
+              fillColor: [255, 255, 255],
+              textColor: [0, 0, 0],
+              lineColor: [200, 200, 200],
+            },
             columnStyles: {
               0: { cellWidth: (pageWidth - 2 * margin) * 0.20 }, // BENÄMNING
               1: { cellWidth: (pageWidth - 2 * margin) * 0.08, halign: 'right' }, // ANTAL
@@ -242,7 +241,6 @@ export function exportToPDF(data: PDFExportData) {
             theme: 'grid',
           })
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           yPos = (doc as any).lastAutoTable.finalY + 5
         }
         yPos += 5 // Add spacing between subsections
@@ -279,8 +277,7 @@ export function exportToPDF(data: PDFExportData) {
     ])
 
     const tableWidth = pageWidth - 2 * margin
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(doc as any).autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['BENÄMNING', 'ANTAL', 'ENHET', 'PRIS/ENHET', 'SUMMA']],
       body: optionsData,

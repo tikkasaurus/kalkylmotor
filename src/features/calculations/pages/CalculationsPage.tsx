@@ -16,6 +16,7 @@ import { TextAnimate } from '@/components/ui/text-animate'
 import { Highlighter } from '@/components/ui/highlighter'
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
+import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
 import { useCalculationsQuery } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
@@ -25,6 +26,7 @@ export function CalculationsPage() {
   const { data: calculations = [], isLoading, error } = useCalculationsQuery()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
+  const [showBudgetOverview, setShowBudgetOverview] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [selectedCalculation, setSelectedCalculation] = useState<{ name: string; project: string } | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
@@ -72,6 +74,10 @@ export function CalculationsPage() {
     setShowCalculationView(false)
     setSelectedTemplate(null)
     setSelectedCalculation(null)
+  }
+
+  const handleCloseBudgetOverview = () => {
+    setShowBudgetOverview(false)
   }
 
   const handleCalculationClick = (calc: { id: number; name: string; project: string }) => {
@@ -132,6 +138,11 @@ export function CalculationsPage() {
     })
   }
 
+  // Show budget overview if active
+  if (showBudgetOverview) {
+    return <BudgetOverviewPage onClose={handleCloseBudgetOverview} />
+  }
+
   return (
     <>
       <div className="min-h-screen bg-background p-8">
@@ -160,7 +171,12 @@ export function CalculationsPage() {
               >
                 <span className="mr-2">+</span> Starta ny kalkyl
               </ShimmerButton>
-              <Button variant="outline">Importera kalkyl till budget</Button>
+              <Button 
+                variant="outline"
+                onClick={() => setShowBudgetOverview(true)}
+              >
+                Importera kalkyl till budget
+              </Button>
             </div>
           </div>
         </div>
@@ -272,29 +288,36 @@ export function CalculationsPage() {
       />
       </div>
 
+      {/* Budget Overview Page */}
+      {showBudgetOverview && (
+        <BudgetOverviewPage onClose={handleCloseBudgetOverview} />
+      )}
+
       {/* NewCalculationPage as modal overlay */}
-      <AnimatePresence mode="wait">
-        {showCalculationView && (
-          selectedTemplate ? (
-            <NewCalculationPage
-              key="template"
-              template={getTemplateById(selectedTemplate)}
-              onClose={handleCloseCalculationView}
-              onSaveSuccess={handleSaveSuccess}
-              initialCalculationName={selectedCalculation?.name}
-              initialProjectName={selectedCalculation?.project}
-            />
-          ) : selectedCalculation ? (
-            <NewCalculationPage
-              key="calculation"
-              onClose={handleCloseCalculationView}
-              onSaveSuccess={handleSaveSuccess}
-              initialCalculationName={selectedCalculation.name}
-              initialProjectName={selectedCalculation.project}
-            />
-          ) : null
-        )}
-      </AnimatePresence>
+      {!showBudgetOverview && (
+        <AnimatePresence mode="wait">
+          {showCalculationView && (
+            selectedTemplate ? (
+              <NewCalculationPage
+                key="template"
+                template={getTemplateById(selectedTemplate)}
+                onClose={handleCloseCalculationView}
+                onSaveSuccess={handleSaveSuccess}
+                initialCalculationName={selectedCalculation?.name}
+                initialProjectName={selectedCalculation?.project}
+              />
+            ) : selectedCalculation ? (
+              <NewCalculationPage
+                key="calculation"
+                onClose={handleCloseCalculationView}
+                onSaveSuccess={handleSaveSuccess}
+                initialCalculationName={selectedCalculation.name}
+                initialProjectName={selectedCalculation.project}
+              />
+            ) : null
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Context Menu */}
       {contextMenu.open && (

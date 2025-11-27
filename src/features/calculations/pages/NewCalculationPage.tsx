@@ -21,7 +21,7 @@ export function NewCalculationPage({
   const state = useNewCalculationState(template)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [calculationName, setCalculationName] = useState(initialCalculationName)
-  const [projectName, setProjectName] = useState(initialProjectName)
+  const [projectName, _] = useState(initialProjectName)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -95,9 +95,8 @@ export function NewCalculationPage({
     })
   }
 
-  const handleSave = (calcName: string, projName: string) => {
+  const handleSave = (calcName: string) => {
     setCalculationName(calcName)
-    setProjectName(projName)
     setIsSaveDialogOpen(true)
   }
 
