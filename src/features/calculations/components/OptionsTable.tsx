@@ -72,10 +72,16 @@ export function OptionsTable({
                   onChange={(e) => updateOptionField(option.id, 'unit', e.target.value)}
                   className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                 >
+                  <option value="st">st</option>
                   <option value="m2">m2</option>
                   <option value="m3">m3</option>
+                  <option value="tim">tim</option>
+                  <option value="liter">liter</option>
+                  <option value="kg">kg</option>
+                  <option value="ton">ton</option>
                   <option value="m">m</option>
-                  <option value="st">st</option>
+                  <option value="löpm">löpm</option>
+                  <option value="kr">kr</option>
                 </select>
               </TableCell>
               <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
