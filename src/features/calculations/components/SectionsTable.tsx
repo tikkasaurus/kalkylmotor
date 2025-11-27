@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
+import { useGetAccounts } from '@/features/calculations/api/queries'
 
 interface SectionsTableProps {
   sections: CalculationSection[]
@@ -57,6 +58,8 @@ export function SectionsTable({
   deleteSubsection,
   deleteRow,
 }: SectionsTableProps) {
+  const { data: accounts = [] } = useGetAccounts()
+  
   return (
     <div className="bg-card border p-6">
       <div className="flex items-center justify-between mb-4">
@@ -199,8 +202,14 @@ export function SectionsTable({
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="number" 
+                                    min="0"
                                     value={row.quantity} 
-                                    onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'quantity', Number(e.target.value))}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value)
+                                      if (value >= 0 || e.target.value === '') {
+                                        updateRowField(section.id, subsection.id, row.id, 'quantity', value)
+                                      }
+                                    }}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
@@ -219,8 +228,14 @@ export function SectionsTable({
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="number" 
+                                    min="0"
                                     value={row.pricePerUnit} 
-                                    onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'pricePerUnit', Number(e.target.value))}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value)
+                                      if (value >= 0 || e.target.value === '') {
+                                        updateRowField(section.id, subsection.id, row.id, 'pricePerUnit', value)
+                                      }
+                                    }}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
@@ -228,8 +243,14 @@ export function SectionsTable({
                                   <div className="flex items-center gap-1 h-10 px-2">
                                     <Input 
                                       type="number" 
+                                      min="0"
                                       value={row.co2} 
-                                      onChange={(e) => updateRowCO2(section.id, subsection.id, row.id, Number(e.target.value))}
+                                      onChange={(e) => {
+                                        const value = Number(e.target.value)
+                                        if (value >= 0 || e.target.value === '') {
+                                          updateRowCO2(section.id, subsection.id, row.id, value)
+                                        }
+                                      }}
                                       className="!h-10 text-right w-20 border-0 rounded-none focus:bg-accent focus:outline-none !py-0"
                                       placeholder="0"
                                     />
@@ -251,8 +272,11 @@ export function SectionsTable({
                                     className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                                   >
                                     <option value="Välj konto">Välj konto</option>
-                                    <option value="4010 -...">4010 -...</option>
-                                    <option value="4020 -...">4020 -...</option>
+                                    {accounts.map((account) => (
+                                      <option key={account.id} value={`${account.accountNumber} - ${account.description}`}>
+                                        {account.accountNumber} - {account.description}
+                                      </option>
+                                    ))}
                                   </select>
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">

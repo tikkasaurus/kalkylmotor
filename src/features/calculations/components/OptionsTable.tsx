@@ -61,8 +61,14 @@ export function OptionsTable({
               <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                 <Input 
                   type="number" 
+                  min="0"
                   value={option.quantity} 
-                  onChange={(e) => updateOptionField(option.id, 'quantity', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = Number(e.target.value)
+                    if (value >= 0 || e.target.value === '') {
+                      updateOptionField(option.id, 'quantity', value)
+                    }
+                  }}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                 />
               </TableCell>
@@ -87,8 +93,14 @@ export function OptionsTable({
               <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                 <Input 
                   type="number" 
+                  min="0"
                   value={option.pricePerUnit} 
-                  onChange={(e) => updateOptionField(option.id, 'pricePerUnit', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = Number(e.target.value)
+                    if (value >= 0 || e.target.value === '') {
+                      updateOptionField(option.id, 'pricePerUnit', value)
+                    }
+                  }}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                 />
               </TableCell>
