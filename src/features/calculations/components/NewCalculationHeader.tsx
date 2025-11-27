@@ -2,20 +2,12 @@ import { useState } from 'react'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { Input } from '@/components/ui/input'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   Home,
   FileText,
-  Download,
   Save,
   X,
   FileSpreadsheet,
 } from 'lucide-react'
-import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 
 interface NewCalculationHeaderProps {
   onClose: () => void
@@ -45,62 +37,61 @@ export function NewCalculationHeader({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Logo */}
-            <div className="w-16 h-16 bg-orange-600 rounded flex items-center justify-center">
-              <span className="text-white font-bold text-xl">BRA</span>
+            <div className="w-16 h-16 bg-orange-600 border border-black flex flex-col items-center justify-center">
+              <div className="flex items-center gap-1 text-white font-bold text-sm">
+                <span>B</span>
+                <span className="text-black">|</span>
+                <span>R</span>
+                <span className="text-black">|</span>
+                <span>A</span>
+              </div>
+              <p className="text-[6px] text-white leading-tight text-center px-1">BILLSTRÖM RIEMER ANDERSSON</p>
             </div>
             <div className="text-left flex-1">
               <Input
                 value={calculationName}
                 required
                 onChange={(e) => setCalculationName(e.target.value)}
-                className="text-xxl font-semibold h-auto py-1 px-2 border-0 bg-transparent hover:bg-accent/50 focus:bg-background focus:border focus:border-input rounded-md mb-2 -ml-2 w-[400px] max-w-none"
+                className="!text-xl md:!text-xl font-bold h-auto py-2 px-2 border-0 bg-transparent hover:bg-accent/50 focus:bg-background focus:border focus:border-input mb-1 -ml-2 w-[500px] max-w-none"
                 placeholder="Kalkylnamn"
               />
               <p className="text-sm text-muted-foreground">{new Date().toISOString().split('T')[0]}</p>
             </div>  
           </div>
 
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center gap-6 mt-4">
-          <button 
-          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors"
-          onClick={onClose}
-          >
-            <Home className="w-4 h-4" />
-            Hem
-          </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors">
-                <Download className="w-4 h-4" />
-                Exportera
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onExportPDF}>
-                <FileText className="w-4 h-4" />
-                Exportera som PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onExportCSV}>
-                <FileSpreadsheet className="w-4 h-4" />
-                Exportera som Excel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <div className="ml-auto flex items-center gap-3">
+          {/* Right side buttons */}
+          <div className="flex items-center gap-3">
+            <button 
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
+              onClick={onClose}
+            >
+              <Home className="w-4 h-4" />
+              Hem
+            </button>
+            <button 
+              onClick={onExportPDF}
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Exportera som PDF
+            </button>
+            <button 
+              onClick={onExportCSV}
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Exportera som Excel
+            </button>
             <ShimmerButton onClick={handleSave}>
               <Save className="w-4 h-4 mr-2" />
               Spara
             </ShimmerButton>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-accent transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
