@@ -88,7 +88,7 @@ export function SectionsTable({
       </div>
 
       {/* Sections List */}
-      <div className="space-y-2">
+      <div className="space-y-4">
         {sections.map((section) => (
           <div key={section.id} className="border overflow-hidden">
             <div 
