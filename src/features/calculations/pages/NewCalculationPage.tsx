@@ -138,6 +138,7 @@ export function NewCalculationPage({
               rate={state.rate}
               area={state.area}
               co2Budget={state.co2Budget}
+              totalCO2={state.totalCO2}
               onChangeRate={state.setRate}
               onChangeArea={state.setArea}
               onChangeCo2Budget={state.setCo2Budget}

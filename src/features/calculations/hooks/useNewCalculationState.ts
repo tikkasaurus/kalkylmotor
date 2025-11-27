@@ -377,6 +377,17 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     return options.reduce((sum, option) => sum + (option.quantity * option.pricePerUnit), 0)
   }, [options])
 
+  // Calculate total CO2 from all rows (use original sections to ensure we get actual CO2 values)
+  const totalCO2 = useMemo(() => {
+    return sections.reduce((sum, section) => {
+      return sum + (section.subsections || []).reduce((subsectionSum, subsection) => {
+        return subsectionSum + (subsection.rows || []).reduce((rowSum, row) => {
+          return rowSum + (row.co2 || 0)
+        }, 0)
+      }, 0)
+    }, 0)
+  }, [sections])
+
   // Derived values - includes both sections and options
   const budgetExclRate = sectionsWithAmounts.reduce((sum, section) => sum + section.amount, 0) + optionsTotal
   const fixedRate = budgetExclRate * (rate / 100)
@@ -388,6 +399,7 @@ export function useNewCalculationState(template?: CalculationTemplate) {
     rate,
     area,
     co2Budget,
+    totalCO2,
     co2ModalOpen,
     selectedRowForCO2,
     setRate,
