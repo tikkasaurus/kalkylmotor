@@ -1,5 +1,6 @@
 import '../App.css'
 import { CalculationsPage } from '@/features/calculations/pages/CalculationsPage'
+import { AuthGuard } from '@/components/AuthGuard'
 
 /**
  * Main application shell
@@ -12,8 +13,12 @@ import { CalculationsPage } from '@/features/calculations/pages/CalculationsPage
  * - Error boundaries
  */
 function App() {
-  return <CalculationsPage />
+  return (
+    <AuthGuard>
+      <CalculationsPage />
+    </AuthGuard>
+  )
 }
 
-export default App
+export default App;
 

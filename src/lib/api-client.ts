@@ -5,6 +5,8 @@
  * Compatible with TanStack Query and supports all common HTTP methods.
  */
 
+import { tokenProvider } from './tokenProvider'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 /**
@@ -85,14 +87,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 /**
  * Get default headers for requests
+ * Includes MSAL access token if available
  */
-function getDefaultHeaders(): HeadersInit {
+async function getDefaultHeaders(): Promise<HeadersInit> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   }
 
-  // Add authentication token if available
-  const token = localStorage.getItem('auth_token')
+  // Get MSAL access token for API calls
+  const token = await tokenProvider.getAccessToken()
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
@@ -110,7 +113,7 @@ async function request<T>(
   const { params, headers, ...fetchOptions } = options
 
   const url = buildUrl(endpoint, params)
-  const defaultHeaders = getDefaultHeaders()
+  const defaultHeaders = await getDefaultHeaders()
 
   const response = await fetch(url, {
     ...fetchOptions,

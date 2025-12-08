@@ -43,16 +43,6 @@ export function CalculationsPage() {
   })
   const contextMenuRef = useRef<HTMLDivElement>(null)
 
-  // Debug logging
-  useEffect(() => {
-    if (error) {
-      console.error('Error fetching calculations:', error)
-    }
-    if (calculations) {
-      console.log('Calculations data:', calculations)
-    }
-  }, [error, calculations])
-
   // Re-trigger animation while loading
   useEffect(() => {
     if (isLoading) {
