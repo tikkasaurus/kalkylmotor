@@ -8,21 +8,23 @@ export interface TemplateMetadata {
   template: CalculationTemplate
 }
 
-export const calculationTemplates: TemplateMetadata[] = [
-  {
-    id: 'empty',
-    title: 'Tom kalkyl',
-    description: 'Starta från en tom kalkyl och bygg upp ditt projekt från grunden',
-    popular: false,
-    template: {
-      name: 'Empty Template',
-      sections: [
-        { name: 'Section 1' },
-        { name: 'Section 2' },
-        { name: 'Section 3' },
-      ],
-    },
+export const emptyTemplate: TemplateMetadata = {
+  id: 'empty',
+  title: 'Tom kalkyl',
+  description: 'Starta från en tom kalkyl och bygg upp ditt projekt från grunden',
+  popular: false,
+  template: {
+    name: 'Empty Template',
+    sections: [
+      { name: 'Section 1' },
+      { name: 'Section 2' },
+      { name: 'Section 3' },
+    ],
   },
+};
+
+export const calculationTemplates: TemplateMetadata[] = [
+  emptyTemplate,
   {
     id: 'industrial',
     title: 'Industribyggnad',
@@ -142,7 +144,7 @@ export const calculationTemplates: TemplateMetadata[] = [
 ]
 
 // Helper to get template by ID
-export function getTemplateById(templateId: string): CalculationTemplate | undefined {
+export function getTemplateById(templateId: number): CalculationTemplate | undefined {
   const metadata = calculationTemplates.find((t) => t.id === templateId)
   return metadata?.template
 }

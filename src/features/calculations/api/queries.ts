@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { Calculation } from './types'
+import type { Calculation, CostEstimateResponse, CreateCalculationRequest } from './types'
 
 /**
  * Fetch all calculations
@@ -10,9 +10,9 @@ export function useCalculationsQuery() {
     queryKey: ['calculations'],
     queryFn: async () => {
       try {
-        const data = await apiClient.get<Calculation[]>('/calculations')
+        const data = await apiClient.get<CostEstimateResponse>('/CostEstimate')
         console.log('API response:', data)
-        return data
+        return data;
       } catch (error) {
         console.error('API error:', error)
         throw error
@@ -20,6 +20,28 @@ export function useCalculationsQuery() {
     },
     retry: 1,
     refetchOnWindowFocus: false,
+  })
+}
+
+export function useCreateTemplate() {
+  return useMutation({
+    mutationFn: (costEstimateId: number) =>
+      apiClient.put(`/CostEstimate/${costEstimateId}/toTemplate`),
+  })
+}
+
+export function useGetTemplates() {
+  return useQuery({
+    queryKey: ['templates'],
+    queryFn: async () => {
+      const res = await apiClient.get<Calculation[]>(`/CostEstimate/template`)
+      return res.map((template) => ({
+        id: template.id,
+        title: template.name,
+        description: '',
+        popular: false,
+      }));
+    }
   })
 }
 
@@ -41,8 +63,8 @@ export function useCreateCalculation() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: (data: Partial<Calculation>) => 
-      apiClient.post<Calculation>('/calculations', data),
+    mutationFn: (costEstimateId: string, data: CreateCalculationRequest) => 
+      apiClient.post<Calculation>(`/CostEstimate/${costEstimateId}/calculations`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calculations'] })
     },
@@ -98,6 +120,14 @@ export const useGetCO2Database = () => {
     },
   })
 }
+
+export function useGetBookkeepingAccounts() {
+  return useQuery({
+    queryKey: ['bookkeeping-accounts'],
+    queryFn: () => apiClient.get<Calculation>(`/CostEstimate/bookkeeping-accounts`),
+  })
+}
+
 
 export const useGetAccounts = () => {
   return useQuery({

@@ -18,16 +18,17 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCalculationsQuery } from '../api/queries'
+import { useCalculationsQuery, useCreateTemplate } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import { FileText } from 'lucide-react'
 
 export function CalculationsPage() {
   const { data: calculations = [], isLoading, error } = useCalculationsQuery()
+  const { mutate: createTemplate } = useCreateTemplate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [selectedCalculation, setSelectedCalculation] = useState<{ name: string } | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
   const [contextMenu, setContextMenu] = useState<{
@@ -53,7 +54,7 @@ export function CalculationsPage() {
     }
   }, [isLoading])
 
-  const handleTemplateSelect = (templateId: string) => {
+  const handleTemplateSelect = (templateId: number) => {
     setSelectedTemplate(templateId)
     setSelectedCalculation(null)
     setIsModalOpen(false)
@@ -87,9 +88,10 @@ export function CalculationsPage() {
     })
   }
 
-  const handleCreateTemplate = () => {
+  const handleCreateTemplate = async () => {
     if (contextMenu.calculation) {
       console.log('Creating template from calculation:', contextMenu.calculation.id);
+      await createTemplate(contextMenu.calculation.id);
       setContextMenu({ open: false, x: 0, y: 0, calculation: null })
     }
   }
@@ -218,7 +220,7 @@ export function CalculationsPage() {
                         {error instanceof Error ? error.message : 'Okänt fel'}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Kontrollera att backend-servern körs på http://localhost:3000
+                        Kontrollera att API-servern körs på rätt port och URL.
                       </p>
                     </div>
                   </TableCell>
@@ -226,7 +228,7 @@ export function CalculationsPage() {
               ) : calculations.length === 0 ? (
                 <motion.tr>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    Inga kalkyler hittades
+                    Inga kalkyler skapade ännu
                   </TableCell>
                 </motion.tr>
               ) : (

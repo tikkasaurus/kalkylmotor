@@ -6,12 +6,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { FileText, ChevronRight } from 'lucide-react'
-import { getAllTemplateMetadata } from '@/lib/calculationTemplates'
+import { emptyTemplate, getAllTemplateMetadata } from '@/lib/calculationTemplates'
+import { useGetTemplates } from '../api/queries'
 
 interface NewCalculationModalProps {
   isOpen: boolean
   onClose: () => void
-  onTemplateSelect: (templateId: string) => void
+  onTemplateSelect: (templateId: number) => void
 }
 
 export function NewCalculationModal({
@@ -19,8 +20,9 @@ export function NewCalculationModal({
   onClose,
   onTemplateSelect,
 }: NewCalculationModalProps) {
-  const templates = getAllTemplateMetadata()
-
+  //const templates = getAllTemplateMetadata()
+  const { data: remoteTemplates = [] } = useGetTemplates();
+  const templates = [emptyTemplate, ...remoteTemplates];
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -31,7 +33,7 @@ export function NewCalculationModal({
           {templates.map((template) => (
             <button
               key={template.id}
-              onClick={() => onTemplateSelect(template.id)}
+              onClick={() => onTemplateSelect(template.id as number)}
               className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-accent hover:border-accent-foreground/20 transition-all text-left group"
             >
               <div className="flex-shrink-0 mt-1">

@@ -25,6 +25,7 @@ export function useAuth() {
       const response = await instance.acquireTokenSilent({
         ...apiRequest,
         account: account,
+        forceRefresh: true,
       })
       return response.accessToken
     } catch (error: unknown) {

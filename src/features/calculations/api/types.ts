@@ -73,3 +73,64 @@ export interface NewCalculationProps {
   initialCalculationName?: string
 }
 
+
+
+export type CostEstimateResponse = {
+  id: number
+  name: string
+  currentVersionId: number
+  currentVersionName: string
+  currentVersionNo: string
+  projectId: number
+  status: string
+  revision: string
+  projectName: string
+  createdBy: string
+  created: string
+}[];
+
+export type CreateCalculationRequest = {
+  sections: CalculationSectionPayload[]
+  optionBudgetRows: OptionBudgetRowPayload[]
+}
+
+export type CalculationSectionPayload = {
+  id: number
+  title: string
+  subSections: CalculationSectionPayload[]
+  budgetRows: BudgetRowPayload[]
+}
+
+export type BudgetRowPayload = {
+  id: number
+  sectionId: number
+  accountNo: number
+  name: string
+  quantity: number
+  price: number
+  amount: number
+  markupAmount: number
+  markupPercent: number
+  waste: number
+  notes: string
+  budgetActivityId: number
+  budgetLocationId: number
+  co2CostId: number
+}
+
+export type OptionBudgetRowPayload = {
+  id: number
+  sectionId: number
+  accountNo: number
+  name: string
+  quantity: number
+  price: number
+  amount: number
+  markupAmount: number
+  markupPercent: number
+  waste: number
+  notes: string
+  budgetActivityId: number
+  budgetLocationId: number
+  co2CostId: number
+}
