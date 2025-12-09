@@ -1,10 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type {
   CalculationTemplate,
   CalculationSection,
   CalculationSubsection,
   CalculationRow,
   OptionRow,
+  CreateCalculationRequest,
+  CalculationSectionPayload,
+  BudgetRowPayload,
+  OptionBudgetRowPayload,
 } from '@/features/calculations/api/types'
 
 // Factory function to create sections from template
@@ -44,29 +48,115 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
   })
 }
 
-export function useNewCalculationState(template?: CalculationTemplate) {
-  // Use template if provided, otherwise use empty default
-  const defaultSections: CalculationSection[] = template 
+function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
+  return {
+    id: row.id,
+    description: row.name,
+    quantity: row.quantity,
+    unit: 'st',
+    pricePerUnit: row.price,
+    co2: 0,
+    account: row.accountNo ? String(row.accountNo) : 'Välj konto',
+    resource: '',
+    note: row.notes,
+  }
+}
+
+function buildSubsectionsFromPayload(
+  section: CalculationSectionPayload,
+  counter: { current: number }
+): CalculationSubsection[] {
+  const subsections: CalculationSubsection[] = []
+
+  const addFromSection = (payloadSection: CalculationSectionPayload) => {
+    const rows = (payloadSection.budgetRows || []).map(mapBudgetRowToCalculationRow)
+    const subsectionAmount = rows.reduce(
+      (sum, row) => sum + row.quantity * row.pricePerUnit,
+      0
+    )
+
+    subsections.push({
+      id: counter.current++,
+      name: payloadSection.title || `Undersektion ${counter.current}`,
+      amount: subsectionAmount,
+      expanded: false,
+      rows,
+    })
+
+    ;(payloadSection.subSections || []).forEach(addFromSection)
+  }
+
+  addFromSection(section)
+  return subsections
+}
+
+function buildSectionsFromPayload(payload?: CreateCalculationRequest): CalculationSection[] {
+  if (!payload?.sections || payload.sections.length === 0) {
+    return [
+      {
+        id: 1,
+        name: 'Section 1',
+        amount: 0,
+        expanded: false,
+        subsections: [
+          { id: 1, name: 'Undersektion 1', amount: 0, expanded: false, rows: [] },
+        ],
+      },
+    ]
+  }
+
+  return payload.sections.map((section) => {
+    const counter = { current: 1 }
+    const subsections = buildSubsectionsFromPayload(section, counter)
+    const sectionAmount = subsections.reduce((sum, sub) => sum + sub.amount, 0)
+
+    return {
+      id: section.id,
+      name: section.title,
+      amount: sectionAmount,
+      expanded: false,
+      subsections,
+    }
+  })
+}
+
+function mapOptionsFromPayload(optionBudgetRows?: OptionBudgetRowPayload[]): OptionRow[] {
+  if (!optionBudgetRows) return []
+
+  return optionBudgetRows.map((row) => ({
+    id: row.id,
+    description: row.name,
+    quantity: row.quantity,
+    unit: 'st',
+    pricePerUnit: row.price,
+  }))
+}
+
+export function useNewCalculationState(
+  template?: CalculationTemplate,
+  existingCalculation?: CreateCalculationRequest
+) {
+  // Use template if provided, otherwise prefer existing calculation, otherwise default
+  const defaultSections: CalculationSection[] = template
     ? createSectionsFromTemplate(template)
-    : [
-        { 
-          id: 1, 
-          name: 'Section 1', 
-          amount: 0, 
-          expanded: false, 
-          subsections: [
-            { id: 1, name: 'Undersektion 1', amount: 0, expanded: false, rows: [] }
-          ]
-        },
-      ]
+    : buildSectionsFromPayload(existingCalculation)
   
   const [sections, setSections] = useState(defaultSections)
-  const [options, setOptions] = useState<OptionRow[]>([])
+  const [options, setOptions] = useState<OptionRow[]>(
+    template ? [] : mapOptionsFromPayload(existingCalculation?.optionBudgetRows)
+  )
   const [rate, setRate] = useState(8)
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
   const [co2ModalOpen, setCo2ModalOpen] = useState(false)
   const [selectedRowForCO2, setSelectedRowForCO2] = useState<{ sectionId: number; subsectionId: number; rowId: number } | null>(null)
+
+  useEffect(() => {
+    if (existingCalculation) {
+      setSections(buildSectionsFromPayload(existingCalculation))
+      setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
+    }
+  }, [existingCalculation])
 
   const toggleSection = (id: number) => {
     setSections(

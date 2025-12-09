@@ -62,12 +62,25 @@ export function useCalculationQuery(id: number) {
 export function useCreateCalculation() {
   const queryClient = useQueryClient()
   
-  return useMutation({
-    mutationFn: (costEstimateId: string, data: CreateCalculationRequest) => 
+  return useMutation<Calculation, unknown, { costEstimateId: string; data: CreateCalculationRequest }>({
+    mutationFn: ({ costEstimateId, data }: { costEstimateId: string; data: CreateCalculationRequest }) =>
       apiClient.post<Calculation>(`/CostEstimate/${costEstimateId}/calculations`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calculations'] })
     },
+  })
+}
+
+/**
+ * Fetch a calculation payload by cost estimate id
+ * (same shape as the create body)
+ */
+export function useGetCalculation(costEstimateId: string) {
+  return useQuery({
+    queryKey: ['calculation', costEstimateId],
+    queryFn: () =>
+      apiClient.get<CreateCalculationRequest>(`/CostEstimate/${costEstimateId}/calculations`),
+    enabled: !!costEstimateId,
   })
 }
 

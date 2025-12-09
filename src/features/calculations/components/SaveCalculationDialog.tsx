@@ -13,7 +13,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useCreateCalculation } from '../api/queries'
 
 const saveCalculationSchema = z.object({
   calculationName: z.string().min(1, 'Kalkylnamn är obligatoriskt'),
@@ -29,6 +28,7 @@ interface SaveCalculationDialogProps {
   onSuccess?: () => void
   hasSections?: boolean
   calculationName: string
+  onSubmitCalculation?: (calculationName: string) => Promise<void>
 }
 
 export function SaveCalculationDialog({
@@ -39,8 +39,8 @@ export function SaveCalculationDialog({
   onSuccess,
   hasSections = true,
   calculationName: initialCalculationName,
+  onSubmitCalculation,
 }: SaveCalculationDialogProps) {
-  const createCalculation = useCreateCalculation()
   const [error, setError] = useState<string | null>(null)
 
   const {
@@ -48,15 +48,12 @@ export function SaveCalculationDialog({
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    watch,
   } = useForm<SaveCalculationFormData>({
     resolver: zodResolver(saveCalculationSchema),
     defaultValues: {
       calculationName: initialCalculationName,
     },
   })
-
-  const calculationNameValue = watch('calculationName')
 
   useEffect(() => {
     if (open) {
@@ -82,17 +79,11 @@ export function SaveCalculationDialog({
         return
       }
       
-      const calculationData = {
-        name: data.calculationName.trim(),
-        project: '', // Project will be set later in BudgetOverviewPage
-        status: 'Aktiv' as const,
-        amount: formatCurrency(bidAmount),
-        created: new Date().toISOString().split('T')[0],
-        createdBy: 'Gustaf',
-        revision: '1',
+      if (!onSubmitCalculation) {
+        throw new Error('Ingen sparfunktion är konfigurerad.')
       }
 
-      await createCalculation.mutateAsync(calculationData)
+      await onSubmitCalculation(data.calculationName.trim())
       
       reset()
       onOpenChange(false)

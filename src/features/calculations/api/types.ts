@@ -68,6 +68,10 @@ export interface CalculationSection {
 
 export interface NewCalculationProps {
   template?: CalculationTemplate
+  existingCalculation?: CreateCalculationRequest
+  existingCalculationLoading?: boolean
+  existingCalculationError?: unknown
+  costEstimateId?: string
   onClose: () => void
   onSaveSuccess?: () => void
   initialCalculationName?: string
@@ -84,6 +88,7 @@ export type CostEstimateResponse = {
   projectId: number
   status: string
   revision: string
+  amount: string
   projectName: string
   createdBy: string
   created: string

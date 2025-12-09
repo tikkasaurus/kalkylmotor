@@ -18,7 +18,7 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCalculationsQuery, useCreateTemplate } from '../api/queries'
+import { useCalculationsQuery, useCreateTemplate, useGetCalculation } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import { FileText } from 'lucide-react'
 
@@ -29,7 +29,7 @@ export function CalculationsPage() {
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
-  const [selectedCalculation, setSelectedCalculation] = useState<{ name: string } | null>(null)
+  const [selectedCalculation, setSelectedCalculation] = useState<{ id: number; name: string } | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
   const [contextMenu, setContextMenu] = useState<{
     open: boolean
@@ -73,7 +73,7 @@ export function CalculationsPage() {
 
   const handleCalculationClick = (calc: { id: number; name: string }) => {
     setSelectedTemplate(null)
-    setSelectedCalculation({ name: calc.name })
+    setSelectedCalculation({ id: calc.id, name: calc.name })
     setShowCalculationView(true)
   }
 
@@ -95,6 +95,13 @@ export function CalculationsPage() {
       setContextMenu({ open: false, x: 0, y: 0, calculation: null })
     }
   }
+
+  const costEstimateId = selectedCalculation?.id ? String(selectedCalculation.id) : ''
+  const {
+    data: existingCalculationData,
+    isLoading: isLoadingCalculation,
+    error: existingCalculationError,
+  } = useGetCalculation(costEstimateId)
 
   // Close context menu when clicking outside or pressing Escape
   useEffect(() => {
@@ -298,6 +305,10 @@ export function CalculationsPage() {
             ) : selectedCalculation ? (
               <NewCalculationPage
                 key="calculation"
+                costEstimateId={costEstimateId}
+                existingCalculation={existingCalculationData}
+                existingCalculationLoading={isLoadingCalculation}
+                existingCalculationError={existingCalculationError}
                 onClose={handleCloseCalculationView}
                 onSaveSuccess={handleSaveSuccess}
                 initialCalculationName={selectedCalculation.name}

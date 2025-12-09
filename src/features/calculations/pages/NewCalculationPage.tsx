@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
 import { CO2DatabaseModal } from '@/features/co2-database/components/CO2DatabaseModal'
-import type { NewCalculationProps } from '@/features/calculations/api/types'
+import type {
+  BudgetRowPayload,
+  CalculationSection,
+  CalculationSectionPayload,
+  CalculationRow,
+  NewCalculationProps,
+  OptionBudgetRowPayload,
+} from '@/features/calculations/api/types'
 import { useNewCalculationState } from '@/features/calculations/hooks/useNewCalculationState'
 import { NewCalculationHeader } from '@/features/calculations/components/NewCalculationHeader'
 import { SaveCalculationDialog } from '@/features/calculations/components/SaveCalculationDialog'
@@ -10,16 +17,72 @@ import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 import { exportToPDF } from '@/features/calculations/utils/pdfExport'
+import { useCreateCalculation } from '../api/queries'
 
 export function NewCalculationPage({ 
   template, 
+  existingCalculation,
+  existingCalculationLoading,
+  existingCalculationError,
+  costEstimateId,
   onClose,
   onSaveSuccess,
   initialCalculationName = 'Kalkylnamn',
 }: NewCalculationProps) {
-  const state = useNewCalculationState(template)
+  const state = useNewCalculationState(template, existingCalculation)
+  const createCalculation = useCreateCalculation()
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [calculationName, setCalculationName] = useState(initialCalculationName)
+
+  const loadingExisting = !!existingCalculationLoading
+  const existingError = existingCalculationError
+
+  const mapRowToPayload = (row: CalculationRow, sectionId: number): BudgetRowPayload => ({
+    id: row.id,
+    sectionId,
+    accountNo: Number(row.account) || 0,
+    name: row.description,
+    quantity: row.quantity,
+    price: row.pricePerUnit,
+    amount: row.quantity * row.pricePerUnit,
+    markupAmount: 0,
+    markupPercent: 0,
+    waste: 0,
+    notes: row.note,
+    budgetActivityId: 0,
+    budgetLocationId: 0,
+    co2CostId: 0,
+  })
+
+  const mapSectionToPayload = (section: CalculationSection): CalculationSectionPayload => ({
+    id: section.id,
+    title: section.name,
+    subSections: (section.subsections || []).map((subsection) => ({
+      id: subsection.id,
+      title: subsection.name,
+      subSections: [],
+      budgetRows: (subsection.rows || []).map((row) => mapRowToPayload(row, section.id)),
+    })),
+    budgetRows: [],
+  })
+
+  const mapOptionsToPayload = (options: typeof state.options): OptionBudgetRowPayload[] =>
+    options.map((option) => ({
+      id: option.id,
+      sectionId: 0,
+      accountNo: 0,
+      name: option.description,
+      quantity: option.quantity,
+      price: option.pricePerUnit,
+      amount: option.quantity * option.pricePerUnit,
+      markupAmount: 0,
+      markupPercent: 0,
+      waste: 0,
+      notes: '',
+      budgetActivityId: 0,
+      budgetLocationId: 0,
+      co2CostId: 0,
+    }))
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -38,22 +101,17 @@ export function NewCalculationPage({
   }
 
   const exportToCSV = () => {
-    // CSV header
     let csvContent = 'Avsnitt,Undersektion,Benämning,Antal,Enhet,Pris/enhet,Summa\n'
 
     state.sections.forEach((section) => {
-      // Section row
       const sectionTotal = `"${formatNumberForCSV(section.amount)} kr"`
       csvContent += `${section.id},${section.name},,,,${sectionTotal}\n`
 
-      // Subsections
       if (section.subsections && section.subsections.length > 0) {
         section.subsections.forEach((subsection) => {
-          // Subsection row
           const subsectionTotal = `"${formatNumberForCSV(subsection.amount)} kr"`
           csvContent += `,${subsection.id},${subsection.name},,,${subsectionTotal}\n`
 
-          // Subsection rows
           if (subsection.rows && subsection.rows.length > 0) {
             subsection.rows.forEach((row) => {
               const rowTotal = row.quantity * row.pricePerUnit
@@ -64,7 +122,6 @@ export function NewCalculationPage({
       }
     })
 
-    // Create blob and download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
@@ -97,6 +154,23 @@ export function NewCalculationPage({
     setIsSaveDialogOpen(true)
   }
 
+  const handleSubmitCalculation = async (_calcName: string) => {
+    void _calcName
+    if (!costEstimateId) {
+      throw new Error('Ingen kalkyl är vald.')
+    }
+
+    const payload = {
+      sections: state.sections.map(mapSectionToPayload),
+      optionBudgetRows: mapOptionsToPayload(state.options),
+    }
+
+    await createCalculation.mutateAsync({
+      costEstimateId,
+      data: payload,
+    })
+  }
+
   const handleSaveSuccess = () => {
     // Trigger confetti animation before closing
     onSaveSuccess?.()
@@ -104,6 +178,25 @@ export function NewCalculationPage({
     setTimeout(() => {
       onClose()
     }, 100)
+  }
+
+  if (loadingExisting) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
+        <p className="text-muted-foreground">Laddar kalkyl...</p>
+      </div>
+    )
+  }
+
+  if (existingError) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
+        <div className="text-center space-y-2">
+          <p className="text-destructive font-medium">Kunde inte hämta kalkylen.</p>
+          <button className="underline" onClick={onClose}>Stäng</button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -192,6 +285,7 @@ export function NewCalculationPage({
             onOpenChange={setIsSaveDialogOpen}
             bidAmount={state.bidAmount}
             formatCurrency={formatCurrency}
+            onSubmitCalculation={handleSubmitCalculation}
             onSuccess={handleSaveSuccess}
             hasSections={state.sections.length > 0}
             calculationName={calculationName}
