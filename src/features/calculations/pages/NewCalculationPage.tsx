@@ -170,8 +170,8 @@ export function NewCalculationPage({
 
   const handleSave = async (calcName: string) => {
     setCalculationName(calcName)
-    
-    if (!costEstimateId) {
+    const estimateId = costEstimateId || existingCalculation?.id;
+    if (!estimateId) {
       toast.error('Ingen kalkyl är vald.')
       return
     }
@@ -193,7 +193,7 @@ export function NewCalculationPage({
       }
 
       await createCalculation.mutateAsync({
-        costEstimateId,
+        costEstimateId: estimateId,
         data: payload,
       })
 
