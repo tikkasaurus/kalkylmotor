@@ -68,7 +68,7 @@ export interface CalculationSection {
 
 export interface NewCalculationProps {
   template?: CalculationTemplate
-  existingCalculation?: CreateCalculationRequest
+  existingCalculation?: GetCalculationsReponse
   existingCalculationLoading?: boolean
   existingCalculationError?: unknown
   costEstimateId?: string

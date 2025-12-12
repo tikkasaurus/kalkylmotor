@@ -193,7 +193,7 @@ export function NewCalculationPage({
       }
 
       await createCalculation.mutateAsync({
-        costEstimateId: estimateId,
+        costEstimateId: String(estimateId),
         data: payload,
       })
 
