@@ -84,6 +84,7 @@ export function useGetCalculation(costEstimateId: string) {
     queryKey: ['calculation', costEstimateId],
     queryFn: () =>
       apiClient.get<GetCalculationsReponse>(`/CostEstimate/${costEstimateId}/calculations`),
+    enabled: !!costEstimateId,
   })
 }
 

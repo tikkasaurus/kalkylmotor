@@ -91,6 +91,7 @@ export type CostEstimateResponse = {
   amount: string
   projectName: string
   createdBy: string
+  createdByName: string
   created: string
 }[];
 

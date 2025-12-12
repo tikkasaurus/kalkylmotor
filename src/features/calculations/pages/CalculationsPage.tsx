@@ -268,7 +268,7 @@ export function CalculationsPage() {
                     {calc.created}
                   </TableCell>
                   <TableCell className="text-left text-muted-foreground">
-                    {calc.createdBy}
+                    {calc.createdByName}
                   </TableCell>
                 </TableRow>
                 ))
