@@ -18,18 +18,23 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation } from '../api/queries'
+import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
+import type { GetCalculationsReponse } from '../api/types'
 import { FileText } from 'lucide-react'
 
 export function CalculationsPage() {
   const { data: costEstimates = [], isLoading, error } = useCostEstimatesQuery()
   const { mutate: createTemplate } = useCreateTemplate()
+  const { mutate: initializeCostEstimate } = useInitializeCostEstimate()
+  const { mutate: copyCostEstimate } = useCopyCostEstimate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [selectedCalculation, setSelectedCalculation] = useState<{ id: number; name: string } | null>(null)
+  const [newCostEstimateId, setNewCostEstimateId] = useState<string | null>(null)
+  const [copiedCalculationData, setCopiedCalculationData] = useState<GetCalculationsReponse | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
   const [contextMenu, setContextMenu] = useState<{
     open: boolean
@@ -54,17 +59,63 @@ export function CalculationsPage() {
     }
   }, [isLoading])
 
-  const handleTemplateSelect = (templateId: number) => {
-    setSelectedTemplate(templateId)
-    setSelectedCalculation(null)
+  // Debug state changes
+  useEffect(() => {
+    console.log('State update:', {
+      showCalculationView,
+      newCostEstimateId,
+      copiedCalculationData: !!copiedCalculationData,
+      selectedTemplate,
+      selectedCalculation,
+    })
+  }, [showCalculationView, newCostEstimateId, copiedCalculationData, selectedTemplate, selectedCalculation])
+
+  const handleTemplateSelect = (templateId: number | string) => {
+    const templateIdStr = String(templateId)
     setIsModalOpen(false)
-    setShowCalculationView(true)
+    
+    if (templateIdStr === 'empty') {
+      // Initialize a new cost estimate
+      initializeCostEstimate(undefined, {
+        onSuccess: (response) => {
+          console.log('Initialize success:', response)
+          setNewCostEstimateId(String(response.id))
+          setCopiedCalculationData(null)
+          setSelectedTemplate(null)
+          setSelectedCalculation(null)
+          setShowCalculationView(true)
+        },
+        onError: (error) => {
+          console.error('Error initializing cost estimate:', error)
+        },
+      })
+    } else {
+      // Copy the cost estimate
+      const costEstimateId = Number(templateIdStr)
+      copyCostEstimate(costEstimateId, {
+        onSuccess: (response) => {
+          console.log('Copy success:', response)
+          // The response contains the copied calculation data
+          // We'll use it as existingCalculation in NewCalculationPage
+          setCopiedCalculationData(response)
+          setNewCostEstimateId(null) // Will be set when saving
+          setSelectedTemplate(null)
+          setSelectedCalculation(null)
+          setShowCalculationView(true)
+        },
+        onError: (error) => {
+          console.error('Error copying cost estimate:', error)
+        },
+      })
+    }
   }
 
   const handleCloseCalculationView = () => {
     setShowCalculationView(false)
     setSelectedTemplate(null)
     setSelectedCalculation(null)
+    setNewCostEstimateId(null)
+    setCopiedCalculationData(null)
   }
 
   const handleCloseBudgetOverview = () => {
@@ -294,25 +345,43 @@ export function CalculationsPage() {
       {!showBudgetOverview && (
         <AnimatePresence mode="wait">
           {showCalculationView && (
-            selectedTemplate ? (
-              <NewCalculationPage
-                key="template"
-                template={getTemplateById(selectedTemplate)}
-                onClose={handleCloseCalculationView}
-                onSaveSuccess={handleSaveSuccess}
-                initialCalculationName={selectedCalculation?.name}
-              />
+            newCostEstimateId ? (
+              <motion.div key="initialized">
+                <NewCalculationPage
+                  costEstimateId={newCostEstimateId}
+                  onClose={handleCloseCalculationView}
+                  onSaveSuccess={handleSaveSuccess}
+                />
+              </motion.div>
+            ) : copiedCalculationData ? (
+              <motion.div key="copied">
+                <NewCalculationPage
+                  existingCalculation={copiedCalculationData}
+                  onClose={handleCloseCalculationView}
+                  onSaveSuccess={handleSaveSuccess}
+                />
+              </motion.div>
+            ) : selectedTemplate ? (
+              <motion.div key="template">
+                <NewCalculationPage
+                  template={getTemplateById(selectedTemplate)}
+                  onClose={handleCloseCalculationView}
+                  onSaveSuccess={handleSaveSuccess}
+                  initialCalculationName={selectedCalculation?.name}
+                />
+              </motion.div>
             ) : selectedCalculation ? (
-              <NewCalculationPage
-                key="calculation"
-                costEstimateId={costEstimateId}
-                existingCalculation={existingCalculationData}
-                existingCalculationLoading={isLoadingCalculation}
-                existingCalculationError={existingCalculationError}
-                onClose={handleCloseCalculationView}
-                onSaveSuccess={handleSaveSuccess}
-                initialCalculationName={selectedCalculation.name}
-              />
+              <motion.div key="calculation">
+                <NewCalculationPage
+                  costEstimateId={costEstimateId}
+                  existingCalculation={existingCalculationData}
+                  existingCalculationLoading={isLoadingCalculation}
+                  existingCalculationError={existingCalculationError}
+                  onClose={handleCloseCalculationView}
+                  onSaveSuccess={handleSaveSuccess}
+                  initialCalculationName={selectedCalculation.name}
+                />
+              </motion.div>
             ) : null
           )}
         </AnimatePresence>

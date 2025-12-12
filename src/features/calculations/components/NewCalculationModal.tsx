@@ -6,13 +6,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { FileText, ChevronRight } from 'lucide-react'
-import { emptyTemplate, getAllTemplateMetadata } from '@/lib/calculationTemplates'
+import { emptyTemplate } from '@/lib/calculationTemplates'
 import { useGetTemplates } from '../api/queries'
 
 interface NewCalculationModalProps {
   isOpen: boolean
   onClose: () => void
-  onTemplateSelect: (templateId: number) => void
+  onTemplateSelect: (templateId: number | string) => void
 }
 
 export function NewCalculationModal({
@@ -33,7 +33,7 @@ export function NewCalculationModal({
           {templates.map((template) => (
             <button
               key={template.id}
-              onClick={() => onTemplateSelect(template.id as number)}
+              onClick={() => onTemplateSelect(template.id)}
               className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-accent hover:border-accent-foreground/20 transition-all text-left group"
             >
               <div className="flex-shrink-0 mt-1">

@@ -11,13 +11,13 @@ import type {
 } from '@/features/calculations/api/types'
 import { useNewCalculationState } from '@/features/calculations/hooks/useNewCalculationState'
 import { NewCalculationHeader } from '@/features/calculations/components/NewCalculationHeader'
-import { SaveCalculationDialog } from '@/features/calculations/components/SaveCalculationDialog'
 import { RateSection } from '@/features/calculations/components/RateSection'
 import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 import { exportToPDF } from '@/features/calculations/utils/pdfExport'
 import { useCreateCalculation } from '../api/queries'
+import { toast } from '@/components/ui/toast'
 
 export function NewCalculationPage({ 
   template, 
@@ -31,58 +31,77 @@ export function NewCalculationPage({
 }: NewCalculationProps) {
   const state = useNewCalculationState(template, existingCalculation)
   const createCalculation = useCreateCalculation()
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [calculationName, setCalculationName] = useState(initialCalculationName)
 
   const loadingExisting = !!existingCalculationLoading
   const existingError = existingCalculationError
 
-  const mapRowToPayload = (row: CalculationRow, sectionId: number): BudgetRowPayload => ({
-    id: row.id,
-    sectionId,
-    accountNo: Number(row.account) || 0,
-    name: row.description,
-    quantity: row.quantity,
-    price: row.pricePerUnit,
-    amount: row.quantity * row.pricePerUnit,
-    markupAmount: 0,
-    markupPercent: 0,
-    waste: 0,
-    notes: row.note,
-    budgetActivityId: 0,
-    budgetLocationId: 0,
-    co2CostId: 0,
-  })
-
-  const mapSectionToPayload = (section: CalculationSection): CalculationSectionPayload => ({
-    id: section.id,
-    title: section.name,
-    subSections: (section.subsections || []).map((subsection) => ({
-      id: subsection.id,
-      title: subsection.name,
-      subSections: [],
-      budgetRows: (subsection.rows || []).map((row) => mapRowToPayload(row, section.id)),
-    })),
-    budgetRows: [],
-  })
-
-  const mapOptionsToPayload = (options: typeof state.options): OptionBudgetRowPayload[] =>
-    options.map((option) => ({
-      id: option.id,
-      sectionId: 0,
-      accountNo: 0,
-      name: option.description,
-      quantity: option.quantity,
-      price: option.pricePerUnit,
-      amount: option.quantity * option.pricePerUnit,
+  const mapRowToPayload = (row: CalculationRow, sectionId: number, includeId: boolean): BudgetRowPayload => {
+    const payload: BudgetRowPayload = {
+      sectionId,
+      accountNo: Number(row.account) || 0,
+      name: row.description,
+      quantity: row.quantity,
+      price: row.pricePerUnit,
+      amount: row.quantity * row.pricePerUnit,
       markupAmount: 0,
       markupPercent: 0,
       waste: 0,
-      notes: '',
+      notes: row.note,
       budgetActivityId: 0,
       budgetLocationId: 0,
       co2CostId: 0,
-    }))
+    }
+    if (includeId) {
+      payload.id = row.id
+    }
+    return payload
+  }
+
+  const mapSectionToPayload = (section: CalculationSection, includeId: boolean): CalculationSectionPayload => {
+    const payload: CalculationSectionPayload = {
+      title: section.name,
+      subSections: (section.subsections || []).map((subsection) => {
+        const subPayload: CalculationSectionPayload = {
+          title: subsection.name,
+          subSections: [],
+          budgetRows: (subsection.rows || []).map((row) => mapRowToPayload(row, section?.id || 0, includeId)),
+        }
+        if (includeId) {
+          subPayload.id = subsection.id
+        }
+        return subPayload
+      }),
+      budgetRows: [],
+    }
+    if (includeId) {
+      payload.id = section.id
+    }
+    return payload
+  }
+
+  const mapOptionsToPayload = (options: typeof state.options, includeId: boolean): OptionBudgetRowPayload[] =>
+    options.map((option) => {
+      const payload: OptionBudgetRowPayload = {
+        sectionId: 0,
+        accountNo: 0,
+        name: option.description,
+        quantity: option.quantity,
+        price: option.pricePerUnit,
+        amount: option.quantity * option.pricePerUnit,
+        markupAmount: 0,
+        markupPercent: 0,
+        waste: 0,
+        notes: '',
+        budgetActivityId: 0,
+        budgetLocationId: 0,
+        co2CostId: 0,
+      }
+      if (includeId && option.id) {
+        payload.id = option.id
+      }
+      return payload
+    })
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -149,41 +168,41 @@ export function NewCalculationPage({
     })
   }
 
-  const handleSave = (calcName: string) => {
+  const handleSave = async (calcName: string) => {
     setCalculationName(calcName)
-    setIsSaveDialogOpen(true)
-  }
-
-  const handleSubmitCalculation = async (calcName: string) => {
+    
     if (!costEstimateId) {
-      throw new Error('Ingen kalkyl är vald.')
+      toast.error('Ingen kalkyl är vald.')
+      return
     }
 
-    const payload = {
-      name: calcName,
-      co2Budget: state.co2Budget,
-      budget: state.budgetExclRate,
-      amount: state.bidAmount,
-      calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
-      fee: state.bidAmount - state.budgetExclRate,
-      squareMeter: state.area,
-      sections: state.sections.map(mapSectionToPayload),
-      optionBudgetRows: mapOptionsToPayload(state.options),
+    // Determine if we're creating new (from template) vs copying/editing existing
+    const isNewCalculation = !existingCalculation
+
+    try {
+      const payload = {
+        name: calcName,
+        co2Budget: state.co2Budget,
+        budget: state.budgetExclRate,
+        amount: state.bidAmount,
+        calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
+        fee: state.bidAmount - state.budgetExclRate,
+        squareMeter: state.area,
+        sections: state.sections.map((section) => mapSectionToPayload(section, !isNewCalculation)),
+        optionBudgetRows: mapOptionsToPayload(state.options, !isNewCalculation),
+      }
+
+      await createCalculation.mutateAsync({
+        costEstimateId,
+        data: payload,
+      })
+
+      toast.success('Kalkylen sparades framgångsrikt!')
+      onSaveSuccess?.()
+    } catch (error) {
+      toast.error('Kunde inte spara kalkylen. Försök igen.')
+      console.error('Error saving calculation:', error)
     }
-
-    await createCalculation.mutateAsync({
-      costEstimateId,
-      data: payload,
-    })
-  }
-
-  const handleSaveSuccess = () => {
-    // Trigger confetti animation before closing
-    onSaveSuccess?.()
-    // Small delay to ensure confetti is visible before closing
-    setTimeout(() => {
-      onClose()
-    }, 100)
   }
 
   if (loadingExisting) {
@@ -284,17 +303,6 @@ export function NewCalculationPage({
             open={state.co2ModalOpen} 
             onOpenChange={state.setCo2ModalOpen}
             onSelect={state.handleCO2Select}
-          />
-
-          <SaveCalculationDialog
-            open={isSaveDialogOpen}
-            onOpenChange={setIsSaveDialogOpen}
-            bidAmount={state.bidAmount}
-            formatCurrency={formatCurrency}
-            onSubmitCalculation={handleSubmitCalculation}
-            onSuccess={handleSaveSuccess}
-            hasSections={state.sections.length > 0}
-            calculationName={calculationName}
           />
       </motion.div>
     </>

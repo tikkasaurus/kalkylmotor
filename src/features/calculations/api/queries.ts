@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import type { 
   Calculation, 
+  CopyCostEstimateResponse, 
   CostEstimateResponse, 
   CreateCalculationRequest, 
   GetCalculationsReponse, 
+  InitializeCostEstimateResponse, 
   ProjectsResponse, 
   UnitTypeResponse 
 } from './types'
@@ -50,17 +52,6 @@ export function useGetTemplates() {
 }
 
 /**
- * Fetch a single calculation
- */
-export function useCalculationQuery(id: number) {
-  return useQuery({
-    queryKey: ['calculations', id],
-    queryFn: () => apiClient.get<Calculation>(`/calculations/${id}`),
-    enabled: !!id,
-  })
-}
-
-/**
  * Create a new calculation
  */
 export function useCreateCalculation() {
@@ -85,6 +76,20 @@ export function useGetCalculation(costEstimateId: string) {
     queryFn: () =>
       apiClient.get<GetCalculationsReponse>(`/CostEstimate/${costEstimateId}/calculations`),
     enabled: !!costEstimateId,
+  })
+}
+
+export function useInitializeCostEstimate() {
+  return useMutation({
+    mutationFn: () =>
+      apiClient.post<InitializeCostEstimateResponse>(`/CostEstimate/init`),
+  })
+}
+
+export function useCopyCostEstimate() {
+  return useMutation({
+    mutationFn: (costEstimateId: number) =>
+      apiClient.put<CopyCostEstimateResponse>(`/CostEstimate/${costEstimateId}/copy`, {}),
   })
 }
 

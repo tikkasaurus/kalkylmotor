@@ -1,6 +1,7 @@
 import '../App.css'
 import { CalculationsPage } from '@/features/calculations/pages/CalculationsPage'
 import { AuthGuard } from '@/components/AuthGuard'
+import { ToastContainer } from '@/components/ui/toast'
 
 /**
  * Main application shell
@@ -16,6 +17,7 @@ function App() {
   return (
     <AuthGuard>
       <CalculationsPage />
+      <ToastContainer />
     </AuthGuard>
   )
 }

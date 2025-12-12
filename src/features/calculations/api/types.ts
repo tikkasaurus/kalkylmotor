@@ -31,7 +31,7 @@ export interface TemplateRow {
 }
 
 export interface CalculationRow {
-  id: number
+  id?: number
   description: string
   quantity: number
   unit: string
@@ -43,7 +43,7 @@ export interface CalculationRow {
 }
 
 export interface OptionRow {
-  id: number
+  id?: number
   description: string
   quantity: number
   unit: string
@@ -51,7 +51,7 @@ export interface OptionRow {
 }
 
 export interface CalculationSubsection {
-  id: number
+  id?: number
   name: string
   amount: number
   expanded?: boolean
@@ -59,7 +59,7 @@ export interface CalculationSubsection {
 }
 
 export interface CalculationSection {
-  id: number
+  id?: number
   name: string
   amount: number
   expanded?: boolean
@@ -94,6 +94,10 @@ export type CostEstimateResponse = {
   createdByName: string
   created: string
 }[];
+
+export type InitializeCostEstimateResponse = {
+  id: number
+}
 
 export type UnitTypeResponse = {
   "count": number,
@@ -139,17 +143,21 @@ export type CreateCalculationRequest = {
   optionBudgetRows: OptionBudgetRowPayload[]
 }
 
-export type GetCalculationsReponse = CreateCalculationRequest;
+export type GetCalculationsReponse = CreateCalculationRequest & {
+  id: number
+};
+
+export type CopyCostEstimateResponse = GetCalculationsReponse;
 
 export type CalculationSectionPayload = {
-  id: number
+  id?: number
   title: string
   subSections: CalculationSectionPayload[]
   budgetRows: BudgetRowPayload[]
 }
 
 export type BudgetRowPayload = {
-  id: number
+  id?: number
   sectionId: number
   accountNo: number
   name: string
@@ -166,7 +174,7 @@ export type BudgetRowPayload = {
 }
 
 export type OptionBudgetRowPayload = {
-  id: number
+  id?: number
   sectionId: number
   accountNo: number
   name: string

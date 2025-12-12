@@ -288,7 +288,7 @@ export function useNewCalculationState(
     setSections(
       sections.map((section) => {
         if (section.id === sectionId) {
-          const newSubsectionId = Math.max(0, ...(section.subsections?.map(s => s.id) || [])) + 1
+          const newSubsectionId = Math.max(0, ...(section.subsections?.map(s => s.id || 0) || [])) + 1
           const newSubsection: CalculationSubsection = {
             id: newSubsectionId,
             name: `Undersektion ${newSubsectionId}`,
@@ -373,7 +373,7 @@ export function useNewCalculationState(
   }
 
   const addNewSection = () => {
-    const newSectionId = Math.max(0, ...sections.map(s => s.id)) + 1
+    const newSectionId = Math.max(0, ...sections.map(s => s.id || 0)) + 1
     const newSection: CalculationSection = {
       id: newSectionId,
       name: `Sektion ${newSectionId}`,
@@ -419,7 +419,7 @@ export function useNewCalculationState(
   }
 
   const addNewOption = () => {
-    const newOptionId = Math.max(0, ...options.map(o => o.id)) + 1
+    const newOptionId = Math.max(0, ...options.map(o => o.id || 0)) + 1
     const newOption: OptionRow = {
       id: newOptionId,
       description: '',
