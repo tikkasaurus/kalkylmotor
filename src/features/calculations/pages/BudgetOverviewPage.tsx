@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
-import { ShimmerButton } from '@/components/ui/shimmer-button'
-import { Plus, ArrowLeft, Check, FileText } from 'lucide-react'
+import { ArrowLeft, Check, FileText, Search } from 'lucide-react'
 import { useGetProjects, useCostEstimatesQuery, useGetAccounts } from '@/features/calculations/api/queries'
 import { apiClient } from '@/lib/api-client'
 import type { GetCalculationsReponse, BudgetRowPayload, OptionBudgetRowPayload, CalculationSectionPayload } from '@/features/calculations/api/types'
@@ -14,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 
 interface BudgetOverviewPageProps {
   onClose: () => void
@@ -286,10 +286,21 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null)
   const [selectedCalculationId, setSelectedCalculationId] = useState<number | null>(null)
   const [calculationData, setCalculationData] = useState<GetCalculationsReponse | null>(null)
+  const [projectSearchQuery, setProjectSearchQuery] = useState('')
   const { data: projects = [], isLoading: projectsLoading } = useGetProjects()
   const { data: costEstimates = [], isLoading: costEstimatesLoading } = useCostEstimatesQuery()
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId)
+
+  const filteredProjects = useMemo(() => {
+    if (!projectSearchQuery.trim()) {
+      return projects
+    }
+    const query = projectSearchQuery.toLowerCase()
+    return projects.filter((project) =>
+      project.name.toLowerCase().includes(query)
+    )
+  }, [projects, projectSearchQuery])
 
   const handleSelectProject = (id: number) => {
     setSelectedProjectId(id)
@@ -364,9 +375,20 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
         {/* Projects List */}
         {step === 'project' && (
           <>
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Sök efter projekt..."
+                  value={projectSearchQuery}
+                  onChange={(e) => setProjectSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
             <SelectableList
               title="Välj projekt"
-              items={projects}
+              items={filteredProjects}
               isLoading={projectsLoading}
               selectedId={selectedProjectId}
               onSelect={handleSelectProject}
