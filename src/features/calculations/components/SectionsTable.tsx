@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
-import { useGetAccounts } from '@/features/calculations/api/queries'
+import { useGetAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
 
 interface SectionsTableProps {
   sections: CalculationSection[]
@@ -59,6 +59,7 @@ export function SectionsTable({
   deleteRow,
 }: SectionsTableProps) {
   const { data: accounts = [] } = useGetAccounts()
+  const { data: unitTypes = [] } = useGetUnitTypes()
   
   return (
     <div className="bg-card border p-6">
@@ -219,10 +220,11 @@ export function SectionsTable({
                                     onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'unit', e.target.value)}
                                     className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                                   >
-                                    <option value="m2">m2</option>
-                                    <option value="m3">m3</option>
-                                    <option value="m">m</option>
-                                    <option value="st">st</option>
+                                    {unitTypes?.map((unit) => (
+                                      <option key={unit.id} value={unit.name}>
+                                        {unit.shortName}
+                                      </option>
+                                    ))}
                                   </select>
                                 </TableCell>
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">

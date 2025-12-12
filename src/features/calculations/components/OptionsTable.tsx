@@ -10,6 +10,7 @@ import {
 import { Calculator, Plus, X } from 'lucide-react'
 import type { OptionRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
+import { useGetUnitTypes } from '../api/queries'
 
 interface OptionsTableProps {
   options: OptionRow[]
@@ -26,6 +27,9 @@ export function OptionsTable({
   updateOptionField,
   deleteOption,
 }: OptionsTableProps) {
+
+  const { data: unitTypes = [] } = useGetUnitTypes()
+
   return (
     <div className="bg-card border p-6 mt-6">
       <div className="flex items-center justify-between mb-4">
@@ -78,16 +82,11 @@ export function OptionsTable({
                   onChange={(e) => updateOptionField(option.id, 'unit', e.target.value)}
                   className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                 >
-                  <option value="st">st</option>
-                  <option value="m2">m2</option>
-                  <option value="m3">m3</option>
-                  <option value="tim">tim</option>
-                  <option value="liter">liter</option>
-                  <option value="kg">kg</option>
-                  <option value="ton">ton</option>
-                  <option value="m">m</option>
-                  <option value="löpm">löpm</option>
-                  <option value="kr">kr</option>
+                  {unitTypes?.map((unit) => (
+                    <option key={unit.id} value={unit.name}>
+                      {unit.shortName}
+                    </option>
+                  ))}
                 </select>
               </TableCell>
               <TableCell className="text-right border-r border-border p-0 h-10 align-middle">

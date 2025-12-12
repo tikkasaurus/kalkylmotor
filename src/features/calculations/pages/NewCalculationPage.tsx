@@ -154,13 +154,19 @@ export function NewCalculationPage({
     setIsSaveDialogOpen(true)
   }
 
-  const handleSubmitCalculation = async (_calcName: string) => {
-    void _calcName
+  const handleSubmitCalculation = async (calcName: string) => {
     if (!costEstimateId) {
       throw new Error('Ingen kalkyl är vald.')
     }
 
     const payload = {
+      name: calcName,
+      co2Budget: state.co2Budget,
+      budget: state.budgetExclRate,
+      amount: state.bidAmount,
+      calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
+      fee: state.bidAmount - state.budgetExclRate,
+      squareMeter: state.area,
       sections: state.sections.map(mapSectionToPayload),
       optionBudgetRows: mapOptionsToPayload(state.options),
     }

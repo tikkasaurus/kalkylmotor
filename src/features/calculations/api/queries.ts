@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { Calculation, CostEstimateResponse, CreateCalculationRequest } from './types'
+import type { 
+  Calculation, 
+  CostEstimateResponse, 
+  CreateCalculationRequest, 
+  GetCalculationsReponse, 
+  ProjectsResponse, 
+  UnitTypeResponse 
+} from './types'
 
-/**
- * Fetch all calculations
- */
-export function useCalculationsQuery() {
+export function useCostEstimatesQuery() {
   return useQuery({
     queryKey: ['calculations'],
     queryFn: async () => {
@@ -79,8 +83,7 @@ export function useGetCalculation(costEstimateId: string) {
   return useQuery({
     queryKey: ['calculation', costEstimateId],
     queryFn: () =>
-      apiClient.get<CreateCalculationRequest>(`/CostEstimate/${costEstimateId}/calculations`),
-    enabled: !!costEstimateId,
+      apiClient.get<GetCalculationsReponse>(`/CostEstimate/${costEstimateId}/calculations`),
   })
 }
 
@@ -97,6 +100,20 @@ export function useUpdateCalculation() {
       queryClient.invalidateQueries({ queryKey: ['calculations'] })
       queryClient.invalidateQueries({ queryKey: ['calculations', id] })
     },
+  })
+}
+
+export function useGetUnitTypes() {
+  return useQuery({
+    queryKey: ['unitTypes'],
+    queryFn: async () => {
+      const res = await apiClient.get<UnitTypeResponse>(`/CostEstimate/unitType?Take=200`)
+      return res.data.map((unit) => ({
+        id: unit.id,
+        name: unit.name,
+        shortName: unit.shortName,
+      }))
+    }
   })
 }
 
@@ -118,17 +135,18 @@ export const useGetCO2Database = () => {
   return useQuery({
     queryKey: ['co2-database'],
     queryFn: () => {
+      //const res = await apiClient.get<CO2Response>("/CostEstimate/co2")
       return [
-        { id: 1, artikelnamn: 'Betong C30/37', kategori: 'Betong', co2Varde: 125, enhet: 'kg CO2/m³' },
-        { id: 2, artikelnamn: 'Betong C25/30', kategori: 'Betong', co2Varde: 110, enhet: 'kg CO2/m³' },
-        { id: 3, artikelnamn: 'Armering B500B', kategori: 'Stål', co2Varde: 1850, enhet: 'kg CO2/ton' },
-        { id: 4, artikelnamn: 'Konstruktionsstål S355', kategori: 'Stål', co2Varde: 1920, enhet: 'kg CO2/ton' },
-        { id: 5, artikelnamn: 'Träreglar 45x145', kategori: 'Trä', co2Varde: 12, enhet: 'kg CO2/m³' },
-        { id: 6, artikelnamn: 'Limträ GL30c', kategori: 'Trä', co2Varde: 45, enhet: 'kg CO2/m³' },
-        { id: 7, artikelnamn: 'Gips 13mm', kategori: 'Gips', co2Varde: 6.5, enhet: 'kg CO2/m³' },
-        { id: 8, artikelnamn: 'Mineralull 195mm', kategori: 'Isolering', co2Varde: 8.2, enhet: 'kg CO2/m³' },
-        { id: 9, artikelnamn: 'Tegel röd', kategori: 'Tegel', co2Varde: 180, enhet: 'kg CO2/1000 st' },
-        { id: 10, artikelnamn: 'Betongpannor', kategori: 'Tak', co2Varde: 15, enhet: 'kg CO2/m³' },
+        { id: 1, name: 'Betong C30/37', category: 'Betong', co2Value: 125, unit: 'kg CO2/m³' },
+        { id: 2, name: 'Betong C25/30', category: 'Betong', co2Value: 110, unit: 'kg CO2/m³' },
+        { id: 3, name: 'Armering B500B', category: 'Stål', co2Value: 1850, unit: 'kg CO2/ton' },
+        { id: 4, name: 'Konstruktionsstål S355', category: 'Stål', co2Value: 1920, unit: 'kg CO2/ton' },
+        { id: 5, name: 'Träreglar 45x145', category: 'Trä', co2Value: 12, unit: 'kg CO2/m³' },
+        { id: 6, name: 'Limträ GL30c', category: 'Trä', co2Value: 45, unit: 'kg CO2/m³' },
+        { id: 7, name: 'Gips 13mm', category: 'Gips', co2Value: 6.5, unit: 'kg CO2/m³' },
+        { id: 8, name: 'Mineralull 195mm', category: 'Isolering', co2Value: 8.2, unit: 'kg CO2/m³' },
+        { id: 9, name: 'Tegel röd', category: 'Tegel', co2Value: 180, unit: 'kg CO2/1000 st' },
+        { id: 10, name: 'Betongpannor', category: 'Tak', co2Value: 15, unit: 'kg CO2/m³' },
       ]
     },
   })
@@ -138,6 +156,19 @@ export function useGetBookkeepingAccounts() {
   return useQuery({
     queryKey: ['bookkeeping-accounts'],
     queryFn: () => apiClient.get<Calculation>(`/CostEstimate/bookkeeping-accounts`),
+  })
+}
+
+export const useGetProjects = () => {
+  return useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const res = await apiClient.get<ProjectsResponse>(`/CostEstimate/projects`)
+      return res.data.map((p) => ({
+        id: p.id,
+        name: p.name,
+      }));
+    }
   })
 }
 

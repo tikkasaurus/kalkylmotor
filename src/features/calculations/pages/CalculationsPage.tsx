@@ -18,12 +18,12 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCalculationsQuery, useCreateTemplate, useGetCalculation } from '../api/queries'
+import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import { FileText } from 'lucide-react'
 
 export function CalculationsPage() {
-  const { data: calculations = [], isLoading, error } = useCalculationsQuery()
+  const { data: costEstimates = [], isLoading, error } = useCostEstimatesQuery()
   const { mutate: createTemplate } = useCreateTemplate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
@@ -232,14 +232,14 @@ export function CalculationsPage() {
                     </div>
                   </TableCell>
                 </motion.tr>
-              ) : calculations.length === 0 ? (
+              ) : costEstimates.length === 0 ? (
                 <motion.tr>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     Inga kalkyler skapade ännu
                   </TableCell>
                 </motion.tr>
               ) : (
-                calculations.map((calc) => (
+                costEstimates.map((calc) => (
                 <TableRow
                   key={calc.id}
                   className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors cursor-pointer"

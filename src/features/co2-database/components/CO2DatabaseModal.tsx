@@ -15,15 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, X } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useGetCO2Database } from '@/features/calculations/api/queries'
 
 interface CO2Item {
   id: number
-  artikelnamn: string
-  kategori: string
-  co2Varde: number
-  enhet: string
+  name: string
+  category: string
+  co2Value: number
+  unit: string
 }
 
 interface CO2DatabaseModalProps {
@@ -38,8 +38,8 @@ export function CO2DatabaseModal({ open, onOpenChange, onSelect }: CO2DatabaseMo
 
   const filteredItems = co2Items?.filter(
     (item: CO2Item) =>
-      item.artikelnamn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.kategori.toLowerCase().includes(searchQuery.toLowerCase())
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const handleSelect = (item: CO2Item) => {
@@ -83,10 +83,10 @@ export function CO2DatabaseModal({ open, onOpenChange, onSelect }: CO2DatabaseMo
             <TableBody>
               {filteredItems?.map((item: CO2Item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.artikelnamn}</TableCell>
-                  <TableCell>{item.kategori}</TableCell>
-                  <TableCell className="text-right">{item.co2Varde}</TableCell>
-                  <TableCell>{item.enhet}</TableCell>
+                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell>{item.category}</TableCell>
+                  <TableCell className="text-right">{item.co2Value}</TableCell>
+                  <TableCell>{item.unit}</TableCell>
                   <TableCell>
                     <Button
                       size="sm"

@@ -94,10 +94,51 @@ export type CostEstimateResponse = {
   created: string
 }[];
 
+export type UnitTypeResponse = {
+  "count": number,
+  "data": [
+    {
+      "id": number,
+      "name": string,
+      "shortName": string
+    }
+  ]
+};
+
+export type ProjectsResponse = {
+  "count": number,
+  "data": [
+    {
+      "id": number,
+      "name": string
+    }
+  ]
+};
+
+export type CO2Response = {
+  "count": number,
+  "data": [
+    {
+      "id": number,
+      "name": string,
+      "shortName": string
+    }
+  ]
+};
+
 export type CreateCalculationRequest = {
+  name: string
+  co2Budget: number
+  budget: number
+  amount: number
+  calculatedFeeAmount: number
+  fee: number
+  squareMeter: number
   sections: CalculationSectionPayload[]
   optionBudgetRows: OptionBudgetRowPayload[]
 }
+
+export type GetCalculationsReponse = CreateCalculationRequest;
 
 export type CalculationSectionPayload = {
   id: number

@@ -214,7 +214,7 @@ export function useNewCalculationState(
     setCo2ModalOpen(true)
   }
 
-  const handleCO2Select = (item: { co2Varde: number }) => {
+  const handleCO2Select = (item: { co2Value: number }) => {
     if (selectedRowForCO2) {
       setSections(
         sections.map((section) =>
@@ -227,7 +227,7 @@ export function useNewCalculationState(
                         ...subsection,
                         rows: subsection.rows?.map((row) =>
                           row.id === selectedRowForCO2.rowId
-                            ? { ...row, co2: item.co2Varde }
+                            ? { ...row, co2: item.co2Value }
                             : row
                         ),
                       }
