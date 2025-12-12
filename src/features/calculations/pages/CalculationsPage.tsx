@@ -195,7 +195,7 @@ export function CalculationsPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-background p-8">
+      <div className="bg-background p-8">
       <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="mb-8">
