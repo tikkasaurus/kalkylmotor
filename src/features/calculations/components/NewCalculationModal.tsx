@@ -106,7 +106,7 @@ export function NewCalculationModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Skapa ny kalkyl</DialogTitle>
+          <DialogTitle>Skapa ny kalkyl från mall</DialogTitle>
         </DialogHeader>
         <ScrollArea className="mt-4 max-h-[60vh]">
           <div className="flex flex-col gap-3 pr-4">
@@ -133,20 +133,17 @@ export function NewCalculationModal({
                       <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="flex-1 min-w-0 self-center">
+                    <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-base">{template.title}</h3>
-                      {template.popular && (
-                        <Badge variant="secondary" className="text-xs">
-                          Populär
-                        </Badge>
-                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {template.description}
-                    </p>
+                    {template.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {template.description}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex-shrink-0 mt-1">
+                  <div className="flex-shrink-0 self-center">
                     <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </div>
                 </button>
