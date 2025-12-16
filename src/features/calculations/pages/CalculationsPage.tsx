@@ -348,7 +348,7 @@ export function CalculationsPage() {
                   </TableCell>
                   <TableCell className="text-left font-medium">{calc.amount}</TableCell>
                   <TableCell className="text-left text-muted-foreground">
-                    {calc.created}
+                    {calc.created.split('T')[0]}
                   </TableCell>
                   <TableCell className="text-left text-muted-foreground">
                     {calc.createdByName}

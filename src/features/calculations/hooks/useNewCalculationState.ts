@@ -86,7 +86,8 @@ function buildSubsectionsFromPayload(
     ;(payloadSection.subSections || []).forEach(addFromSection)
   }
 
-  addFromSection(section)
+  // Only process the actual subsections, not the parent section itself
+  ;(section.subSections || []).forEach(addFromSection)
   return subsections
 }
 
@@ -304,7 +305,8 @@ export function useNewCalculationState(
             ...section,
             subsections: section.subsections?.map((subsection) => {
               if (subsection.id === subsectionId) {
-                const newRowId = Math.max(0, ...(subsection.rows?.map(r => r.id) || [])) + 1
+                const existingIds = subsection.rows?.map(r => r.id).filter((id): id is number => id !== undefined) || []
+                const newRowId = existingIds.length > 0 ? Math.max(0, ...existingIds) + 1 : 1
                 const newRow: CalculationRow = {
                   id: newRowId,
                   description: '',
