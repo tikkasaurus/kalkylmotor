@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
-import { useGetAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
+import { useGetBookkeepingAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
 
 interface SectionsTableProps {
   sections: CalculationSection[]
@@ -58,7 +58,7 @@ export function SectionsTable({
   deleteSubsection,
   deleteRow,
 }: SectionsTableProps) {
-  const { data: accounts = [] } = useGetAccounts()
+  const { data: accounts = [] } = useGetBookkeepingAccounts()
   const { data: unitTypes = [] } = useGetUnitTypes()
   
   return (

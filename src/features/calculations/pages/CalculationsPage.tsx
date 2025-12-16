@@ -209,13 +209,13 @@ export function CalculationsPage() {
   }, [contextMenu.open])
 
   const handleSaveSuccess = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { x: 0.5, y: 0 },
-      gravity: 1.5,
-      colors: ['#0099FF', '#00FF99', '#FF9900', '#FF0099', '#9900FF'],
-    })
+    // confetti({
+    //   particleCount: 100,
+    //   spread: 70,
+    //   origin: { x: 0.5, y: 0 },
+    //   gravity: 1.5,
+    //   colors: ['#0099FF', '#00FF99', '#FF9900', '#FF0099', '#9900FF'],
+    // })
   }
 
   // Show budget overview if active

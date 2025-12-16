@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import type { 
+  BookkeepingAccountResponse,
   Calculation, 
   CopyCostEstimateResponse, 
   CostEstimateResponse, 
@@ -183,7 +184,14 @@ export const useGetCO2Database = () => {
 export function useGetBookkeepingAccounts() {
   return useQuery({
     queryKey: ['bookkeeping-accounts'],
-    queryFn: () => apiClient.get<Calculation>(`/CostEstimate/bookkeeping-accounts`),
+    queryFn: async () => {
+      const res = await apiClient.get<BookkeepingAccountResponse>(`/CostEstimate/bookkeeping-accounts`)
+      return res.data.map((account) => ({
+        id: account.accountNo,
+        accountNumber: account.accountNo,
+        description: account.name,
+      }))
+    }
   })
 }
 

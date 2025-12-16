@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Check, FileText, Search } from 'lucide-react'
-import { useGetProjects, useCostEstimatesQuery, useGetAccounts, useConnectCostEstimateToProject } from '@/features/calculations/api/queries'
+import { useGetProjects, useCostEstimatesQuery, useConnectCostEstimateToProject, useGetBookkeepingAccounts } from '@/features/calculations/api/queries'
 import { toast } from '@/components/ui/toast'
 import { apiClient } from '@/lib/api-client'
 import type { GetCalculationsReponse, BudgetRowPayload, OptionBudgetRowPayload, CalculationSectionPayload } from '@/features/calculations/api/types'
@@ -175,7 +175,7 @@ function flattenBudgetRows(calculationData: GetCalculationsReponse): (BudgetRowP
 }
 
 function BudgetPreview({ calculationData }: { calculationData: GetCalculationsReponse }) {
-  const { data: accounts = [] } = useGetAccounts()
+  const { data: accounts = [] } = useGetBookkeepingAccounts()
   
   const accountGroups = useMemo(() => {
     const rows = flattenBudgetRows(calculationData)
@@ -185,7 +185,7 @@ function BudgetPreview({ calculationData }: { calculationData: GetCalculationsRe
       if (row.accountNo === 0) return
       
       if (!grouped.has(row.accountNo)) {
-        const account = accounts.find((a) => a.accountNumber === row.accountNo.toString())
+        const account = accounts.find((a) => a.accountNumber === row.accountNo)
         grouped.set(row.accountNo, {
           accountNo: row.accountNo,
           accountName: account ? `${row.accountNo} ${account.description}` : `${row.accountNo}`,

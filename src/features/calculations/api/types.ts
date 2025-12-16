@@ -9,6 +9,19 @@ export interface Calculation {
   revision?: string
 }
 
+export type BookkeepingAccountResponse = {
+  count: number
+  data: {
+    accountNo: number
+    name: string
+    accountGroupId: number
+    accountGroupName: string
+    aggregateToAccountNo: number
+    prevAccountNo: number
+    accountGroupSortOrder: number
+  }[]
+}
+
 export interface CalculationTemplate {
   name: string
   sections: TemplateSection[]

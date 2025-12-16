@@ -36,9 +36,15 @@ export function NewCalculationPage({
   const loadingExisting = !!existingCalculationLoading
   const existingError = existingCalculationError
 
-  const mapRowToPayload = (row: CalculationRow, sectionId: number, includeId: boolean): BudgetRowPayload => {
+  const mapRowToPayload = (
+    row: CalculationRow, 
+    sectionId: number | undefined, 
+    subsectionId: number | undefined,
+    includeId: boolean,
+    originalSections?: CalculationSectionPayload[]
+  ): BudgetRowPayload => {
     const payload: BudgetRowPayload = {
-      sectionId,
+      sectionId: sectionId || 0,
       accountNo: Number(row.account) || 0,
       name: row.description,
       quantity: row.quantity,
@@ -47,33 +53,60 @@ export function NewCalculationPage({
       notes: row.note,
       co2CostId: 0, //TODO: Add co2 cost id from CO2 hook
     }
-    if (includeId) {
-      payload.id = row.id
+    
+    // Only include ID if it exists in the original payload
+    // Both sectionId and subsectionId must be defined to find the original row
+    if (includeId && row.id && originalSections && sectionId !== undefined && subsectionId !== undefined) {
+      const originalSection = originalSections.find(s => s.id === sectionId)
+      const originalSubsection = originalSection?.subSections.find(sub => sub.id === subsectionId)
+      const originalRow = originalSubsection?.budgetRows.find(r => r.id === row.id)
+      if (originalRow) {
+        payload.id = row.id
+      }
     }
+    
     return payload
   }
 
-  const mapSectionToPayload = (section: CalculationSection, includeId: boolean): CalculationSectionPayload => {
+  const mapSectionToPayload = (
+    section: CalculationSection, 
+    includeId: boolean,
+    originalSections?: CalculationSectionPayload[]
+  ): CalculationSectionPayload => {
+    // Find the original section if it exists
+    const originalSection = originalSections?.find(s => s.id === section.id)
+    
     const payload: CalculationSectionPayload = {
       title: section.name,
       subSections: (section.subsections || []).map((subsection) => {
+        // Check if subsection ID exists in original payload
+        const originalSubsection = originalSection?.subSections.find(sub => sub.id === subsection.id)
         const subPayload: CalculationSectionPayload = {
-          id: includeId ? subsection.id : undefined,
+          id: includeId && subsection.id && originalSubsection ? subsection.id : undefined,
           title: subsection.name,
           subSections: [],
-          budgetRows: (subsection.rows || []).map((row) => mapRowToPayload(row, section?.id || 0, includeId)),
+          budgetRows: (subsection.rows || []).map((row) => 
+            mapRowToPayload(row, section.id, subsection.id, includeId, originalSections)
+          ),
         }
         return subPayload
       }),
       budgetRows: [],
     }
-    if (includeId) {
+    
+    // Only include section ID if it exists in the original payload
+    if (includeId && section.id && originalSection) {
       payload.id = section.id
     }
+    
     return payload
   }
 
-  const mapOptionsToPayload = (options: typeof state.options, includeId: boolean): OptionBudgetRowPayload[] =>
+  const mapOptionsToPayload = (
+    options: typeof state.options, 
+    includeId: boolean,
+    originalOptions?: OptionBudgetRowPayload[]
+  ): OptionBudgetRowPayload[] =>
     options.map((option) => {
       const payload: OptionBudgetRowPayload = {
         accountNo: 0,
@@ -82,9 +115,15 @@ export function NewCalculationPage({
         price: option.pricePerUnit,
         amount: option.quantity * option.pricePerUnit,
       }
-      if (includeId && option.id) {
-        payload.id = option.id
+      
+      // Only include ID if it exists in the original payload
+      if (includeId && option.id && originalOptions) {
+        const originalOption = originalOptions.find(o => o.id === option.id)
+        if (originalOption) {
+          payload.id = option.id
+        }
       }
+      
       return payload
     })
 
@@ -173,8 +212,14 @@ export function NewCalculationPage({
         calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
         fee: state.bidAmount - state.budgetExclRate,
         squareMeter: state.area,
-        sections: state.sections.map((section) => mapSectionToPayload(section, !isNewCalculation)),
-        optionBudgetRows: mapOptionsToPayload(state.options, !isNewCalculation),
+        sections: state.sections.map((section) => 
+          mapSectionToPayload(section, !isNewCalculation, existingCalculation?.sections)
+        ),
+        optionBudgetRows: mapOptionsToPayload(
+          state.options, 
+          !isNewCalculation, 
+          existingCalculation?.optionBudgetRows
+        ),
       }
 
       await createCalculation.mutateAsync({
