@@ -107,7 +107,6 @@ export function SectionsTable({
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   )}
                 </div>
-                <span className="text-muted-foreground w-6">{section.id}</span>
                 <Input
                   type="text"
                   value={section.name}
