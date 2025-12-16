@@ -214,23 +214,3 @@ export function useConnectCostEstimateToProject() {
       apiClient.post(`/CostEstimate/${costEstimateId}/projects/${projectId}?budgetType=Production`, {}),
   })
 }
-
-
-export const useGetAccounts = () => {
-  return useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => {
-      return [
-        { id: 1, accountNumber: '4010', description: 'Material' },
-        { id: 2, accountNumber: '4020', description: 'Underentreprenörer' },
-        { id: 3, accountNumber: '4030', description: 'Maskinhyror' },
-        { id: 4, accountNumber: '4040', description: 'Transporter' },
-        { id: 5, accountNumber: '4050', description: 'Arbetskostnader' },
-        { id: 6, accountNumber: '4060', description: 'Övriga direkta kostnader' },
-        { id: 7, accountNumber: '4070', description: 'Projektkostnader' },
-        { id: 8, accountNumber: '4080', description: 'Resor och traktamenten' },
-      ]
-    },
-  })
-}
-
