@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import confetti from 'canvas-confetti'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
@@ -146,7 +145,10 @@ export function CalculationsPage() {
 
   const handleCreateTemplate = async () => {
     if (contextMenu.calculation) {
-      await createTemplate(contextMenu.calculation.id);
+      await createTemplate({ 
+        costEstimateId: contextMenu.calculation.id, 
+        templateName: contextMenu.calculation.name 
+      });
       setContextMenu({ open: false, x: 0, y: 0, calculation: null })
       toast.success('Mall skapad')
     }

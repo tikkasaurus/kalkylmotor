@@ -33,8 +33,8 @@ export function useCostEstimatesQuery() {
 export function useCreateTemplate() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (costEstimateId: number) =>
-      apiClient.put(`/CostEstimate/${costEstimateId}/toTemplate`),
+    mutationFn: ({ costEstimateId, templateName }: { costEstimateId: number; templateName: string }) =>
+      apiClient.put(`/CostEstimate/${costEstimateId}/toTemplate?templateName=${templateName}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['templates'] })
     },
