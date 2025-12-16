@@ -8,6 +8,7 @@ import {
   X,
   FileSpreadsheet,
 } from 'lucide-react'
+import { useGetTenantIcon } from '../api/queries'
 
 interface NewCalculationHeaderProps {
   onClose: () => void
@@ -25,6 +26,7 @@ export function NewCalculationHeader({
   initialCalculationName = 'Kalkylnamn',
 }: NewCalculationHeaderProps) {
   const [calculationName, setCalculationName] = useState(initialCalculationName)
+  const { data: tenantIcon } = useGetTenantIcon()
 
   const handleSave = () => {
     if (onSave) {
@@ -37,16 +39,13 @@ export function NewCalculationHeader({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Logo */}
-            <div className="w-16 h-16 bg-orange-600 border border-black flex flex-col items-center justify-center">
-              <div className="flex items-center gap-1 text-white font-bold text-sm">
-                <span>B</span>
-                <span className="text-black">|</span>
-                <span>R</span>
-                <span className="text-black">|</span>
-                <span>A</span>
-              </div>
-              <p className="text-[6px] text-white leading-tight text-center px-1">BILLSTRÖM RIEMER ANDERSSON</p>
-            </div>
+            {tenantIcon && (
+              <img 
+                src={tenantIcon} 
+                alt="Tenant logo" 
+                className="w-24 object-contain"
+              />
+            )}
             <div className="text-left flex-1">
               <Input
                 value={calculationName}

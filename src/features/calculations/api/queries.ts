@@ -44,7 +44,31 @@ export function useCreateTemplate() {
 export function useGetTenantIcon() {
   return useQuery({
     queryKey: ['tenant-icon'],
-    queryFn: () => apiClient.get<string>(`/CostEstimate/tenant/icon`),
+    queryFn: async () => {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+      const { tokenProvider } = await import('@/lib/tokenProvider')
+      const token = await tokenProvider.getAccessToken()
+      
+      const headers: HeadersInit = {
+        'Accept': 'image/png,image/*,*/*',
+      }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const url = `${API_BASE_URL}/CostEstimate/tenant/icon`
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch tenant icon: ${response.statusText}`)
+      }
+      
+      const blob = await response.blob()
+      return URL.createObjectURL(blob)
+    },
   })
 }
 
