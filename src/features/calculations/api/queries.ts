@@ -92,7 +92,7 @@ export function useGetTemplates() {
       return res.map((template) => ({
         id: template.id,
         title: template.name,
-        description: '',
+        description: undefined,
         popular: false,
       }));
     }
