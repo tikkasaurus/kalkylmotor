@@ -182,7 +182,6 @@ export function SectionsTable({
                               <TableHead className="text-gray-600 w-[80px] text-center border-r border-border bg-muted/50 font-semibold">CO2</TableHead>
                               <TableHead className="text-gray-600 w-[130px] text-right border-r border-border bg-muted/50 font-semibold">SUMMA</TableHead>
                               <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
-                              <TableHead className="text-gray-600 w-[120px] border-r border-border bg-muted/50 font-semibold">RESURS</TableHead>
                               <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
                               <TableHead className="w-[50px] bg-muted/50 font-semibold"></TableHead>
                             </TableRow>
@@ -279,15 +278,6 @@ export function SectionsTable({
                                       </option>
                                     ))}
                                   </select>
-                                </TableCell>
-                                <TableCell className="border-r border-border p-0 h-10 align-middle">
-                                  <Input 
-                                    type="text" 
-                                    value={row.resource} 
-                                    onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'resource', e.target.value)}
-                                    className="!h-10 w-full text-sm border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                                    placeholder="Resurs..."
-                                  />
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <Input 

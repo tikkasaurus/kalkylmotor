@@ -198,13 +198,12 @@ export function exportToPDF(data: PDFExportData) {
             formatNumber(row.co2 || 0),
             formatCurrency(row.quantity * row.pricePerUnit),
             row.account || '',
-            row.resource || '',
             row.note || '',
           ])
 
           autoTable(doc, {
             startY: yPos,
-            head: [['BENÄMNING', 'ANTAL', 'ENHET', 'PRIS/ENHET', 'CO2', 'SUMMA', 'KONTO', 'RESURS', 'ANTECKNING']],
+            head: [['BENÄMNING', 'ANTAL', 'ENHET', 'PRIS/ENHET', 'CO2', 'SUMMA', 'KONTO', 'ANTECKNING']],
             body: tableData,
             margin: { left: margin, right: margin },
             tableWidth: 'auto',
