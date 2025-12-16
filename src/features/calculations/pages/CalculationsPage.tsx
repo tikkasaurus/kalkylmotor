@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import confetti from 'canvas-confetti'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -18,16 +19,18 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate } from '../api/queries'
+import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import type { GetCalculationsReponse } from '../api/types'
-import { FileText } from 'lucide-react'
+import { FileText, Trash } from 'lucide-react'
+import { toast } from '@/components/ui/toast'
 
 export function CalculationsPage() {
   const { data: costEstimates = [], isLoading, error } = useCostEstimatesQuery()
   const { mutate: createTemplate } = useCreateTemplate()
   const { mutate: initializeCostEstimate } = useInitializeCostEstimate()
   const { mutate: copyCostEstimate } = useCopyCostEstimate()
+  const { mutate: deleteCostEstimate } = useDeleteCostEstimate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
@@ -36,6 +39,8 @@ export function CalculationsPage() {
   const [newCostEstimateId, setNewCostEstimateId] = useState<string | null>(null)
   const [copiedCalculationData, setCopiedCalculationData] = useState<GetCalculationsReponse | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [contextMenu, setContextMenu] = useState<{
     open: boolean
     x: number
@@ -141,10 +146,35 @@ export function CalculationsPage() {
 
   const handleCreateTemplate = async () => {
     if (contextMenu.calculation) {
-      console.log('Creating template from calculation:', contextMenu.calculation.id);
       await createTemplate(contextMenu.calculation.id);
       setContextMenu({ open: false, x: 0, y: 0, calculation: null })
+      toast.success('Mall skapad')
     }
+  }
+
+  const handleConfirmDeleteOpen = () => {
+    if (!contextMenu.calculation) return
+    setDeleteTarget(contextMenu.calculation)
+    setShowDeleteConfirm(true)
+    setContextMenu({ open: false, x: 0, y: 0, calculation: null })
+  }
+
+  const handleDeleteCostEstimate = async () => {
+    if (!deleteTarget) return
+
+    deleteCostEstimate(deleteTarget.id, {
+      onSuccess: () => {
+        setShowDeleteConfirm(false)
+        setDeleteTarget(null)
+        // Reset view if the deleted calc was open
+        if (selectedCalculation?.id === deleteTarget.id) {
+          handleCloseCalculationView()
+        }
+      },
+      onError: (err) => {
+        console.error('Error deleting cost estimate:', err)
+      },
+    })
   }
 
   const costEstimateId = selectedCalculation?.id ? String(selectedCalculation.id) : ''
@@ -405,8 +435,40 @@ export function CalculationsPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
             Skapa mall från denna kalkyl
           </button>
+          <button
+            onClick={handleConfirmDeleteOpen}
+            className="relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-red-500 outline-none transition-colors hover:bg-accent hover:text-red-600 focus:bg-accent focus:text-red-600"
+          >
+            <Trash className="h-4 w-4 text-muted-foreground" />
+            Ta bort kalkyl
+          </button>
         </div>
       )}
+
+      <Dialog
+        open={showDeleteConfirm}
+        onOpenChange={(open) => {
+          setShowDeleteConfirm(open)
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bekräfta borttagning</DialogTitle>
+            <DialogDescription>
+              Är du säker på att du vill ta bort kalkylen? Denna åtgärd går inte att ångra i efterhand.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+              Avbryt
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteCostEstimate}>
+              Ok
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

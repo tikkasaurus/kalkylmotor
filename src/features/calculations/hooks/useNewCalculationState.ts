@@ -92,17 +92,7 @@ function buildSubsectionsFromPayload(
 
 function buildSectionsFromPayload(payload?: CreateCalculationRequest): CalculationSection[] {
   if (!payload?.sections || payload.sections.length === 0) {
-    return [
-      {
-        id: 1,
-        name: 'Section 1',
-        amount: 0,
-        expanded: false,
-        subsections: [
-          { id: 1, name: 'Undersektion 1', amount: 0, expanded: false, rows: [] },
-        ],
-      },
-    ]
+    return [];
   }
 
   return payload.sections.map((section) => {

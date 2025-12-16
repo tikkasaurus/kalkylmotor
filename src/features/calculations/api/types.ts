@@ -164,28 +164,15 @@ export type BudgetRowPayload = {
   quantity: number
   price: number
   amount: number
-  markupAmount: number
-  markupPercent: number
-  waste: number
   notes: string
-  budgetActivityId: number
-  budgetLocationId: number
   co2CostId: number
 }
 
 export type OptionBudgetRowPayload = {
   id?: number
-  sectionId: number
   accountNo: number
   name: string
   quantity: number
   price: number
   amount: number
-  markupAmount: number
-  markupPercent: number
-  waste: number
-  notes: string
-  budgetActivityId: number
-  budgetLocationId: number
-  co2CostId: number
 }

@@ -44,13 +44,8 @@ export function NewCalculationPage({
       quantity: row.quantity,
       price: row.pricePerUnit,
       amount: row.quantity * row.pricePerUnit,
-      markupAmount: 0,
-      markupPercent: 0,
-      waste: 0,
       notes: row.note,
-      budgetActivityId: 0,
-      budgetLocationId: 0,
-      co2CostId: 0,
+      co2CostId: 0, //TODO: Add co2 cost id from CO2 hook
     }
     if (includeId) {
       payload.id = row.id
@@ -63,12 +58,10 @@ export function NewCalculationPage({
       title: section.name,
       subSections: (section.subsections || []).map((subsection) => {
         const subPayload: CalculationSectionPayload = {
+          id: includeId ? subsection.id : undefined,
           title: subsection.name,
           subSections: [],
           budgetRows: (subsection.rows || []).map((row) => mapRowToPayload(row, section?.id || 0, includeId)),
-        }
-        if (includeId) {
-          subPayload.id = subsection.id
         }
         return subPayload
       }),
@@ -83,19 +76,11 @@ export function NewCalculationPage({
   const mapOptionsToPayload = (options: typeof state.options, includeId: boolean): OptionBudgetRowPayload[] =>
     options.map((option) => {
       const payload: OptionBudgetRowPayload = {
-        sectionId: 0,
         accountNo: 0,
         name: option.description,
         quantity: option.quantity,
         price: option.pricePerUnit,
         amount: option.quantity * option.pricePerUnit,
-        markupAmount: 0,
-        markupPercent: 0,
-        waste: 0,
-        notes: '',
-        budgetActivityId: 0,
-        budgetLocationId: 0,
-        co2CostId: 0,
       }
       if (includeId && option.id) {
         payload.id = option.id

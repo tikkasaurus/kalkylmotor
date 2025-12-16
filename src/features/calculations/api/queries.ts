@@ -30,9 +30,31 @@ export function useCostEstimatesQuery() {
 }
 
 export function useCreateTemplate() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (costEstimateId: number) =>
       apiClient.put(`/CostEstimate/${costEstimateId}/toTemplate`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] })
+    },
+  })
+}
+
+export function useGetTenantIcon() {
+  return useQuery({
+    queryKey: ['tenant-icon'],
+    queryFn: () => apiClient.get<string>(`/CostEstimate/tenant/icon`),
+  })
+}
+
+export function useDeleteCostEstimate() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (costEstimateId: number) =>
+      apiClient.delete(`/CostEstimate/${costEstimateId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calculations'] })
+    },
   })
 }
 
@@ -175,6 +197,13 @@ export const useGetProjects = () => {
         name: p.name,
       }));
     }
+  })
+}
+
+export function useConnectCostEstimateToProject() {
+  return useMutation({
+    mutationFn: ({ costEstimateId, projectId }: { costEstimateId: number; projectId: number }) =>
+      apiClient.post(`/CostEstimate/${costEstimateId}/projects/${projectId}?budgetType=Production`, {}),
   })
 }
 

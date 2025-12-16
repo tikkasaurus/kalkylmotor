@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Check, FileText, Search } from 'lucide-react'
-import { useGetProjects, useCostEstimatesQuery, useGetAccounts } from '@/features/calculations/api/queries'
+import { useGetProjects, useCostEstimatesQuery, useGetAccounts, useConnectCostEstimateToProject } from '@/features/calculations/api/queries'
+import { toast } from '@/components/ui/toast'
 import { apiClient } from '@/lib/api-client'
 import type { GetCalculationsReponse, BudgetRowPayload, OptionBudgetRowPayload, CalculationSectionPayload } from '@/features/calculations/api/types'
 import {
@@ -287,8 +288,11 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
   const [selectedCalculationId, setSelectedCalculationId] = useState<number | null>(null)
   const [calculationData, setCalculationData] = useState<GetCalculationsReponse | null>(null)
   const [projectSearchQuery, setProjectSearchQuery] = useState('')
+  const [importProgress, setImportProgress] = useState(0)
+  const [isImporting, setIsImporting] = useState(false)
   const { data: projects = [], isLoading: projectsLoading } = useGetProjects()
   const { data: costEstimates = [], isLoading: costEstimatesLoading } = useCostEstimatesQuery()
+  const { mutate: connectCostEstimateToProject } = useConnectCostEstimateToProject()
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId)
 
@@ -338,6 +342,72 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
     } else if (step === 'preview') {
       setStep('calculation')
     }
+  }
+
+  const apiResultRef = useRef<'success' | 'error' | null>(null)
+
+  const handleImportCalculation = () => {
+    if (!selectedProjectId || !selectedCalculationId) return
+
+    setIsImporting(true)
+    setImportProgress(0)
+    apiResultRef.current = null
+
+    const duration = 5000 // 5 seconds
+    const updateInterval = 50 // Update every 50ms for smooth animation
+    const startTime = Date.now()
+    let progressInterval: NodeJS.Timeout | null = null
+
+    // Simulate progress over 5 seconds - always completes
+    progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min((elapsed / duration) * 100, 100)
+      setImportProgress(progress)
+
+      if (progress >= 100) {
+        if (progressInterval) {
+          clearInterval(progressInterval)
+          progressInterval = null
+        }
+        
+        // Progress completed, wait for API result if not ready, then show message
+        const checkResult = () => {
+          if (apiResultRef.current === 'success') {
+            toast.success('Kalkylen har importerats framgångsrikt')
+            setIsImporting(false)
+            setImportProgress(0)
+            onClose()
+          } else if (apiResultRef.current === 'error') {
+            toast.error('Det gick inte att importera kalkylen. Försök igen.')
+            setIsImporting(false)
+            setImportProgress(0)
+          } else {
+            // API hasn't responded yet, check again in 100ms (with timeout)
+            setTimeout(checkResult, 100)
+          }
+        }
+        
+        // Small delay to ensure state is set, then check result
+        setTimeout(checkResult, 100)
+      }
+    }, updateInterval)
+
+    // Call the API (in parallel with progress)
+    connectCostEstimateToProject(
+      {
+        costEstimateId: selectedCalculationId,
+        projectId: selectedProjectId,
+      },
+      {
+        onSuccess: () => {
+          apiResultRef.current = 'success'
+        },
+        onError: (error) => {
+          console.error('Error importing calculation:', error)
+          apiResultRef.current = 'error'
+        },
+      }
+    )
   }
 
   return (
@@ -430,16 +500,30 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
         {step === 'preview' && calculationData && (
           <>
             <BudgetPreview calculationData={calculationData} />
-            <div className="mt-6 flex items-center justify-between">
-              <Button onClick={handleBack} size="lg" variant="outline">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Tillbaka
-              </Button>
-              <Button onClick={() => {
-                // TODO: Handle import/final step
-              }} size="lg">
-                Importera kalkyl
-              </Button>
+            <div className="mt-6 space-y-4">
+              {isImporting && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Importerar kalkyl...</span>
+                    <span className="font-medium">{importProgress}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-100 ease-linear"
+                      style={{ width: `${importProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <Button onClick={handleBack} size="lg" variant="outline" disabled={isImporting}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Tillbaka
+                </Button>
+                <Button onClick={handleImportCalculation} size="lg" disabled={isImporting || !selectedProjectId || !selectedCalculationId}>
+                  {isImporting ? 'Importerar...' : 'Importera kalkyl'}
+                </Button>
+              </div>
             </div>
           </>
         )}

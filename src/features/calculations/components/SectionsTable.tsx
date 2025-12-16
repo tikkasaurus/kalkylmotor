@@ -97,7 +97,7 @@ export function SectionsTable({
           <div key={section.id} className="border overflow-hidden">
             <div 
               className="w-full flex items-center justify-between p-4 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
-              onClick={() => toggleSection(section.id)}
+              onClick={() => toggleSection(section.id ?? 0)}
             >
               <div className="flex items-center gap-3 flex-1">
                 <div className="hover:bg-accent p-1 transition-colors pointer-events-none">
@@ -111,7 +111,7 @@ export function SectionsTable({
                 <Input
                   type="text"
                   value={section.name}
-                  onChange={(e) => updateSectionName(section.id, e.target.value)}
+                  onChange={(e) => updateSectionName(section.id ?? 0, e.target.value)}
                   className="h-8 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs"
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -121,7 +121,7 @@ export function SectionsTable({
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    deleteSection(section.id)
+                    deleteSection(section.id ?? 0)
                   }}
                   className="h-6 w-6 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                   title="Ta bort sektion"
@@ -137,7 +137,7 @@ export function SectionsTable({
                     {/* Subsection Header */}
                     <div 
                       className="w-full flex items-center justify-between p-3 bg-background cursor-pointer hover:bg-muted/30 transition-colors pl-8"
-                      onClick={() => toggleSubsection(section.id, subsection.id)}
+                      onClick={() => toggleSubsection(section.id ?? 0, subsection.id ?? 0)}
                     >
                       <div className="flex items-center gap-3 flex-1">
                         <div className="hover:bg-accent p-1 transition-colors pointer-events-none">
@@ -150,7 +150,7 @@ export function SectionsTable({
                         <Input
                           type="text"
                           value={subsection.name}
-                          onChange={(e) => updateSubsectionName(section.id, subsection.id, e.target.value)}
+                          onChange={(e) => updateSubsectionName(section.id ?? 0, subsection.id ?? 0, e.target.value)}
                           className="h-7 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs text-sm"
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -160,7 +160,7 @@ export function SectionsTable({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            deleteSubsection(section.id, subsection.id)
+                            deleteSubsection(section.id ?? 0, subsection.id ?? 0)
                           }}
                           className="h-5 w-5 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                           title="Ta bort undersektion"
