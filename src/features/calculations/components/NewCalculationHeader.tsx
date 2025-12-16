@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { Input } from '@/components/ui/input'
 import {
   Home,
@@ -9,6 +8,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react'
 import { useGetTenantIcon } from '../api/queries'
+import { Button } from '@/components/ui/button'
 
 interface NewCalculationHeaderProps {
   onClose: () => void
@@ -81,10 +81,10 @@ export function NewCalculationHeader({
               <FileSpreadsheet className="w-4 h-4" />
               Exportera som Excel
             </button>
-            <ShimmerButton onClick={handleSave}>
+            <Button variant="default" onClick={handleSave}>
               <Save className="w-4 h-4 mr-2" />
               Spara
-            </ShimmerButton>
+            </Button>
             <button
               onClick={onClose}
               className="p-2 hover:bg-accent transition-colors"

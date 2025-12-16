@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -248,11 +247,12 @@ export function CalculationsPage() {
             </div>
             <div className="flex gap-3">
               <AnimatedThemeToggler />
-              <ShimmerButton 
+              <Button 
+                variant="default"
                 onClick={() => setIsModalOpen(true)}
               >
                 <span className="mr-2">+</span> Starta ny kalkyl
-              </ShimmerButton>
+              </Button>
               <Button 
                 variant="outline"
                 onClick={() => setShowBudgetOverview(true)}

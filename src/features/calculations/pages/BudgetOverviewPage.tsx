@@ -52,9 +52,9 @@ function ProgressIndicator({ currentStep }: { currentStep: 'project' | 'calculat
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
                     isCurrent
-                      ? 'bg-blue-500 text-primary-foreground border-blue-500'
+                      ? 'bg-black text-white hover:bg-black/90'
                       : isCompleted
-                      ? 'bg-blue-500 text-primary-foreground border-blue-500'
+                      ? 'bg-black text-white hover:bg-black/90'
                       : 'bg-background border-muted-foreground text-muted-foreground'
                   }`}
                 >
@@ -77,7 +77,7 @@ function ProgressIndicator({ currentStep }: { currentStep: 'project' | 'calculat
               {index < steps.length - 1 && (
                 <div
                   className={`w-24 h-0.5 mx-4 transition-colors ${
-                    isCompleted ? 'bg-blue-500' : 'bg-muted'
+                    isCompleted ? 'bg-black' : 'bg-muted'
                   }`}
                 />
               )}
