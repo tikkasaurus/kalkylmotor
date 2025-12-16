@@ -331,22 +331,17 @@ export function CalculationsPage() {
                 >
                   <TableCell className="text-left">
                     <div className="font-medium">{calc.name}</div>
-                    {calc.revision && (
-                      <div className="text-sm text-muted-foreground">
-                        {calc.revision}
-                      </div>
-                    )}
                   </TableCell>
                   <TableCell className="text-left">
                     <Badge
                       variant={
-                        calc.status === 'Aktiv' ? 'default' : 'secondary'
+                        calc.status === 'Active' ? 'default' : 'secondary'
                       }
                     >
                       {calc.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-left font-medium">{calc.amount}</TableCell>
+                  <TableCell className="text-left font-medium">{calc.versionAmount}</TableCell>
                   <TableCell className="text-left text-muted-foreground">
                     {calc.created.split('T')[0]}
                   </TableCell>

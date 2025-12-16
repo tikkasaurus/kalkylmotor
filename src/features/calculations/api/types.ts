@@ -96,16 +96,15 @@ export type CostEstimateResponse = {
   id: number
   name: string
   currentVersionId: number
-  currentVersionName: string
-  currentVersionNo: string
   projectId: number
-  status: string
-  revision: string
-  amount: string
   projectName: string
+  status: string
   createdBy: string
   createdByName: string
   created: string
+  versionName: string
+  versionNo: string
+  versionAmount: string
 }[];
 
 export type InitializeCostEstimateResponse = {
