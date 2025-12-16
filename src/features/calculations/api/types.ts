@@ -93,18 +93,18 @@ export interface NewCalculationProps {
 
 
 export type CostEstimateResponse = {
-  id: number
-  name: string
-  currentVersionId: number
-  projectId: number
-  projectName: string
-  status: string
-  createdBy: string
-  createdByName: string
-  created: string
-  versionName: string
-  versionNo: string
-  versionAmount: string
+  "id": 0,
+  "name": "string",
+  "currentVersionId": 0,
+  "projectId": 0,
+  "projectName": "string",
+  "status": "Created",
+  "createdBy": "string",
+  "createdByName": "string",
+  "created": "2025-12-16T14:13:25.345Z",
+  "versionName": "string",
+  "versionNo": "string",
+  "versionAmount": "string"
 }[];
 
 export type InitializeCostEstimateResponse = {
@@ -136,10 +136,13 @@ export type CO2Response = {
   "count": number,
   "data": [
     {
-      "id": number,
-      "name": string,
-      "shortName": string
-    }
+      id: number,
+      name: string,
+      value: number,
+      unitTypeName: string,
+      categoryName: string,
+      unitTypeCo2Name: string
+    },
   ]
 };
 

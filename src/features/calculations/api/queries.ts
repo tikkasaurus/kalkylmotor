@@ -3,6 +3,7 @@ import { apiClient } from '@/lib/api-client'
 import type { 
   BookkeepingAccountResponse,
   Calculation, 
+  CO2Response, 
   CopyCostEstimateResponse, 
   CostEstimateResponse, 
   CreateCalculationRequest, 
@@ -187,20 +188,15 @@ export function useDeleteCalculation() {
 export const useGetCO2Database = () => {
   return useQuery({
     queryKey: ['co2-database'],
-    queryFn: () => {
-      //const res = await apiClient.get<CO2Response>("/CostEstimate/co2")
-      return [
-        { id: 1, name: 'Betong C30/37', category: 'Betong', co2Value: 125, unit: 'kg CO2/m³' },
-        { id: 2, name: 'Betong C25/30', category: 'Betong', co2Value: 110, unit: 'kg CO2/m³' },
-        { id: 3, name: 'Armering B500B', category: 'Stål', co2Value: 1850, unit: 'kg CO2/ton' },
-        { id: 4, name: 'Konstruktionsstål S355', category: 'Stål', co2Value: 1920, unit: 'kg CO2/ton' },
-        { id: 5, name: 'Träreglar 45x145', category: 'Trä', co2Value: 12, unit: 'kg CO2/m³' },
-        { id: 6, name: 'Limträ GL30c', category: 'Trä', co2Value: 45, unit: 'kg CO2/m³' },
-        { id: 7, name: 'Gips 13mm', category: 'Gips', co2Value: 6.5, unit: 'kg CO2/m³' },
-        { id: 8, name: 'Mineralull 195mm', category: 'Isolering', co2Value: 8.2, unit: 'kg CO2/m³' },
-        { id: 9, name: 'Tegel röd', category: 'Tegel', co2Value: 180, unit: 'kg CO2/1000 st' },
-        { id: 10, name: 'Betongpannor', category: 'Tak', co2Value: 15, unit: 'kg CO2/m³' },
-      ]
+    queryFn: async () => {
+      const res = await apiClient.get<CO2Response>("/CostEstimate/co2")
+      return res.data.map((co2) => ({
+        id: co2.id,
+        name: co2.name,
+        category: co2.categoryName,
+        co2Value: co2.value,
+        unit: co2.unitTypeName,
+      }))
     },
   })
 }
