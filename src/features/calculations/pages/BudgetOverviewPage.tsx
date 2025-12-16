@@ -6,6 +6,7 @@ import { useGetProjects, useCostEstimatesQuery, useConnectCostEstimateToProject,
 import { toast } from '@/components/ui/toast'
 import { apiClient } from '@/lib/api-client'
 import type { GetCalculationsReponse, BudgetRowPayload, OptionBudgetRowPayload, CalculationSectionPayload } from '@/features/calculations/api/types'
+import confetti from 'canvas-confetti'
 import {
   Table,
   TableBody,
@@ -353,7 +354,7 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
     setImportProgress(0)
     apiResultRef.current = null
 
-    const duration = 5000 // 5 seconds
+    const duration = 4000 // 5 seconds
     const updateInterval = 50 // Update every 50ms for smooth animation
     const startTime = Date.now()
     let progressInterval: NodeJS.Timeout | null = null
@@ -374,6 +375,13 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
         const checkResult = () => {
           if (apiResultRef.current === 'success') {
             toast.success('Kalkylen har importerats framgångsrikt')
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { x: 0.5, y: 0 },
+              gravity: 1.5,
+              colors: ['#0099FF', '#00FF99', '#FF9900', '#FF0099', '#9900FF'],
+            })
             setIsImporting(false)
             setImportProgress(0)
             onClose()
