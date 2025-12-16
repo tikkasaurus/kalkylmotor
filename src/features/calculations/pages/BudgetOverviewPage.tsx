@@ -505,7 +505,7 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Importerar kalkyl...</span>
-                    <span className="font-medium">{importProgress}%</span>
+                    <span className="font-medium">{Math.floor(importProgress)}%</span>
                   </div>
                   <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                     <div
