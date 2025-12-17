@@ -93,18 +93,18 @@ export interface NewCalculationProps {
 
 
 export type CostEstimateResponse = {
-  "id": 0,
-  "name": "string",
-  "currentVersionId": 0,
-  "projectId": 0,
-  "projectName": "string",
-  "status": "Created",
-  "createdBy": "string",
-  "createdByName": "string",
-  "created": "2025-12-16T14:13:25.345Z",
-  "versionName": "string",
-  "versionNo": "string",
-  "versionAmount": "string"
+  id: number,
+  name: string,
+  currentVersionId: number,
+  projectId: number,
+  projectName: string,
+  status: "Active" | "Created",
+  createdBy: string,
+  createdByName: string,
+  created: string,
+  versionName: string,
+  versionNo: string,
+  versionAmount: string
 }[];
 
 export type InitializeCostEstimateResponse = {
