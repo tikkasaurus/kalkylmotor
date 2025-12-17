@@ -57,7 +57,7 @@ export function OptionsTable({
                 <Input 
                   type="text" 
                   value={option.description} 
-                  onChange={(e) => updateOptionField(option.id, 'description', e.target.value)}
+                  onChange={(e) => updateOptionField(option.id ?? 0, 'description', e.target.value)}
                   className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                   placeholder="Lägg till option..."
                 />
@@ -70,7 +70,7 @@ export function OptionsTable({
                   onChange={(e) => {
                     const value = Number(e.target.value)
                     if (value >= 0 || e.target.value === '') {
-                      updateOptionField(option.id, 'quantity', value)
+                      updateOptionField(option.id ?? 0, 'quantity', value)
                     }
                   }}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -79,7 +79,7 @@ export function OptionsTable({
               <TableCell className="border-r border-border p-0 h-10 align-middle">
                 <select 
                   value={option.unit}
-                  onChange={(e) => updateOptionField(option.id, 'unit', e.target.value)}
+                  onChange={(e) => updateOptionField(option.id ?? 0, 'unit', e.target.value)}
                   className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                 >
                   {unitTypes?.map((unit) => (
@@ -97,7 +97,7 @@ export function OptionsTable({
                   onChange={(e) => {
                     const value = Number(e.target.value)
                     if (value >= 0 || e.target.value === '') {
-                      updateOptionField(option.id, 'pricePerUnit', value)
+                      updateOptionField(option.id ?? 0, 'pricePerUnit', value)
                     }
                   }}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -108,7 +108,7 @@ export function OptionsTable({
               </TableCell>
               <TableCell className="p-0 h-10 align-middle">
                 <button
-                  onClick={() => deleteOption(option.id)}
+                  onClick={() => deleteOption(option.id ?? 0)}
                   className="h-full w-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                   title="Ta bort option"
                 >
