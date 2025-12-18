@@ -3,7 +3,7 @@ export const msalConfig = {
     clientId: "6b12e4cb-93e8-4e9b-b20e-b5ba59b00619",
     authority:
       "https://login.microsoftonline.com/6169ca83-37bf-4372-8d32-a7a754f87192/v2.0",
-    redirectUri: "http://localhost:5173",
+    redirectUri: import.meta.env.VITE_REDIRECT_URI,
   },
 };
 

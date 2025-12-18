@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# Copy .env.qa to .env for build
+RUN if [ -f .env.qa ]; then cp .env.qa .env; fi
 RUN npm run build
 
 # serve stage
