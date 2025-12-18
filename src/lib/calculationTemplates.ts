@@ -144,7 +144,7 @@ export const calculationTemplates: TemplateMetadata[] = [
 ]
 
 // Helper to get template by ID
-export function getTemplateById(templateId: number): CalculationTemplate | undefined {
+export function getTemplateById(templateId: string): CalculationTemplate | undefined {
   const metadata = calculationTemplates.find((t) => t.id === templateId)
   return metadata?.template
 }

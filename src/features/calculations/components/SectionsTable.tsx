@@ -193,7 +193,7 @@ export function SectionsTable({
                                   <Input 
                                     type="text" 
                                     value={row.description} 
-                                    onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'description', e.target.value)}
+                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'description', e.target.value)}
                                     className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Benämning"
                                   />
@@ -206,7 +206,7 @@ export function SectionsTable({
                                     onChange={(e) => {
                                       const value = Number(e.target.value)
                                       if (value >= 0 || e.target.value === '') {
-                                        updateRowField(section.id, subsection.id, row.id, 'quantity', value)
+                                        updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'quantity', value)
                                       }
                                     }}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -215,7 +215,7 @@ export function SectionsTable({
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <select 
                                     value={row.unit}
-                                    onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'unit', e.target.value)}
+                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'unit', e.target.value)}
                                     className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                                   >
                                     {unitTypes?.map((unit) => (
@@ -233,7 +233,7 @@ export function SectionsTable({
                                     onChange={(e) => {
                                       const value = Number(e.target.value)
                                       if (value >= 0 || e.target.value === '') {
-                                        updateRowField(section.id, subsection.id, row.id, 'pricePerUnit', value)
+                                        updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'pricePerUnit', value)
                                       }
                                     }}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -248,14 +248,14 @@ export function SectionsTable({
                                       onChange={(e) => {
                                         const value = Number(e.target.value)
                                         if (value >= 0 || e.target.value === '') {
-                                          updateRowCO2(section.id, subsection.id, row.id, value)
+                                          updateRowCO2(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, value)
                                         }
                                       }}
                                       className="!h-10 text-right w-20 border-0 rounded-none focus:bg-accent focus:outline-none !py-0"
                                       placeholder="0"
                                     />
                                     <button 
-                                      onClick={() => openCO2Modal(section.id, subsection.id, row.id)}
+                                      onClick={() => openCO2Modal(section.id ?? 0, subsection.id ?? 0, row.id ?? 0)}
                                       className="h-8 w-8 flex items-center justify-center hover:bg-accent flex-shrink-0"
                                     >
                                       <Search className="w-4 h-4" />
@@ -268,7 +268,7 @@ export function SectionsTable({
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <select 
                                     value={row.account}
-                                    onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'account', e.target.value)}
+                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'account', e.target.value)}
                                     className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                                   >
                                     <option value="Välj konto">Välj konto</option>
@@ -283,14 +283,14 @@ export function SectionsTable({
                                   <Input 
                                     type="text" 
                                     value={row.note} 
-                                    onChange={(e) => updateRowField(section.id, subsection.id, row.id, 'note', e.target.value)}
+                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'note', e.target.value)}
                                     className="!h-10 w-full text-sm border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Anteckning..."
                                   />
                                 </TableCell>
                                 <TableCell className="p-0 h-10 align-middle">
                                   <button
-                                    onClick={() => deleteRow(section.id, subsection.id, row.id)}
+                                    onClick={() => deleteRow(section.id ?? 0, subsection.id ?? 0, row.id ?? 0)}
                                     className="h-full w-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                                     title="Ta bort rad"
                                   >
@@ -303,7 +303,7 @@ export function SectionsTable({
                         </Table>
                         <div className="py-4">
                           <Button 
-                            onClick={() => addNewRow(section.id, subsection.id)}
+                            onClick={() => addNewRow(section.id ?? 0, subsection.id ?? 0)}
                             variant="outline"
                             className="flex items-center gap-2 text-sm hover:text-foreground"
                           >
@@ -317,7 +317,7 @@ export function SectionsTable({
                 ))}
                 <div className="p-4 border-t pl-8">
                   <Button 
-                    onClick={() => addNewSubsection(section.id)}
+                    onClick={() => addNewSubsection(section.id ?? 0)}
                     variant="outline"
                     className="flex items-center gap-2 text-sm hover:text-foreground"
                   >

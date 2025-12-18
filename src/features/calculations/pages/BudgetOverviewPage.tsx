@@ -271,7 +271,7 @@ function BudgetPreview({ calculationData }: { calculationData: GetCalculationsRe
                   <TableCell className="text-right">{formatCurrency(row.price)}</TableCell>
                   <TableCell className="text-right font-semibold">{formatCurrency(row.amount)}</TableCell>
                   <TableCell className="text-left">-</TableCell>
-                  <TableCell className="text-left">{row.notes || '-'}</TableCell>
+                  <TableCell className="text-left">{('notes' in row ? row.notes : undefined) || '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -357,7 +357,7 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
     const duration = 4000 // 5 seconds
     const updateInterval = 50 // Update every 50ms for smooth animation
     const startTime = Date.now()
-    let progressInterval: NodeJS.Timeout | null = null
+    let progressInterval: ReturnType<typeof setInterval> | null = null
 
     // Simulate progress over 5 seconds - always completes
     progressInterval = setInterval(() => {

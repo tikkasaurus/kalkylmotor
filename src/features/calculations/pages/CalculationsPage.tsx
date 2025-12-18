@@ -391,7 +391,7 @@ export function CalculationsPage() {
             ) : selectedTemplate ? (
               <motion.div key="template">
                 <NewCalculationPage
-                  template={getTemplateById(selectedTemplate)}
+                  template={getTemplateById(String(selectedTemplate))}
                   onClose={handleCloseCalculationView}
                   onSaveSuccess={handleSaveSuccess}
                   initialCalculationName={selectedCalculation?.name}
