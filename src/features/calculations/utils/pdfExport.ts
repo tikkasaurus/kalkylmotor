@@ -99,7 +99,7 @@ export function exportToPDF(data: PDFExportData) {
   doc.setTextColor(100, 100, 100)
   doc.text(data.date, calcNameX, yPos + 14)
 
-  yPos += 30
+  yPos += 20
 
   // Compact summary (single box, 3x2 grid)
   const summaryW = pageWidth - 2 * margin
@@ -148,17 +148,16 @@ export function exportToPDF(data: PDFExportData) {
   drawMetric(1, 2, `Fastarvode ${data.rate}%`, formatCurrency(data.fixedRate))
   drawMetric(2, 2, 'Anbudssumma', formatCurrency(data.bidAmount), true)
 
-  yPos += summaryH + 10
+  yPos += summaryH + 2
 
   // Kostnadskalkyl Section
-  doc.setDrawColor(200, 200, 200)
-  doc.rect(margin, yPos, pageWidth - 2 * margin, 10, 'S')
+  
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(0, 0, 0)
-  doc.text('Kostnadskalkyl', margin + 5, yPos + 7)
+  doc.text('Kostnadskalkyl', margin, yPos + 7)
 
-  yPos += 15
+  yPos += 10
 
   type ReportRowKind = 'level1' | 'level2' | 'level3' | 'row'
   type ReportRow = {
