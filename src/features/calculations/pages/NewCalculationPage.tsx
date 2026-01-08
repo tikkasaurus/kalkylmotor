@@ -16,7 +16,7 @@ import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 import { exportToPDF } from '@/features/calculations/utils/pdfExport'
-import { useCreateCalculation } from '../api/queries'
+import { useCreateCalculation, useGetTenantIcon } from '../api/queries'
 import { toast } from '@/components/ui/toast'
 
 export function NewCalculationPage({ 
@@ -32,6 +32,7 @@ export function NewCalculationPage({
   const state = useNewCalculationState(template, existingCalculation)
   const createCalculation = useCreateCalculation()
   const [calculationName, setCalculationName] = useState(initialCalculationName)
+  const { data: tenantIcon } = useGetTenantIcon()
 
   const loadingExisting = !!existingCalculationLoading
   const existingError = existingCalculationError
@@ -218,19 +219,38 @@ export function NewCalculationPage({
     document.body.removeChild(link)
   }
 
-  const handleExportPDF = () => {
-    exportToPDF({
-      calculationName,
-      date: new Date().toISOString().split('T')[0],
-      rate: state.rate,
-      area: state.area,
-      co2Budget: state.co2Budget,
-      budgetExclRate: state.budgetExclRate,
-      fixedRate: state.fixedRate,
-      bidAmount: state.bidAmount,
-      sections: state.sections.map(section => ({ ...section, expanded: true })), // All sections expanded
-      options: state.options,
+  const fetchAsDataUrl = async (url?: string): Promise<string | undefined> => {
+    if (!url) return undefined
+    const res = await fetch(url)
+    const blob = await res.blob()
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(blob)
     })
+  }
+
+  const handleExportPDF = async () => {
+    try {
+      const tenantLogoDataUrl = await fetchAsDataUrl(tenantIcon)
+      exportToPDF({
+        calculationName,
+        date: new Date().toISOString().split('T')[0],
+        rate: state.rate,
+        area: state.area,
+        co2Budget: state.co2Budget,
+        budgetExclRate: state.budgetExclRate,
+        fixedRate: state.fixedRate,
+        bidAmount: state.bidAmount,
+        sections: state.sections.map(section => ({ ...section, expanded: true })), // All sections expanded
+        options: state.options,
+        tenantLogoDataUrl,
+      })
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      toast.error('Kunde inte exportera PDF. Försök igen.')
+    }
   }
 
   const handleSave = async (calcName: string) => {
