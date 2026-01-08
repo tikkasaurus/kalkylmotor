@@ -36,6 +36,17 @@ export function NewCalculationPage({
   const loadingExisting = !!existingCalculationLoading
   const existingError = existingCalculationError
 
+  const parseAccountNo = (account: string): number => {
+    if (!account || account === 'Välj konto') return 0
+    // Preferred: account is just "4010"
+    const direct = Number(account)
+    if (Number.isFinite(direct) && direct > 0) return direct
+    // Legacy: "4010 - Description"
+    const match = account.match(/^\s*(\d+)\s*-/)
+    if (match) return Number(match[1])
+    return 0
+  }
+
   const mapRowToPayload = (
     row: CalculationRow, 
     sectionId: number | undefined, 
@@ -46,13 +57,13 @@ export function NewCalculationPage({
   ): BudgetRowPayload => {
     const payload: BudgetRowPayload = {
       sectionId: sectionId || 0,
-      accountNo: Number(row.account) || 0,
+      accountNo: parseAccountNo(row.account),
       name: row.description,
       quantity: row.quantity,
       price: row.pricePerUnit,
       amount: row.quantity * row.pricePerUnit,
       notes: row.note,
-      co2CostId: 0, //TODO: Add co2 cost id from CO2 hook
+      co2CostId: row.co2CostId || 0,
     }
     
     // Only include ID if it exists in the original payload

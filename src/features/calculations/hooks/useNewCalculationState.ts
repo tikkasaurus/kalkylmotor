@@ -11,6 +11,7 @@ import type {
   BudgetRowPayload,
   OptionBudgetRowPayload,
 } from '@/features/calculations/api/types'
+import { useGetCO2Database } from '@/features/calculations/api/queries'
 
 // Factory function to create sections from template
 function createSectionsFromTemplate(template: CalculationTemplate): CalculationSection[] {
@@ -24,6 +25,7 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
       unit: row.unit,
       pricePerUnit: row.pricePerUnit,
       co2: row.co2 || 0,
+      co2CostId: 0,
       account: row.account || 'Välj konto',
       resource: row.resource || '',
       note: row.note || '',
@@ -57,6 +59,7 @@ function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
     unit: 'st',
     pricePerUnit: row.price,
     co2: 0,
+    co2CostId: row.co2CostId || 0,
     account: row.accountNo ? String(row.accountNo) : 'Välj konto',
     resource: '',
     note: row.notes,
@@ -161,6 +164,15 @@ export function useNewCalculationState(
     rowId: number
   } | null>(null)
 
+  const { data: co2Items = [] } = useGetCO2Database()
+  const co2ValueById = useMemo(() => {
+    const map = new Map<number, number>()
+    for (const item of co2Items) {
+      map.set(item.id, item.co2Value)
+    }
+    return map
+  }, [co2Items])
+
   useEffect(() => {
     if (existingCalculation) {
       setSections(buildSectionsFromPayload(existingCalculation))
@@ -254,7 +266,7 @@ export function useNewCalculationState(
     setCo2ModalOpen(true)
   }
 
-  const handleCO2Select = (item: { co2Value: number }) => {
+  const handleCO2Select = (item: { id: number; co2Value: number }) => {
     if (selectedRowForCO2) {
       setSections(
         sections.map((section) =>
@@ -271,7 +283,9 @@ export function useNewCalculationState(
                               ? {
                                   ...subSub,
                                   rows: subSub.rows?.map((row) =>
-                                    row.id === selectedRowForCO2.rowId ? { ...row, co2: item.co2Value } : row
+                                    row.id === selectedRowForCO2.rowId
+                                      ? { ...row, co2: item.co2Value, co2CostId: item.id }
+                                      : row
                                   ),
                                 }
                               : subSub
@@ -280,7 +294,9 @@ export function useNewCalculationState(
                       : {
                           ...subsection,
                           rows: subsection.rows?.map((row) =>
-                            row.id === selectedRowForCO2.rowId ? { ...row, co2: item.co2Value } : row
+                            row.id === selectedRowForCO2.rowId
+                              ? { ...row, co2: item.co2Value, co2CostId: item.id }
+                              : row
                           ),
                         }
                     : subsection
@@ -307,14 +323,18 @@ export function useNewCalculationState(
                           subSub.id === subSubsectionId
                             ? {
                                 ...subSub,
-                                rows: subSub.rows?.map((row) => (row.id === rowId ? { ...row, co2: co2Value } : row)),
+                                rows: subSub.rows?.map((row) =>
+                                  row.id === rowId ? { ...row, co2: co2Value, co2CostId: 0 } : row
+                                ),
                               }
                             : subSub
                         ),
                       }
                     : {
                         ...subsection,
-                        rows: subsection.rows?.map((row) => (row.id === rowId ? { ...row, co2: co2Value } : row)),
+                        rows: subsection.rows?.map((row) =>
+                          row.id === rowId ? { ...row, co2: co2Value, co2CostId: 0 } : row
+                        ),
                       }
                   : subsection
               ),
@@ -483,6 +503,7 @@ export function useNewCalculationState(
                   unit: 'm2',
                   pricePerUnit: 0,
                   co2: 0,
+                  co2CostId: 0,
                   account: 'Välj konto',
                   resource: '',
                   note: '',
@@ -625,17 +646,34 @@ export function useNewCalculationState(
 
   // Recalculate subsection and section amounts based on rows
   const sectionsWithAmounts = useMemo(() => {
+    const resolveRowCO2 = (row: CalculationRow): CalculationRow => {
+      if (row.co2CostId > 0) {
+        const resolved = co2ValueById.get(row.co2CostId)
+        if (resolved !== undefined) {
+          return { ...row, co2: resolved }
+        }
+      }
+      return row
+    }
+
     return sections.map((section) => {
       const subsectionsWithAmounts = (section.subsections || []).map((subsection) => {
         const subSubsectionsWithAmounts = (subsection.subSubsections || []).map((subSub) => {
-          const subSubAmount = (subSub.rows || []).reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
-          return { ...subSub, amount: subSubAmount }
+          const resolvedRows = (subSub.rows || []).map(resolveRowCO2)
+          const subSubAmount = resolvedRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+          return { ...subSub, amount: subSubAmount, rows: resolvedRows }
         })
 
-        const subsectionRowsAmount = (subsection.rows || []).reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+        const resolvedSubsectionRows = (subsection.rows || []).map(resolveRowCO2)
+        const subsectionRowsAmount = resolvedSubsectionRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
         const subsectionAmount = subsectionRowsAmount + subSubsectionsWithAmounts.reduce((sum, s) => sum + s.amount, 0)
 
-        return { ...subsection, amount: subsectionAmount, subSubsections: subSubsectionsWithAmounts }
+        return {
+          ...subsection,
+          amount: subsectionAmount,
+          rows: resolvedSubsectionRows,
+          subSubsections: subSubsectionsWithAmounts,
+        }
       })
       
       const sectionAmount = subsectionsWithAmounts.reduce(
@@ -645,7 +683,7 @@ export function useNewCalculationState(
       
       return { ...section, amount: sectionAmount, subsections: subsectionsWithAmounts }
     })
-  }, [sections])
+  }, [sections, co2ValueById])
 
   // Calculate options total
   const optionsTotal = useMemo(() => {
@@ -654,16 +692,19 @@ export function useNewCalculationState(
 
   // Calculate total CO2 from all rows (use original sections to ensure we get actual CO2 values)
   const totalCO2 = useMemo(() => {
-    return sections.reduce((sum, section) => {
-      return sum + (section.subsections || []).reduce((subsectionSum, subsection) => {
-        const rowsCO2 = (subsection.rows || []).reduce((rowSum, row) => rowSum + (row.co2 || 0), 0)
-        const subSubCO2 = (subsection.subSubsections || []).reduce((subSubSum, subSub) => {
-          return subSubSum + (subSub.rows || []).reduce((rowSum, row) => rowSum + (row.co2 || 0), 0)
+    return sectionsWithAmounts.reduce((sum, section) => {
+      return (
+        sum +
+        (section.subsections || []).reduce((subsectionSum, subsection) => {
+          const rowsCO2 = (subsection.rows || []).reduce((rowSum, row) => rowSum + (row.co2 || 0), 0)
+          const subSubCO2 = (subsection.subSubsections || []).reduce((subSubSum, subSub) => {
+            return subSubSum + (subSub.rows || []).reduce((rowSum, row) => rowSum + (row.co2 || 0), 0)
+          }, 0)
+          return subsectionSum + rowsCO2 + subSubCO2
         }, 0)
-        return subsectionSum + rowsCO2 + subSubCO2
-      }, 0)
+      )
     }, 0)
-  }, [sections])
+  }, [sectionsWithAmounts])
 
   // Derived values - includes both sections and options
   const budgetExclRate = sectionsWithAmounts.reduce((sum, section) => sum + section.amount, 0) + optionsTotal

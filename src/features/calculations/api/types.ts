@@ -50,6 +50,7 @@ export interface CalculationRow {
   unit: string
   pricePerUnit: number
   co2: number
+  co2CostId: number
   account: string
   resource: string
   note: string

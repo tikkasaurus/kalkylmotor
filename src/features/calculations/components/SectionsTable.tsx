@@ -316,7 +316,7 @@ export function SectionsTable({
                                   >
                                     <option value="Välj konto">Välj konto</option>
                                     {accounts.map((account) => (
-                                      <option key={account.id} value={`${account.accountNumber} - ${account.description}`}>
+                                      <option key={account.id} value={String(account.accountNumber)}>
                                         {account.accountNumber} - {account.description}
                                       </option>
                                     ))}
@@ -569,7 +569,7 @@ export function SectionsTable({
                                           >
                                             <option value="Välj konto">Välj konto</option>
                                             {accounts.map((account) => (
-                                              <option key={account.id} value={`${account.accountNumber} - ${account.description}`}>
+                                              <option key={account.id} value={String(account.accountNumber)}>
                                                 {account.accountNumber} - {account.description}
                                               </option>
                                             ))}
