@@ -286,8 +286,8 @@ export function exportToPDF(data: PDFExportData) {
       3: { cellWidth: tableWidth * 0.12, halign: 'right' }, // Pris/enhet
       4: { cellWidth: tableWidth * 0.07, halign: 'right' }, // CO2
       5: { cellWidth: tableWidth * 0.14, halign: 'right' }, // Summa
-      6: { cellWidth: tableWidth * 0.10 }, // Konto
-      7: { cellWidth: tableWidth * 0.10 }, // Anteckning
+      6: { cellWidth: tableWidth * 0.08 }, // Konto
+      7: { cellWidth: tableWidth * 0.12 }, // Anteckning
     },
     didParseCell: (hookData) => {
       if (hookData.section !== 'body') return
