@@ -14,7 +14,7 @@ interface NewCalculationHeaderProps {
   onClose: () => void
   onExportCSV: () => void
   onExportPDF?: () => void
-  onSave?: (calculationName: string) => void
+  onSave?: (calculationName: string) => Promise<void> | void
   initialCalculationName?: string
 }
 
@@ -26,11 +26,16 @@ export function NewCalculationHeader({
   initialCalculationName = 'Kalkylnamn',
 }: NewCalculationHeaderProps) {
   const [calculationName, setCalculationName] = useState(initialCalculationName)
+  const [isSaving, setIsSaving] = useState(false)
   const { data: tenantIcon } = useGetTenantIcon()
 
-  const handleSave = () => {
-    if (onSave) {
-      onSave(calculationName)
+  const handleSave = async () => {
+    if (!onSave || isSaving) return
+    try {
+      setIsSaving(true)
+      await onSave(calculationName)
+    } finally {
+      setIsSaving(false)
     }
   }
   return (
@@ -81,9 +86,9 @@ export function NewCalculationHeader({
               <FileSpreadsheet className="w-4 h-4" />
               Exportera som Excel
             </button>
-            <Button variant="default" onClick={handleSave}>
+            <Button variant="default" onClick={handleSave} disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              Spara
+              {isSaving ? 'Sparar...' : 'Spara'}
             </Button>
             <button
               onClick={onClose}
