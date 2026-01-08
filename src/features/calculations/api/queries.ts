@@ -108,8 +108,14 @@ export function useCreateCalculation() {
   return useMutation<Calculation, unknown, { costEstimateId: string; data: CreateCalculationRequest }>({
     mutationFn: ({ costEstimateId, data }: { costEstimateId: string; data: CreateCalculationRequest }) =>
       apiClient.post<Calculation>(`/CostEstimate/${costEstimateId}/calculations`, data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['calculations'] })
+      // Invalidate the calculation detail cache so reopening the same calc fetches updated data
+      // but don't refetch while the calculation view is open (keeps expand/collapse state)
+      queryClient.invalidateQueries({
+        queryKey: ['calculation', variables.costEstimateId],
+        refetchType: 'inactive',
+      })
     },
   })
 }

@@ -70,7 +70,7 @@ export function SaveCalculationDialog({
       
       // Validate that there's calculation data
       if (!hasSections) {
-        setError('Kalkylen måste innehålla minst ett avsnitt med data för att kunna sparas.')
+        setError('Kalkylen måste innehålla minst en nivå 1 med data för att kunna sparas.')
         return
       }
       

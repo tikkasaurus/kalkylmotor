@@ -55,6 +55,14 @@ export interface CalculationRow {
   note: string
 }
 
+export interface CalculationSubSubsection {
+  id?: number
+  name: string
+  amount: number
+  expanded?: boolean
+  rows?: CalculationRow[]
+}
+
 export interface OptionRow {
   id?: number
   description: string
@@ -69,6 +77,7 @@ export interface CalculationSubsection {
   amount: number
   expanded?: boolean
   rows?: CalculationRow[]
+  subSubsections?: CalculationSubSubsection[]
 }
 
 export interface CalculationSection {

@@ -41,7 +41,8 @@ export function NewCalculationPage({
     sectionId: number | undefined, 
     subsectionId: number | undefined,
     includeId: boolean,
-    originalSections?: CalculationSectionPayload[]
+    originalSections?: CalculationSectionPayload[],
+    subSubsectionId?: number
   ): BudgetRowPayload => {
     const payload: BudgetRowPayload = {
       sectionId: sectionId || 0,
@@ -59,7 +60,11 @@ export function NewCalculationPage({
     if (includeId && row.id && originalSections && sectionId !== undefined && subsectionId !== undefined) {
       const originalSection = originalSections.find(s => s.id === sectionId)
       const originalSubsection = originalSection?.subSections.find(sub => sub.id === subsectionId)
-      const originalRow = originalSubsection?.budgetRows.find(r => r.id === row.id)
+      const originalTargetSection =
+        subSubsectionId !== undefined
+          ? originalSubsection?.subSections.find(sub => sub.id === subSubsectionId)
+          : originalSubsection
+      const originalRow = originalTargetSection?.budgetRows.find(r => r.id === row.id)
       if (originalRow) {
         payload.id = row.id
       }
@@ -84,8 +89,19 @@ export function NewCalculationPage({
         const subPayload: CalculationSectionPayload = {
           id: includeId && subsection.id && originalSubsection ? subsection.id : undefined,
           title: subsection.name,
-          subSections: [],
-          budgetRows: (subsection.rows || []).map((row) => 
+          subSections: (subsection.subSubsections || []).map((subSub) => {
+            const originalSubSub = originalSubsection?.subSections.find(sub => sub.id === subSub.id)
+            const subSubPayload: CalculationSectionPayload = {
+              id: includeId && subSub.id && originalSubSub ? subSub.id : undefined,
+              title: subSub.name,
+              subSections: [],
+              budgetRows: (subSub.rows || []).map((row) =>
+                mapRowToPayload(row, section.id, subsection.id, includeId, originalSections, subSub.id)
+              ),
+            }
+            return subSubPayload
+          }),
+          budgetRows: (subsection.rows || []).map((row) =>
             mapRowToPayload(row, section.id, subsection.id, includeId, originalSections)
           ),
         }
@@ -144,21 +160,35 @@ export function NewCalculationPage({
   }
 
   const exportToCSV = () => {
-    let csvContent = 'Avsnitt,Undersektion,Benämning,Antal,Enhet,Pris/enhet,Summa\n'
+    let csvContent = 'Nivå 1,Nivå 2,Nivå 3,Benämning,Antal,Enhet,Pris/enhet,Summa\n'
 
     state.sections.forEach((section) => {
       const sectionTotal = `"${formatNumberForCSV(section.amount)} kr"`
-      csvContent += `${section.id},${section.name},,,,${sectionTotal}\n`
+      csvContent += `"${section.name}",,,,,,${sectionTotal}\n`
 
       if (section.subsections && section.subsections.length > 0) {
         section.subsections.forEach((subsection) => {
           const subsectionTotal = `"${formatNumberForCSV(subsection.amount)} kr"`
-          csvContent += `,${subsection.id},${subsection.name},,,${subsectionTotal}\n`
+          csvContent += `"${section.name}","${subsection.name}",,,,,${subsectionTotal}\n`
 
           if (subsection.rows && subsection.rows.length > 0) {
             subsection.rows.forEach((row) => {
               const rowTotal = row.quantity * row.pricePerUnit
-              csvContent += `,,${row.description},${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+              csvContent += `"${section.name}","${subsection.name}",,"${row.description}",${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+            })
+          }
+
+          if (subsection.subSubsections && subsection.subSubsections.length > 0) {
+            subsection.subSubsections.forEach((subSub) => {
+              const subSubTotal = `"${formatNumberForCSV(subSub.amount)} kr"`
+              csvContent += `"${section.name}","${subsection.name}","${subSub.name}",,,,,${subSubTotal}\n`
+
+              if (subSub.rows && subSub.rows.length > 0) {
+                subSub.rows.forEach((row) => {
+                  const rowTotal = row.quantity * row.pricePerUnit
+                  csvContent += `"${section.name}","${subsection.name}","${subSub.name}","${row.description}",${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+                })
+              }
             })
           }
         })
@@ -305,18 +335,22 @@ export function NewCalculationPage({
           formatCurrency={formatCurrency}
           toggleSection={state.toggleSection}
           toggleSubsection={state.toggleSubsection}
+          toggleSubSubsection={state.toggleSubSubsection}
           expandAll={state.expandAll}
           collapseAll={state.collapseAll}
           addNewSection={state.addNewSection}
           addNewSubsection={state.addNewSubsection}
+          addNewSubSubsection={state.addNewSubSubsection}
           addNewRow={state.addNewRow}
           updateSectionName={state.updateSectionName}
           updateSubsectionName={state.updateSubsectionName}
+          updateSubSubsectionName={state.updateSubSubsectionName}
           updateRowField={state.updateRowField}
           updateRowCO2={state.updateRowCO2}
           openCO2Modal={state.openCO2Modal}
           deleteSection={state.deleteSection}
           deleteSubsection={state.deleteSubsection}
+          deleteSubSubsection={state.deleteSubSubsection}
           deleteRow={state.deleteRow}
         />
 

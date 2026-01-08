@@ -4,6 +4,7 @@ import type {
   CalculationSection,
   CalculationSubsection,
   CalculationRow,
+  CalculationSubSubsection,
   OptionRow,
   CreateCalculationRequest,
   CalculationSectionPayload,
@@ -32,7 +33,7 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
 
     const subsection: CalculationSubsection = {
       id: 1,
-      name: 'Undersektion 1',
+      name: 'Nivå 2',
       amount: subsectionAmount,
       expanded: false,
       rows,
@@ -68,26 +69,39 @@ function buildSubsectionsFromPayload(
 ): CalculationSubsection[] {
   const subsections: CalculationSubsection[] = []
 
-  const addFromSection = (payloadSection: CalculationSectionPayload) => {
-    const rows = (payloadSection.budgetRows || []).map(mapBudgetRowToCalculationRow)
-    const subsectionAmount = rows.reduce(
-      (sum, row) => sum + row.quantity * row.pricePerUnit,
-      0
+  // section.subSections are the first level ("subsections")
+  ;(section.subSections || []).forEach((payloadSubsection) => {
+    const rows = (payloadSubsection.budgetRows || []).map(mapBudgetRowToCalculationRow)
+    const subsectionOwnRowsAmount = rows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+
+    const subSubsections: CalculationSubSubsection[] = (payloadSubsection.subSections || []).map(
+      (payloadSubSubsection) => {
+        const subRows = (payloadSubSubsection.budgetRows || []).map(mapBudgetRowToCalculationRow)
+        const subAmount = subRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+
+        return {
+          id: payloadSubSubsection.id ?? counter.current++,
+          name: payloadSubSubsection.title || 'Nivå 3',
+          amount: subAmount,
+          expanded: false,
+          rows: subRows,
+        }
+      }
     )
 
+    const subSubAmount = subSubsections.reduce((sum, s) => sum + s.amount, 0)
+    const subsectionAmount = subsectionOwnRowsAmount + subSubAmount
+
     subsections.push({
-      id: counter.current++,
-      name: payloadSection.title || `Undersektion ${counter.current}`,
+      id: payloadSubsection.id ?? counter.current++,
+      name: payloadSubsection.title || 'Nivå 2',
       amount: subsectionAmount,
       expanded: false,
       rows,
+      subSubsections,
     })
+  })
 
-    ;(payloadSection.subSections || []).forEach(addFromSection)
-  }
-
-  // Only process the actual subsections, not the parent section itself
-  ;(section.subSections || []).forEach(addFromSection)
   return subsections
 }
 
@@ -140,7 +154,12 @@ export function useNewCalculationState(
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
   const [co2ModalOpen, setCo2ModalOpen] = useState(false)
-  const [selectedRowForCO2, setSelectedRowForCO2] = useState<{ sectionId: number; subsectionId: number; rowId: number } | null>(null)
+  const [selectedRowForCO2, setSelectedRowForCO2] = useState<{
+    sectionId: number
+    subsectionId: number
+    subSubsectionId?: number
+    rowId: number
+  } | null>(null)
 
   useEffect(() => {
     if (existingCalculation) {
@@ -174,6 +193,28 @@ export function useNewCalculationState(
     )
   }
 
+  const toggleSubSubsection = (sectionId: number, subsectionId: number, subSubsectionId: number) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              subsections: section.subsections?.map((subsection) =>
+                subsection.id === subsectionId
+                  ? {
+                      ...subsection,
+                      subSubsections: subsection.subSubsections?.map((subSub) =>
+                        subSub.id === subSubsectionId ? { ...subSub, expanded: !subSub.expanded } : subSub
+                      ),
+                    }
+                  : subsection
+              ),
+            }
+          : section
+      )
+    )
+  }
+
   const expandAll = () => {
     setSections(
       sections.map((section) => ({
@@ -182,6 +223,10 @@ export function useNewCalculationState(
         subsections: section.subsections?.map((subsection) => ({
           ...subsection,
           expanded: true,
+          subSubsections: subsection.subSubsections?.map((subSub) => ({
+            ...subSub,
+            expanded: true,
+          })),
         })),
       }))
     )
@@ -195,13 +240,17 @@ export function useNewCalculationState(
         subsections: section.subsections?.map((subsection) => ({
           ...subsection,
           expanded: false,
+          subSubsections: subsection.subSubsections?.map((subSub) => ({
+            ...subSub,
+            expanded: false,
+          })),
         })),
       }))
     )
   }
 
-  const openCO2Modal = (sectionId: number, subsectionId: number, rowId: number) => {
-    setSelectedRowForCO2({ sectionId, subsectionId, rowId })
+  const openCO2Modal = (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => {
+    setSelectedRowForCO2({ sectionId, subsectionId, subSubsectionId, rowId })
     setCo2ModalOpen(true)
   }
 
@@ -214,14 +263,26 @@ export function useNewCalculationState(
                 ...section,
                 subsections: section.subsections?.map((subsection) =>
                   subsection.id === selectedRowForCO2.subsectionId
-                    ? {
-                        ...subsection,
-                        rows: subsection.rows?.map((row) =>
-                          row.id === selectedRowForCO2.rowId
-                            ? { ...row, co2: item.co2Value }
-                            : row
-                        ),
-                      }
+                    ? selectedRowForCO2.subSubsectionId !== undefined
+                      ? {
+                          ...subsection,
+                          subSubsections: subsection.subSubsections?.map((subSub) =>
+                            subSub.id === selectedRowForCO2.subSubsectionId
+                              ? {
+                                  ...subSub,
+                                  rows: subSub.rows?.map((row) =>
+                                    row.id === selectedRowForCO2.rowId ? { ...row, co2: item.co2Value } : row
+                                  ),
+                                }
+                              : subSub
+                          ),
+                        }
+                      : {
+                          ...subsection,
+                          rows: subsection.rows?.map((row) =>
+                            row.id === selectedRowForCO2.rowId ? { ...row, co2: item.co2Value } : row
+                          ),
+                        }
                     : subsection
                 ),
               }
@@ -231,7 +292,7 @@ export function useNewCalculationState(
     }
   }
 
-  const updateRowCO2 = (sectionId: number, subsectionId: number, rowId: number, co2Value: number) => {
+  const updateRowCO2 = (sectionId: number, subsectionId: number, rowId: number, co2Value: number, subSubsectionId?: number) => {
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -239,12 +300,22 @@ export function useNewCalculationState(
               ...section,
               subsections: section.subsections?.map((subsection) =>
                 subsection.id === subsectionId
-                  ? {
-                      ...subsection,
-                      rows: subsection.rows?.map((row) =>
-                        row.id === rowId ? { ...row, co2: co2Value } : row
-                      ),
-                    }
+                  ? subSubsectionId !== undefined
+                    ? {
+                        ...subsection,
+                        subSubsections: subsection.subSubsections?.map((subSub) =>
+                          subSub.id === subSubsectionId
+                            ? {
+                                ...subSub,
+                                rows: subSub.rows?.map((row) => (row.id === rowId ? { ...row, co2: co2Value } : row)),
+                              }
+                            : subSub
+                        ),
+                      }
+                    : {
+                        ...subsection,
+                        rows: subsection.rows?.map((row) => (row.id === rowId ? { ...row, co2: co2Value } : row)),
+                      }
                   : subsection
               ),
             }
@@ -253,7 +324,14 @@ export function useNewCalculationState(
     )
   }
 
-  const updateRowField = (sectionId: number, subsectionId: number, rowId: number, field: keyof CalculationRow, value: string | number) => {
+  const updateRowField = (
+    sectionId: number,
+    subsectionId: number,
+    rowId: number,
+    field: keyof CalculationRow,
+    value: string | number,
+    subSubsectionId?: number
+  ) => {
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -261,12 +339,22 @@ export function useNewCalculationState(
               ...section,
               subsections: section.subsections?.map((subsection) =>
                 subsection.id === subsectionId
-                  ? {
-                      ...subsection,
-                      rows: subsection.rows?.map((row) =>
-                        row.id === rowId ? { ...row, [field]: value } : row
-                      ),
-                    }
+                  ? subSubsectionId !== undefined
+                    ? {
+                        ...subsection,
+                        subSubsections: subsection.subSubsections?.map((subSub) =>
+                          subSub.id === subSubsectionId
+                            ? {
+                                ...subSub,
+                                rows: subSub.rows?.map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
+                              }
+                            : subSub
+                        ),
+                      }
+                    : {
+                        ...subsection,
+                        rows: subsection.rows?.map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
+                      }
                   : subsection
               ),
             }
@@ -282,10 +370,11 @@ export function useNewCalculationState(
           const newSubsectionId = Math.max(0, ...(section.subsections?.map(s => s.id || 0) || [])) + 1
           const newSubsection: CalculationSubsection = {
             id: newSubsectionId,
-            name: `Undersektion ${newSubsectionId}`,
+            name: 'Nivå 2',
             amount: 0,
             expanded: false,
             rows: [],
+            subSubsections: [],
           }
           return {
             ...section,
@@ -297,7 +386,82 @@ export function useNewCalculationState(
     )
   }
 
-  const addNewRow = (sectionId: number, subsectionId: number) => {
+  const addNewSubSubsection = (sectionId: number, subsectionId: number) => {
+    setSections(
+      sections.map((section) => {
+        if (section.id !== sectionId) return section
+
+        return {
+          ...section,
+          subsections: section.subsections?.map((subsection) => {
+            if (subsection.id !== subsectionId) return subsection
+
+            const existingIds =
+              subsection.subSubsections?.map((s) => s.id).filter((id): id is number => id !== undefined) || []
+            const newId = existingIds.length > 0 ? Math.max(0, ...existingIds) + 1 : 1
+
+            const newSubSub: CalculationSubSubsection = {
+              id: newId,
+              name: 'Nivå 3',
+              amount: 0,
+              expanded: false,
+              rows: [],
+            }
+
+            return {
+              ...subsection,
+              subSubsections: [...(subsection.subSubsections || []), newSubSub],
+              expanded: true,
+            }
+          }),
+        }
+      })
+    )
+  }
+
+  const updateSubSubsectionName = (sectionId: number, subsectionId: number, subSubsectionId: number, newName: string) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              subsections: section.subsections?.map((subsection) =>
+                subsection.id === subsectionId
+                  ? {
+                      ...subsection,
+                      subSubsections: subsection.subSubsections?.map((subSub) =>
+                        subSub.id === subSubsectionId ? { ...subSub, name: newName } : subSub
+                      ),
+                    }
+                  : subsection
+              ),
+            }
+          : section
+      )
+    )
+  }
+
+  const deleteSubSubsection = (sectionId: number, subsectionId: number, subSubsectionId: number) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              subsections: section.subsections?.map((subsection) =>
+                subsection.id === subsectionId
+                  ? {
+                      ...subsection,
+                      subSubsections: subsection.subSubsections?.filter((s) => s.id !== subSubsectionId),
+                    }
+                  : subsection
+              ),
+            }
+          : section
+      )
+    )
+  }
+
+  const addNewRow = (sectionId: number, subsectionId: number, subSubsectionId?: number) => {
     setSections(
       sections.map((section) => {
         if (section.id === sectionId) {
@@ -305,7 +469,12 @@ export function useNewCalculationState(
             ...section,
             subsections: section.subsections?.map((subsection) => {
               if (subsection.id === subsectionId) {
-                const existingIds = subsection.rows?.map(r => r.id).filter((id): id is number => id !== undefined) || []
+                const targetRows =
+                  subSubsectionId !== undefined
+                    ? subsection.subSubsections?.find((s) => s.id === subSubsectionId)?.rows
+                    : subsection.rows
+
+                const existingIds = targetRows?.map((r) => r.id).filter((id): id is number => id !== undefined) || []
                 const newRowId = existingIds.length > 0 ? Math.max(0, ...existingIds) + 1 : 1
                 const newRow: CalculationRow = {
                   id: newRowId,
@@ -318,10 +487,21 @@ export function useNewCalculationState(
                   resource: '',
                   note: '',
                 }
-                return {
-                  ...subsection,
-                  rows: [...(subsection.rows || []), newRow],
-                }
+                return subSubsectionId !== undefined
+                  ? {
+                      ...subsection,
+                      subSubsections: subsection.subSubsections?.map((subSub) =>
+                        subSub.id === subSubsectionId
+                          ? { ...subSub, rows: [...(subSub.rows || []), newRow], expanded: true }
+                          : subSub
+                      ),
+                      expanded: true,
+                    }
+                  : {
+                      ...subsection,
+                      rows: [...(subsection.rows || []), newRow],
+                      expanded: true,
+                    }
               }
               return subsection
             }),
@@ -368,11 +548,11 @@ export function useNewCalculationState(
     const newSectionId = Math.max(0, ...sections.map(s => s.id || 0)) + 1
     const newSection: CalculationSection = {
       id: newSectionId,
-      name: `Sektion ${newSectionId}`,
+      name: 'Nivå 1',
       amount: 0,
       expanded: true,
       subsections: [
-        { id: 1, name: 'Undersektion 1', amount: 0, expanded: false, rows: [] }
+        { id: 1, name: 'Nivå 2', amount: 0, expanded: false, rows: [], subSubsections: [] }
       ],
     }
     setSections([...sections, newSection])
@@ -390,7 +570,7 @@ export function useNewCalculationState(
     setSections(sections.filter((section) => section.id !== sectionId))
   }
 
-  const deleteRow = (sectionId: number, subsectionId: number, rowId: number) => {
+  const deleteRow = (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => {
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -398,10 +578,19 @@ export function useNewCalculationState(
               ...section,
               subsections: section.subsections?.map((subsection) =>
                 subsection.id === subsectionId
-                  ? {
-                      ...subsection,
-                      rows: subsection.rows?.filter((row) => row.id !== rowId) || [],
-                    }
+                  ? subSubsectionId !== undefined
+                    ? {
+                        ...subsection,
+                        subSubsections: subsection.subSubsections?.map((subSub) =>
+                          subSub.id === subSubsectionId
+                            ? { ...subSub, rows: subSub.rows?.filter((row) => row.id !== rowId) || [] }
+                            : subSub
+                        ),
+                      }
+                    : {
+                        ...subsection,
+                        rows: subsection.rows?.filter((row) => row.id !== rowId) || [],
+                      }
                   : subsection
               ),
             }
@@ -438,11 +627,15 @@ export function useNewCalculationState(
   const sectionsWithAmounts = useMemo(() => {
     return sections.map((section) => {
       const subsectionsWithAmounts = (section.subsections || []).map((subsection) => {
-        const subsectionAmount = (subsection.rows || []).reduce(
-          (sum, row) => sum + (row.quantity * row.pricePerUnit),
-          0
-        )
-        return { ...subsection, amount: subsectionAmount }
+        const subSubsectionsWithAmounts = (subsection.subSubsections || []).map((subSub) => {
+          const subSubAmount = (subSub.rows || []).reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+          return { ...subSub, amount: subSubAmount }
+        })
+
+        const subsectionRowsAmount = (subsection.rows || []).reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+        const subsectionAmount = subsectionRowsAmount + subSubsectionsWithAmounts.reduce((sum, s) => sum + s.amount, 0)
+
+        return { ...subsection, amount: subsectionAmount, subSubsections: subSubsectionsWithAmounts }
       })
       
       const sectionAmount = subsectionsWithAmounts.reduce(
@@ -463,9 +656,11 @@ export function useNewCalculationState(
   const totalCO2 = useMemo(() => {
     return sections.reduce((sum, section) => {
       return sum + (section.subsections || []).reduce((subsectionSum, subsection) => {
-        return subsectionSum + (subsection.rows || []).reduce((rowSum, row) => {
-          return rowSum + (row.co2 || 0)
+        const rowsCO2 = (subsection.rows || []).reduce((rowSum, row) => rowSum + (row.co2 || 0), 0)
+        const subSubCO2 = (subsection.subSubsections || []).reduce((subSubSum, subSub) => {
+          return subSubSum + (subSub.rows || []).reduce((rowSum, row) => rowSum + (row.co2 || 0), 0)
         }, 0)
+        return subsectionSum + rowsCO2 + subSubCO2
       }, 0)
     }, 0)
   }, [sections])
@@ -490,13 +685,16 @@ export function useNewCalculationState(
     setCo2ModalOpen,
     toggleSection,
     toggleSubsection,
+    toggleSubSubsection,
     expandAll,
     collapseAll,
     addNewRow,
     addNewSubsection,
+    addNewSubSubsection,
     addNewSection,
     updateSectionName,
     updateSubsectionName,
+    updateSubSubsectionName,
     updateRowField,
     updateRowCO2,
     addNewOption,
@@ -506,6 +704,7 @@ export function useNewCalculationState(
     deleteSection,
     deleteSubsection,
     deleteRow,
+    deleteSubSubsection,
     deleteOption,
     budgetExclRate,
     fixedRate,
