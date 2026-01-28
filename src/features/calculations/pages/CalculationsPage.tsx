@@ -17,7 +17,7 @@ import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate } from '../api/queries'
+import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate, useGetTenantIcon } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import type { GetCalculationsReponse } from '../api/types'
 import { FileText, Trash } from 'lucide-react'
@@ -29,6 +29,7 @@ export function CalculationsPage() {
   const { mutate: initializeCostEstimate } = useInitializeCostEstimate()
   const { mutate: copyCostEstimate } = useCopyCostEstimate()
   const { mutate: deleteCostEstimate } = useDeleteCostEstimate()
+  const { data: tenantIcon } = useGetTenantIcon()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
@@ -232,18 +233,28 @@ export function CalculationsPage() {
         <div className="mb-8">
           <div className="flex items-start justify-between mb-6">
             <div className="text-left">
-              <h1 className="text-3xl font-bold mb-2">
-                <Highlighter action="underline" color="#0099FF">
-                  Kalkylmodul
-                </Highlighter>
-              </h1>
-              <TextAnimate
-                as="p"
-                className="text-muted-foreground"
-                delay={0.2}
-              >
-                Hantera och skapa projektkalkyler
-              </TextAnimate>
+              {tenantIcon ? (
+                <img
+                  src={tenantIcon}
+                  alt="Tenant logo"
+                  className="h-12 w-auto object-contain"
+                />
+              ) : (
+                <>
+                  <h1 className="text-3xl font-bold mb-2">
+                    <Highlighter action="underline" color="#0099FF">
+                      Kalkylmodul
+                    </Highlighter>
+                  </h1>
+                  <TextAnimate
+                    as="p"
+                    className="text-muted-foreground"
+                    delay={0.2}
+                  >
+                    Hantera och skapa projektkalkyler
+                  </TextAnimate>
+                </>
+              )}
             </div>
             <div className="flex gap-3">
               <AnimatedThemeToggler />
