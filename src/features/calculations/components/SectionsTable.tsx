@@ -18,6 +18,7 @@ import {
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
 import { useGetBookkeepingAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
+import { evaluateIntegerArithmeticExpression } from '@/features/calculations/utils/evaluateArithmeticExpression'
 
 function getDisplayNameAndIndex(name: string, baseLabel: string, fallbackIndex: number) {
   const exact = name.trim() === baseLabel
@@ -50,6 +51,14 @@ interface SectionsTableProps {
   updateSubsectionName: (sectionId: number, subsectionId: number, name: string) => void
   updateSubSubsectionName: (sectionId: number, subsectionId: number, subSubsectionId: number, name: string) => void
   updateRowField: (sectionId: number, subsectionId: number, rowId: number, field: keyof CalculationRow, value: string | number, subSubsectionId?: number) => void
+  updateRowFormulaAndQuantity: (
+    sectionId: number,
+    subsectionId: number,
+    rowId: number,
+    formula: string,
+    quantity?: number,
+    subSubsectionId?: number
+  ) => void
   updateRowCO2: (sectionId: number, subsectionId: number, rowId: number, value: number, subSubsectionId?: number) => void
   openCO2Modal: (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => void
   deleteSection: (sectionId: number) => void
@@ -74,6 +83,7 @@ export function SectionsTable({
   updateSubsectionName,
   updateSubSubsectionName,
   updateRowField,
+  updateRowFormulaAndQuantity,
   updateRowCO2,
   openCO2Modal,
   deleteSection,
@@ -83,6 +93,25 @@ export function SectionsTable({
 }: SectionsTableProps) {
   const { data: accounts = [] } = useGetBookkeepingAccounts()
   const { data: unitTypes = [] } = useGetUnitTypes()
+
+  const handleFormulaChange = (params: {
+    sectionId: number
+    subsectionId: number
+    rowId: number
+    subSubsectionId?: number
+  }) => {
+    return (value: string) => {
+      const computed = evaluateIntegerArithmeticExpression(value)
+      updateRowFormulaAndQuantity(
+        params.sectionId,
+        params.subsectionId,
+        params.rowId,
+        value,
+        computed ?? undefined,
+        params.subSubsectionId
+      )
+    }
+  }
   
   return (
     <div className="bg-card border p-4">
@@ -219,6 +248,7 @@ export function SectionsTable({
                           <TableHeader>
                             <TableRow className="border-b border-border">
                               <TableHead className="text-gray-600 w-[200px] border-r border-border bg-muted/50 font-semibold">BENÄMNING</TableHead>
+                              <TableHead className="text-gray-600 w-[140px] border-r border-border bg-muted/50 font-semibold">FORMEL</TableHead>
                               <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">ANTAL</TableHead>
                               <TableHead className="text-gray-600 w-[120px] border-r border-border bg-muted/50 font-semibold">ENHET</TableHead>
                               <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
@@ -239,6 +269,21 @@ export function SectionsTable({
                                     onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'description', e.target.value)}
                                     className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Benämning"
+                                  />
+                                </TableCell>
+                                <TableCell className="border-r border-border p-0 h-10 align-middle">
+                                  <Input
+                                    type="text"
+                                    value={row.formula ?? ''}
+                                    onChange={(e) =>
+                                      handleFormulaChange({
+                                        sectionId: section.id ?? 0,
+                                        subsectionId: subsection.id ?? 0,
+                                        rowId: row.id ?? 0,
+                                      })(e.target.value)
+                                    }
+                                    className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                    placeholder="t.ex. 10/3"
                                   />
                                 </TableCell>
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
@@ -418,6 +463,7 @@ export function SectionsTable({
                                   <TableHeader>
                                     <TableRow className="border-b border-border">
                                       <TableHead className="text-gray-600 w-[200px] border-r border-border bg-muted/50 font-semibold">BENÄMNING</TableHead>
+                                      <TableHead className="text-gray-600 w-[140px] border-r border-border bg-muted/50 font-semibold">FORMEL</TableHead>
                                       <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">ANTAL</TableHead>
                                       <TableHead className="text-gray-600 w-[120px] border-r border-border bg-muted/50 font-semibold">ENHET</TableHead>
                                       <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
@@ -447,6 +493,22 @@ export function SectionsTable({
                                             }
                                             className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                             placeholder="Benämning"
+                                          />
+                                        </TableCell>
+                                        <TableCell className="border-r border-border p-0 h-10 align-middle">
+                                          <Input
+                                            type="text"
+                                            value={row.formula ?? ''}
+                                            onChange={(e) =>
+                                              handleFormulaChange({
+                                                sectionId: section.id ?? 0,
+                                                subsectionId: subsection.id ?? 0,
+                                                rowId: row.id ?? 0,
+                                                subSubsectionId: subSub.id ?? 0,
+                                              })(e.target.value)
+                                            }
+                                            className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                            placeholder="t.ex. 10/3"
                                           />
                                         </TableCell>
                                         <TableCell className="text-right border-r border-border p-0 h-10 align-middle">

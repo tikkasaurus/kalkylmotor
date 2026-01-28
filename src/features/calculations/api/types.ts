@@ -47,6 +47,7 @@ export interface CalculationRow {
   id?: number
   description: string
   quantity: number
+  formula?: string
   unit: string
   pricePerUnit: number
   co2: number

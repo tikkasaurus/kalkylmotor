@@ -375,6 +375,7 @@ export function NewCalculationPage({
           updateSubsectionName={state.updateSubsectionName}
           updateSubSubsectionName={state.updateSubSubsectionName}
           updateRowField={state.updateRowField}
+          updateRowFormulaAndQuantity={state.updateRowFormulaAndQuantity}
           updateRowCO2={state.updateRowCO2}
           openCO2Modal={state.openCO2Modal}
           deleteSection={state.deleteSection}

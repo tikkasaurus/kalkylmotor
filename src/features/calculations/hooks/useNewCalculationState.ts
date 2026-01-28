@@ -22,6 +22,7 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
       id: rowIndex + 1,
       description: row.description,
       quantity: row.quantity,
+      formula: '',
       unit: row.unit,
       pricePerUnit: row.pricePerUnit,
       co2: row.co2 || 0,
@@ -56,6 +57,7 @@ function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
     id: row.id,
     description: row.name,
     quantity: row.quantity,
+    formula: '',
     unit: 'st',
     pricePerUnit: row.price,
     co2: 0,
@@ -383,6 +385,61 @@ export function useNewCalculationState(
     )
   }
 
+  const updateRowFormulaAndQuantity = (
+    sectionId: number,
+    subsectionId: number,
+    rowId: number,
+    formula: string,
+    quantity?: number,
+    subSubsectionId?: number
+  ) => {
+    setSections(
+      sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              subsections: section.subsections?.map((subsection) =>
+                subsection.id === subsectionId
+                  ? subSubsectionId !== undefined
+                    ? {
+                        ...subsection,
+                        subSubsections: subsection.subSubsections?.map((subSub) =>
+                          subSub.id === subSubsectionId
+                            ? {
+                                ...subSub,
+                                rows: subSub.rows?.map((row) =>
+                                  row.id === rowId
+                                    ? {
+                                        ...row,
+                                        formula,
+                                        ...(quantity !== undefined ? { quantity } : {}),
+                                      }
+                                    : row
+                                ),
+                              }
+                            : subSub
+                        ),
+                      }
+                    : {
+                        ...subsection,
+                        rows: subsection.rows?.map((row) =>
+                          row.id === rowId
+                            ? {
+                                ...row,
+                                formula,
+                                ...(quantity !== undefined ? { quantity } : {}),
+                              }
+                            : row
+                        ),
+                      }
+                  : subsection
+              ),
+            }
+          : section
+      )
+    )
+  }
+
   const addNewSubsection = (sectionId: number) => {
     setSections(
       sections.map((section) => {
@@ -500,6 +557,7 @@ export function useNewCalculationState(
                   id: newRowId,
                   description: '',
                   quantity: 0,
+                  formula: '',
                   unit: 'm2',
                   pricePerUnit: 0,
                   co2: 0,
@@ -737,6 +795,7 @@ export function useNewCalculationState(
     updateSubsectionName,
     updateSubSubsectionName,
     updateRowField,
+    updateRowFormulaAndQuantity,
     updateRowCO2,
     addNewOption,
     updateOptionField,
