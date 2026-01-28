@@ -331,12 +331,11 @@ export function exportToPDF(data: PDFExportData) {
       yPos = margin
     }
 
-    doc.setDrawColor(200, 200, 200)
-    doc.rect(margin, yPos, pageWidth - 2 * margin, 10, 'S')
-    doc.setFontSize(14)
+    
+    doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(0, 0, 0)
-    doc.text('Optioner', margin + 5, yPos + 7)
+    doc.text('Optioner', margin, yPos + 8)
 
     yPos += 15
 
