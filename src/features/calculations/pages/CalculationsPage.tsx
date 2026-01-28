@@ -210,16 +210,6 @@ export function CalculationsPage() {
     }
   }, [contextMenu.open])
 
-  const handleSaveSuccess = () => {
-    // confetti({
-    //   particleCount: 100,
-    //   spread: 70,
-    //   origin: { x: 0.5, y: 0 },
-    //   gravity: 1.5,
-    //   colors: ['#0099FF', '#00FF99', '#FF9900', '#FF0099', '#9900FF'],
-    // })
-  }
-
   // Show budget overview if active
   if (showBudgetOverview) {
     return <BudgetOverviewPage onClose={handleCloseBudgetOverview} />
@@ -388,7 +378,6 @@ export function CalculationsPage() {
                 <NewCalculationPage
                   costEstimateId={newCostEstimateId}
                   onClose={handleCloseCalculationView}
-                  onSaveSuccess={handleSaveSuccess}
                 />
               </motion.div>
             ) : copiedCalculationData ? (
@@ -396,7 +385,6 @@ export function CalculationsPage() {
                 <NewCalculationPage
                   existingCalculation={copiedCalculationData}
                   onClose={handleCloseCalculationView}
-                  onSaveSuccess={handleSaveSuccess}
                 />
               </motion.div>
             ) : selectedTemplate ? (
@@ -404,7 +392,6 @@ export function CalculationsPage() {
                 <NewCalculationPage
                   template={getTemplateById(String(selectedTemplate))}
                   onClose={handleCloseCalculationView}
-                  onSaveSuccess={handleSaveSuccess}
                   initialCalculationName={selectedCalculation?.name}
                 />
               </motion.div>
@@ -416,7 +403,6 @@ export function CalculationsPage() {
                   existingCalculationLoading={isLoadingCalculation}
                   existingCalculationError={existingCalculationError}
                   onClose={handleCloseCalculationView}
-                  onSaveSuccess={handleSaveSuccess}
                   initialCalculationName={selectedCalculation.name}
                 />
               </motion.div>

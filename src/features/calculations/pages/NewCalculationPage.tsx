@@ -26,7 +26,6 @@ export function NewCalculationPage({
   existingCalculationError,
   costEstimateId,
   onClose,
-  onSaveSuccess,
   initialCalculationName = 'Kalkylnamn',
 }: NewCalculationProps) {
   const state = useNewCalculationState(template, existingCalculation)
@@ -289,7 +288,6 @@ export function NewCalculationPage({
       })
 
       toast.success('Kalkylen sparades framgångsrikt!')
-      onSaveSuccess?.()
     } catch (error) {
       toast.error('Kunde inte spara kalkylen. Försök igen.')
       console.error('Error saving calculation:', error)

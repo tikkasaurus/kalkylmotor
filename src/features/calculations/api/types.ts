@@ -96,7 +96,6 @@ export interface NewCalculationProps {
   existingCalculationError?: unknown
   costEstimateId?: string
   onClose: () => void
-  onSaveSuccess?: () => void
   initialCalculationName?: string
 }
 
