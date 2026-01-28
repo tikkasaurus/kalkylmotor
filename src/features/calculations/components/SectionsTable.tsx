@@ -85,13 +85,13 @@ export function SectionsTable({
   const { data: unitTypes = [] } = useGetUnitTypes()
   
   return (
-    <div className="bg-card border p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-card border p-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Calculator className="w-5 h-5" />
           <h2 className="text-lg font-semibold">Kostnadskalkyl</h2>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={expandAll}
             className="text-sm text-gray-600 font-medium hover:text-foreground transition-colors"
@@ -107,7 +107,7 @@ export function SectionsTable({
           <Button 
             onClick={addNewSection}
             variant="outline"
-            className="text-sm flex items-center gap-1 text-gray-600 hover:text-foreground transition-colors"
+            className="text-sm h-8 px-3 flex items-center gap-1 text-gray-600 hover:text-foreground transition-colors"
           >
             <span>+</span> Lägg till nivå 1
           </Button>
@@ -115,11 +115,11 @@ export function SectionsTable({
       </div>
 
       {/* Sections List */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {sections.map((section, sectionIdx) => (
           <div key={section.id} className="border overflow-hidden">
             <div 
-              className="w-full flex items-center justify-between p-4 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
+              className="w-full flex items-center justify-between p-3 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
               onClick={() => toggleSection(section.id ?? 0)}
             >
               <div className="flex items-center gap-3 flex-1">
@@ -138,7 +138,7 @@ export function SectionsTable({
                         type="text"
                         value={displayName}
                         onChange={(e) => updateSectionName(section.id ?? 0, e.target.value)}
-                        className="h-8 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs"
+                        className="h-7 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs"
                         onClick={(e) => e.stopPropagation()}
                       />
                       {displayIndex && (
@@ -168,7 +168,7 @@ export function SectionsTable({
                   <div key={subsection.id} className="border-b last:border-b-0 border-l-4 border-l-primary/20">
                     {/* Subsection Header */}
                     <div 
-                      className="w-full flex items-center justify-between p-3 bg-background cursor-pointer hover:bg-muted/30 transition-colors pl-8"
+                      className="w-full flex items-center justify-between p-2 bg-background cursor-pointer hover:bg-muted/30 transition-colors pl-6"
                       onClick={() => toggleSubsection(section.id ?? 0, subsection.id ?? 0)}
                     >
                       <div className="flex items-center gap-3 flex-1">
@@ -187,7 +187,7 @@ export function SectionsTable({
                                 type="text"
                                 value={displayName}
                                 onChange={(e) => updateSubsectionName(section.id ?? 0, subsection.id ?? 0, e.target.value)}
-                                className="h-7 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs text-sm"
+                                className="h-6 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs text-sm"
                                 onClick={(e) => e.stopPropagation()}
                               />
                               {displayIndex && (
@@ -214,7 +214,7 @@ export function SectionsTable({
 
                     {/* Subsection Rows */}
                     {subsection.expanded && (
-                      <div className="bg-card pl-8">
+                      <div className="bg-card pl-6">
                         <Table className="border border-border">
                           <TableHeader>
                             <TableRow className="border-b border-border">
@@ -344,11 +344,11 @@ export function SectionsTable({
                             ))}
                           </TableBody>
                         </Table>
-                        <div className="py-4">
+                        <div className="py-2">
                           <Button 
                             onClick={() => addNewRow(section.id ?? 0, subsection.id ?? 0)}
                             variant="outline"
-                            className="flex items-center gap-2 text-sm hover:text-foreground"
+                            className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                           >
                             <Plus className="w-4 h-4" />
                             Lägg till rad
@@ -357,9 +357,9 @@ export function SectionsTable({
 
                         {/* Sub-subsections */}
                         {(subsection.subSubsections || []).map((subSub, subSubIdx) => (
-                          <div key={subSub.id} className="border mt-3 ml-6">
+                          <div key={subSub.id} className="border mt-2 ml-4">
                             <div
-                              className="w-full flex items-center justify-between p-3 bg-muted/30 cursor-pointer hover:bg-muted/40 transition-colors"
+                              className="w-full flex items-center justify-between p-2 bg-muted/30 cursor-pointer hover:bg-muted/40 transition-colors"
                               onClick={() =>
                                 toggleSubSubsection(section.id ?? 0, subsection.id ?? 0, subSub.id ?? 0)
                               }
@@ -387,7 +387,7 @@ export function SectionsTable({
                                             e.target.value
                                           )
                                         }
-                                        className="h-7 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs text-sm"
+                                        className="h-6 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs text-sm"
                                         onClick={(e) => e.stopPropagation()}
                                       />
                                       {displayIndex && (
@@ -608,11 +608,11 @@ export function SectionsTable({
                                     ))}
                                   </TableBody>
                                 </Table>
-                                <div className="py-4 px-2">
+                                <div className="py-2 px-2">
                                   <Button
                                     onClick={() => addNewRow(section.id ?? 0, subsection.id ?? 0, subSub.id ?? 0)}
                                     variant="outline"
-                                    className="flex items-center gap-2 text-sm hover:text-foreground"
+                                    className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                                   >
                                     <Plus className="w-4 h-4" />
                                     Lägg till rad
@@ -623,11 +623,11 @@ export function SectionsTable({
                           </div>
                         ))}
 
-                        <div className="py-2 ml-6">
+                        <div className="py-2 ml-4">
                           <Button
                             onClick={() => addNewSubSubsection(section.id ?? 0, subsection.id ?? 0)}
                             variant="outline"
-                            className="flex items-center gap-2 text-sm hover:text-foreground"
+                            className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                           >
                             <Plus className="w-4 h-4" />
                             Lägg till nivå 3
@@ -637,11 +637,11 @@ export function SectionsTable({
                     )}
                   </div>
                 ))}
-                <div className="p-4 border-t pl-8">
+                <div className="p-3 border-t pl-6">
                   <Button 
                     onClick={() => addNewSubsection(section.id ?? 0)}
                     variant="outline"
-                    className="flex items-center gap-2 text-sm hover:text-foreground"
+                    className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                   >
                     <Plus className="w-4 h-4" />
                     Lägg till nivå 2
