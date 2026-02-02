@@ -29,7 +29,7 @@ export function CalculationsPage() {
   const { mutate: initializeCostEstimate } = useInitializeCostEstimate()
   const { mutate: copyCostEstimate } = useCopyCostEstimate()
   const { mutate: deleteCostEstimate } = useDeleteCostEstimate()
-  const { data: tenantIcon } = useGetTenantIcon()
+  const { data: tenantIcon, isLoading: isLoadingTenantIcon } = useGetTenantIcon()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showCalculationView, setShowCalculationView] = useState(false)
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
@@ -229,7 +229,7 @@ export function CalculationsPage() {
                   alt="Tenant logo"
                   className="h-12 w-auto object-contain"
                 />
-              ) : (
+              ) : isLoadingTenantIcon ? null : (
                 <>
                   <h1 className="text-3xl font-bold mb-2">
                     <Highlighter action="underline" color="#0099FF">
