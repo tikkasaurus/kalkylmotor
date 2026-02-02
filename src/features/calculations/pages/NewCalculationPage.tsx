@@ -18,6 +18,7 @@ import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 import { exportToPDF } from '@/features/calculations/utils/pdfExport'
 import { useCreateCalculation, useGetTenantIcon } from '../api/queries'
 import { toast } from '@/components/ui/toast'
+import { useAuth } from '@/lib/useAuth'
 
 export function NewCalculationPage({ 
   template, 
@@ -32,6 +33,7 @@ export function NewCalculationPage({
   const createCalculation = useCreateCalculation()
   const [calculationName, setCalculationName] = useState(initialCalculationName)
   const { data: tenantIcon } = useGetTenantIcon()
+  const { account } = useAuth()
 
   const loadingExisting = !!existingCalculationLoading
   const existingError = existingCalculationError
@@ -172,33 +174,33 @@ export function NewCalculationPage({
   }
 
   const exportToCSV = () => {
-    let csvContent = 'Nivå 1,Nivå 2,Nivå 3,Benämning,Antal,Enhet,Pris/enhet,Summa\n'
+    let csvContent = 'Nivå 1,Nivå 2,Nivå 3,Benämning,Antal,Enhet,Pris/enhet,Spill,Summa\n'
 
     state.sections.forEach((section) => {
       const sectionTotal = `"${formatNumberForCSV(section.amount)} kr"`
-      csvContent += `"${section.name}",,,,,,${sectionTotal}\n`
+      csvContent += `"${section.name}",,,,,,,${sectionTotal}\n`
 
       if (section.subsections && section.subsections.length > 0) {
         section.subsections.forEach((subsection) => {
           const subsectionTotal = `"${formatNumberForCSV(subsection.amount)} kr"`
-          csvContent += `"${section.name}","${subsection.name}",,,,,${subsectionTotal}\n`
+          csvContent += `"${section.name}","${subsection.name}",,,,,,${subsectionTotal}\n`
 
           if (subsection.rows && subsection.rows.length > 0) {
             subsection.rows.forEach((row) => {
-              const rowTotal = row.quantity * row.pricePerUnit
-              csvContent += `"${section.name}","${subsection.name}",,"${row.description}",${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+              const rowTotal = row.quantity * row.pricePerUnit * (1 + row.waste)
+              csvContent += `"${section.name}","${subsection.name}",,"${row.description}",${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr",${formatNumberForCSV(row.waste * 100)},"${formatNumberForCSV(rowTotal)} kr"\n`
             })
           }
 
           if (subsection.subSubsections && subsection.subSubsections.length > 0) {
             subsection.subSubsections.forEach((subSub) => {
               const subSubTotal = `"${formatNumberForCSV(subSub.amount)} kr"`
-              csvContent += `"${section.name}","${subsection.name}","${subSub.name}",,,,,${subSubTotal}\n`
+              csvContent += `"${section.name}","${subsection.name}","${subSub.name}",,,,,,${subSubTotal}\n`
 
               if (subSub.rows && subSub.rows.length > 0) {
                 subSub.rows.forEach((row) => {
-                  const rowTotal = row.quantity * row.pricePerUnit
-                  csvContent += `"${section.name}","${subsection.name}","${subSub.name}","${row.description}",${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr","${formatNumberForCSV(rowTotal)} kr"\n`
+                  const rowTotal = row.quantity * row.pricePerUnit * (1 + row.waste)
+                  csvContent += `"${section.name}","${subsection.name}","${subSub.name}","${row.description}",${formatNumberForCSV(row.quantity)},${row.unit},"${formatNumberForCSV(row.pricePerUnit)} kr",${formatNumberForCSV(row.waste * 100)},"${formatNumberForCSV(rowTotal)} kr"\n`
                 })
               }
             })
@@ -237,13 +239,14 @@ export function NewCalculationPage({
       exportToPDF({
         calculationName,
         date: new Date().toISOString().split('T')[0],
+        createdBy: account?.name || account?.username || 'Okänd',
         rate: state.rate,
         area: state.area,
         co2Budget: state.co2Budget,
         budgetExclRate: state.budgetExclRate,
         fixedRate: state.fixedRate,
         bidAmount: state.bidAmount,
-        sections: state.sections.map(section => ({ ...section, expanded: true })), // All sections expanded
+        sections: state.sections,
         options: state.options,
         tenantLogoDataUrl,
       })

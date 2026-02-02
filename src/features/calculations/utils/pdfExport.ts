@@ -7,6 +7,7 @@ type AutoTableCapableDoc = jsPDF & { lastAutoTable?: { finalY: number } }
 interface PDFExportData {
   calculationName: string
   date: string
+  createdBy?: string
   rate: number
   area: number
   co2Budget: number
@@ -42,7 +43,7 @@ const formatNumber = (num: number): string => {
 
 export function exportToPDF(data: PDFExportData) {
   const doc = new jsPDF({
-    orientation: 'portrait',
+    orientation: 'landscape',
     unit: 'mm',
     format: 'a4',
   })
@@ -98,8 +99,11 @@ export function exportToPDF(data: PDFExportData) {
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(100, 100, 100)
   doc.text(data.date, calcNameX, yPos + 14)
+  if (data.createdBy) {
+    doc.text(`Skapad av: ${data.createdBy}`, calcNameX, yPos + 18)
+  }
 
-  yPos += 20
+  yPos += 22
 
   // Compact summary (single box, 3x2 grid)
   const summaryW = pageWidth - 2 * margin
@@ -179,88 +183,102 @@ export function exportToPDF(data: PDFExportData) {
         '',
         '',
         '',
+        '',
         formatCurrency(section.amount),
         '',
         '',
       ],
     })
 
-    ;(section.subsections || []).forEach((subsection) => {
-      reportRows.push({
-        kind: 'level2',
-        indent: 1,
-        cells: [
-          subsection.name || '',
-          '',
-          '',
-          '',
-          '',
-          formatCurrency(subsection.amount),
-          '',
-          '',
-        ],
-      })
-
-      // Rows directly on level2
-      ;(subsection.rows || []).forEach((row) => {
+    // Only process if section is expanded
+    if (section.expanded) {
+      ;(section.subsections || []).forEach((subsection) => {
         reportRows.push({
-          kind: 'row',
-          indent: 2,
+          kind: 'level2',
+          indent: 1,
           cells: [
-            row.description || '',
-            formatNumber(row.quantity),
-            row.unit || '',
-            formatNumber(row.pricePerUnit),
-            formatNumber(row.co2 || 0),
-            formatCurrency(row.quantity * row.pricePerUnit),
-            row.account && row.account !== 'Välj konto' ? row.account : '',
-            row.note || '',
-          ],
-        })
-      })
-
-      // Level3 blocks under level2
-      ;(subsection.subSubsections || []).forEach((subSub) => {
-        reportRows.push({
-          kind: 'level3',
-          indent: 2,
-          cells: [
-            subSub.name || '',
+            subsection.name || '',
             '',
             '',
             '',
             '',
-            formatCurrency(subSub.amount),
+            '',
+            formatCurrency(subsection.amount),
             '',
             '',
           ],
         })
 
-        ;(subSub.rows || []).forEach((row) => {
-          reportRows.push({
-            kind: 'row',
-            indent: 3,
-            cells: [
-              row.description || '',
-              formatNumber(row.quantity),
-              row.unit || '',
-              formatNumber(row.pricePerUnit),
-              formatNumber(row.co2 || 0),
-              formatCurrency(row.quantity * row.pricePerUnit),
-              row.account && row.account !== 'Välj konto' ? row.account : '',
-              row.note || '',
-            ],
+        // Only process if subsection is expanded
+        if (subsection.expanded) {
+          // Rows directly on level2
+          ;(subsection.rows || []).forEach((row) => {
+            reportRows.push({
+              kind: 'row',
+              indent: 2,
+              cells: [
+                row.description || '',
+                formatNumber(row.quantity),
+                row.unit || '',
+                formatNumber(row.pricePerUnit),
+                formatNumber(row.waste * 100),
+                formatNumber(row.co2 || 0),
+                formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste)),
+                row.account && row.account !== 'Välj konto' ? row.account : '',
+                row.note || '',
+              ],
+            })
           })
-        })
+
+          // Level3 blocks under level2
+          ;(subsection.subSubsections || []).forEach((subSub) => {
+            reportRows.push({
+              kind: 'level3',
+              indent: 2,
+              cells: [
+                subSub.name || '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                formatCurrency(subSub.amount),
+                '',
+                '',
+              ],
+            })
+
+            // Only process if sub-subsection is expanded
+            if (subSub.expanded) {
+              ;(subSub.rows || []).forEach((row) => {
+                reportRows.push({
+                  kind: 'row',
+                  indent: 3,
+                  cells: [
+                    row.description || '',
+                    formatNumber(row.quantity),
+                    row.unit || '',
+                    formatNumber(row.pricePerUnit),
+                    formatNumber(row.waste * 100),
+                    formatNumber(row.co2 || 0),
+                    formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste)),
+                    row.account && row.account !== 'Välj konto' ? row.account : '',
+                    row.note || '',
+                  ],
+                })
+              })
+            }
+          })
+        }
       })
-    })
+    }
   })
 
   const body = reportRows.map((r) => r.cells.map((c) => (c === null || c === undefined ? '' : String(c))))
 
   autoTable(doc, {
     startY: yPos,
-    head: [['Benämning', 'Antal', 'Enhet', 'Pris/enhet', 'CO2', 'Summa', 'Konto', 'Anteckning']],
+    head: [['Benämning', 'Antal', 'Enhet', 'Pris/enhet', 'Spill', 'CO2', 'Summa', 'Konto', 'Anteckning']],
     body,
     margin: { left: margin, right: margin },
     tableWidth: 'auto',
@@ -279,14 +297,15 @@ export function exportToPDF(data: PDFExportData) {
       lineWidth: 0.2,
     },
     columnStyles: {
-      0: { cellWidth: tableWidth * 0.30 }, // Benämning
-      1: { cellWidth: tableWidth * 0.09, halign: 'right' }, // Antal
-      2: { cellWidth: tableWidth * 0.08 }, // Enhet
-      3: { cellWidth: tableWidth * 0.12, halign: 'right' }, // Pris/enhet
-      4: { cellWidth: tableWidth * 0.07, halign: 'right' }, // CO2
-      5: { cellWidth: tableWidth * 0.14, halign: 'right' }, // Summa
-      6: { cellWidth: tableWidth * 0.08 }, // Konto
-      7: { cellWidth: tableWidth * 0.12 }, // Anteckning
+      0: { cellWidth: tableWidth * 0.26 }, // Benämning
+      1: { cellWidth: tableWidth * 0.08, halign: 'right' }, // Antal
+      2: { cellWidth: tableWidth * 0.07 }, // Enhet
+      3: { cellWidth: tableWidth * 0.10, halign: 'right' }, // Pris/enhet
+      4: { cellWidth: tableWidth * 0.07, halign: 'right' }, // Spill
+      5: { cellWidth: tableWidth * 0.07, halign: 'right' }, // CO2
+      6: { cellWidth: tableWidth * 0.13, halign: 'right' }, // Summa
+      7: { cellWidth: tableWidth * 0.10 }, // Konto
+      8: { cellWidth: tableWidth * 0.12 }, // Anteckning
     },
     didParseCell: (hookData) => {
       if (hookData.section !== 'body') return
