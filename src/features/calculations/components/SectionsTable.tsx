@@ -253,6 +253,7 @@ export function SectionsTable({
                               <TableHead className="text-gray-600 w-[120px] border-r border-border bg-muted/50 font-semibold">ENHET</TableHead>
                               <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
                               <TableHead className="text-gray-600 w-[80px] text-center border-r border-border bg-muted/50 font-semibold">CO2</TableHead>
+                              <TableHead className="text-gray-600 w-[80px] text-right border-r border-border bg-muted/50 font-semibold">SPILL</TableHead>
                               <TableHead className="text-gray-600 w-[130px] text-right border-r border-border bg-muted/50 font-semibold">SUMMA</TableHead>
                               <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
                               <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
@@ -350,8 +351,24 @@ export function SectionsTable({
                                     </button>
                                   </div>
                                 </TableCell>
+                                <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                  <Input 
+                                    type="number" 
+                                    min="0"
+                                    max="100"
+                                    value={row.waste * 100} 
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value)
+                                      if (value >= 0 || e.target.value === '') {
+                                        updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'waste', value / 100)
+                                      }
+                                    }}
+                                    className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                    placeholder="0"
+                                  />
+                                </TableCell>
                                 <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
-                                  {formatCurrency(row.quantity * row.pricePerUnit)}
+                                  {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <select 
@@ -468,6 +485,7 @@ export function SectionsTable({
                                       <TableHead className="text-gray-600 w-[120px] border-r border-border bg-muted/50 font-semibold">ENHET</TableHead>
                                       <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
                                       <TableHead className="text-gray-600 w-[80px] text-center border-r border-border bg-muted/50 font-semibold">CO2</TableHead>
+                                      <TableHead className="text-gray-600 w-[80px] text-right border-r border-border bg-muted/50 font-semibold">SPILL</TableHead>
                                       <TableHead className="text-gray-600 w-[130px] text-right border-r border-border bg-muted/50 font-semibold">SUMMA</TableHead>
                                       <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
                                       <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
@@ -611,8 +629,24 @@ export function SectionsTable({
                                             </button>
                                           </div>
                                         </TableCell>
+                                        <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                          <Input 
+                                            type="number" 
+                                            min="0"
+                                            max="100"
+                                            value={row.waste * 100} 
+                                            onChange={(e) => {
+                                              const value = Number(e.target.value)
+                                              if (value >= 0 || e.target.value === '') {
+                                                updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'waste', value / 100, subSub.id ?? 0)
+                                              }
+                                            }}
+                                            className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                            placeholder="0"
+                                          />
+                                        </TableCell>
                                         <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
-                                          {formatCurrency(row.quantity * row.pricePerUnit)}
+                                          {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                         </TableCell>
                                         <TableCell className="border-r border-border p-0 h-10 align-middle">
                                           <select

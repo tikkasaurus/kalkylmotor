@@ -61,9 +61,10 @@ export function NewCalculationPage({
       name: row.description,
       quantity: row.quantity,
       price: row.pricePerUnit,
-      amount: row.quantity * row.pricePerUnit,
+      amount: row.quantity * row.pricePerUnit * (1 + row.waste),
       notes: row.note,
       co2CostId: row.co2CostId || 0,
+      waste: row.waste,
     }
     
     // Only include ID if it exists in the original payload

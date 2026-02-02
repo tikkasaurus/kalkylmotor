@@ -55,6 +55,7 @@ export interface CalculationRow {
   account: string
   resource: string
   note: string
+  waste: number
 }
 
 export interface CalculationSubSubsection {
@@ -191,6 +192,7 @@ export type BudgetRowPayload = {
   amount: number
   notes: string
   co2CostId: number
+  waste: number
 }
 
 export type OptionBudgetRowPayload = {

@@ -30,9 +30,10 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
       account: row.account || 'Välj konto',
       resource: row.resource || '',
       note: row.note || '',
+      waste: 0,
     }))
 
-    const subsectionAmount = rows.reduce((sum, row) => sum + (row.quantity * row.pricePerUnit), 0)
+    const subsectionAmount = rows.reduce((sum, row) => sum + (row.quantity * row.pricePerUnit * (1 + row.waste)), 0)
 
     const subsection: CalculationSubsection = {
       id: 1,
@@ -65,6 +66,7 @@ function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
     account: row.accountNo ? String(row.accountNo) : 'Välj konto',
     resource: '',
     note: row.notes,
+    waste: row.waste || 0,
   }
 }
 
@@ -77,12 +79,12 @@ function buildSubsectionsFromPayload(
   // section.subSections are the first level ("subsections")
   ;(section.subSections || []).forEach((payloadSubsection) => {
     const rows = (payloadSubsection.budgetRows || []).map(mapBudgetRowToCalculationRow)
-    const subsectionOwnRowsAmount = rows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+    const subsectionOwnRowsAmount = rows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit * (1 + row.waste), 0)
 
     const subSubsections: CalculationSubSubsection[] = (payloadSubsection.subSections || []).map(
       (payloadSubSubsection) => {
         const subRows = (payloadSubSubsection.budgetRows || []).map(mapBudgetRowToCalculationRow)
-        const subAmount = subRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+        const subAmount = subRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit * (1 + row.waste), 0)
 
         return {
           id: payloadSubSubsection.id ?? counter.current++,
@@ -565,6 +567,7 @@ export function useNewCalculationState(
                   account: 'Välj konto',
                   resource: '',
                   note: '',
+                  waste: 0,
                 }
                 return subSubsectionId !== undefined
                   ? {
@@ -718,12 +721,12 @@ export function useNewCalculationState(
       const subsectionsWithAmounts = (section.subsections || []).map((subsection) => {
         const subSubsectionsWithAmounts = (subsection.subSubsections || []).map((subSub) => {
           const resolvedRows = (subSub.rows || []).map(resolveRowCO2)
-          const subSubAmount = resolvedRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+          const subSubAmount = resolvedRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit * (1 + row.waste), 0)
           return { ...subSub, amount: subSubAmount, rows: resolvedRows }
         })
 
         const resolvedSubsectionRows = (subsection.rows || []).map(resolveRowCO2)
-        const subsectionRowsAmount = resolvedSubsectionRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit, 0)
+        const subsectionRowsAmount = resolvedSubsectionRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit * (1 + row.waste), 0)
         const subsectionAmount = subsectionRowsAmount + subSubsectionsWithAmounts.reduce((sum, s) => sum + s.amount, 0)
 
         return {
