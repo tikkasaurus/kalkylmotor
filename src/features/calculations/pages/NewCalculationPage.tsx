@@ -356,6 +356,9 @@ export function NewCalculationPage({
               fixedRate={state.fixedRate}
               bidAmount={state.bidAmount}
               rate={state.rate}
+              totalCO2={state.totalCO2}
+              co2Budget={state.co2Budget}
+              area={state.area}
               formatCurrency={formatCurrency}
             />
 
