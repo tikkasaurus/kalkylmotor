@@ -6,6 +6,7 @@ interface RateSectionProps {
   area: number
   co2Budget: number
   totalCO2: number
+  bidAmount: number
   onChangeRate: (value: number) => void
   onChangeArea: (value: number) => void
   onChangeCo2Budget: (value: number) => void
@@ -16,12 +17,21 @@ export function RateSection({
   area,
   co2Budget,
   totalCO2,
+  bidAmount,
   onChangeRate,
   onChangeArea,
   onChangeCo2Budget,
 }: RateSectionProps) {
   const co2BudgetTotal = co2Budget * area
   const exceedsBudget = totalCO2 > co2BudgetTotal && co2BudgetTotal > 0
+  const costPerKvm = area > 0 ? bidAmount / area : 0
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('sv-SE', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num)
+  }
 
   return (
     <div className="bg-card border p-6 mb-6">
@@ -39,6 +49,9 @@ export function RateSection({
             />
             <span className="text-muted-foreground">%</span>
           </div>
+          <p className="text-sm text-muted-foreground text-left mt-2">
+            Procentuellt arvode på totalkostnaden
+          </p>
         </div>
         <div>
           <Label htmlFor="area">Area (kvm)</Label>
@@ -52,6 +65,11 @@ export function RateSection({
             />
             <span className="text-muted-foreground">kvm</span>
           </div>
+          {area > 0 && (
+            <p className="text-sm font-semibold ml-1 mt-2 text-left text-blue-600">
+              {formatNumber(costPerKvm)} kr per kvm
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="co2">CO2 Budget</Label>
@@ -67,9 +85,6 @@ export function RateSection({
           </div>
         </div>
       </div>
-      <p className="text-sm text-muted-foreground text-left">
-        Procentuellt arvode på totalkostnaden
-      </p>
       {exceedsBudget && (
         <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-md flex items-start gap-3">
           <div className="flex-1">
