@@ -6,6 +6,7 @@ import type {
   CalculationSection,
   CalculationSectionPayload,
   CalculationRow,
+  CreateCalculationRequest,
   NewCalculationProps,
   OptionBudgetRowPayload,
 } from '@/features/calculations/api/types'
@@ -268,7 +269,7 @@ export function NewCalculationPage({
     const isNewCalculation = !existingCalculation
 
     try {
-      const payload = {
+      const payload: CreateCalculationRequest = {
         name: calcName,
         co2Budget: state.co2Budget,
         budget: state.budgetExclRate,
@@ -277,7 +278,7 @@ export function NewCalculationPage({
         fee: state.bidAmount - state.budgetExclRate,
         squareMeter: state.area,
         customerId: state.selectedCustomer?.id,
-        customer: state.selectedCustomer,
+        customer: state.selectedCustomer ?? undefined,
         sections: state.sections.map((section) => 
           mapSectionToPayload(section, !isNewCalculation, existingCalculation?.sections)
         ),
