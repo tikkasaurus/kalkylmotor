@@ -1,5 +1,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CustomerSearchCombobox } from '@/features/calculations/components/CustomerSearchCombobox'
+import type { Customer } from '@/features/calculations/api/types'
 
 interface RateSectionProps {
   rate: number
@@ -7,9 +9,11 @@ interface RateSectionProps {
   co2Budget: number
   totalCO2: number
   bidAmount: number
+  selectedCustomer?: Customer | null
   onChangeRate: (value: number) => void
   onChangeArea: (value: number) => void
   onChangeCo2Budget: (value: number) => void
+  onCustomerChange: (customer: Customer | null) => void
 }
 
 export function RateSection({
@@ -18,9 +22,11 @@ export function RateSection({
   co2Budget,
   totalCO2,
   bidAmount,
+  selectedCustomer,
   onChangeRate,
   onChangeArea,
   onChangeCo2Budget,
+  onCustomerChange,
 }: RateSectionProps) {
   const co2BudgetTotal = co2Budget * area
   const exceedsBudget = totalCO2 > co2BudgetTotal && co2BudgetTotal > 0
@@ -36,7 +42,7 @@ export function RateSection({
   return (
     <div className="bg-card border p-6 mb-6">
       <h2 className="text-lg font-semibold mb-4 text-left">Arvode</h2>
-      <div className="grid grid-cols-3 gap-6 mb-4">
+      <div className="grid grid-cols-4 gap-6 mb-4">
         <div>
           <Label htmlFor="arvode">Arvode (%)</Label>
           <div className="flex items-center gap-2 mt-2">
@@ -82,6 +88,15 @@ export function RateSection({
               className="flex-1"
             />
             <span className="text-muted-foreground">kg/kvm</span>
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="customer">Kund (frivillig)</Label>
+          <div className="mt-2">
+            <CustomerSearchCombobox
+              value={selectedCustomer}
+              onChange={onCustomerChange}
+            />
           </div>
         </div>
       </div>

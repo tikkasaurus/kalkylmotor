@@ -276,6 +276,8 @@ export function NewCalculationPage({
         calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
         fee: state.bidAmount - state.budgetExclRate,
         squareMeter: state.area,
+        customerId: state.selectedCustomer?.id,
+        customer: state.selectedCustomer,
         sections: state.sections.map((section) => 
           mapSectionToPayload(section, !isNewCalculation, existingCalculation?.sections)
         ),
@@ -351,9 +353,11 @@ export function NewCalculationPage({
               co2Budget={state.co2Budget}
               totalCO2={state.totalCO2}
               bidAmount={state.bidAmount}
+              selectedCustomer={state.selectedCustomer}
               onChangeRate={state.setRate}
               onChangeArea={state.setArea}
               onChangeCo2Budget={state.setCo2Budget}
+              onCustomerChange={state.setSelectedCustomer}
             />
 
             <SummaryCards

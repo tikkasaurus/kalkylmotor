@@ -7,6 +7,7 @@ import type {
   CopyCostEstimateResponse, 
   CostEstimateResponse, 
   CreateCalculationRequest, 
+  CustomerSearchResponse,
   GetCalculationsReponse, 
   InitializeCostEstimateResponse, 
   ProjectsResponse, 
@@ -238,5 +239,21 @@ export function useConnectCostEstimateToProject() {
   return useMutation({
     mutationFn: ({ costEstimateId, projectId }: { costEstimateId: number; projectId: number }) =>
       apiClient.post(`/CostEstimate/${costEstimateId}/projects/${projectId}?budgetType=Production`, {}),
+  })
+}
+
+export function useCustomerSearch(searchTerm: string) {
+  return useQuery({
+    queryKey: ['customer-search', searchTerm],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) {
+        return { count: 0, data: [] }
+      }
+      return await apiClient.get<CustomerSearchResponse>(
+        `/CostEstimate/customer/search?Search=${encodeURIComponent(searchTerm)}`
+      )
+    },
+    enabled: searchTerm.length >= 2,
+    staleTime: 30000, // Cache for 30 seconds
   })
 }

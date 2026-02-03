@@ -10,6 +10,7 @@ import type {
   CalculationSectionPayload,
   BudgetRowPayload,
   OptionBudgetRowPayload,
+  Customer,
 } from '@/features/calculations/api/types'
 import { useGetCO2Database } from '@/features/calculations/api/queries'
 
@@ -160,6 +161,9 @@ export function useNewCalculationState(
   const [rate, setRate] = useState(8)
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    existingCalculation?.customer || null
+  )
   const [co2ModalOpen, setCo2ModalOpen] = useState(false)
   const [selectedRowForCO2, setSelectedRowForCO2] = useState<{
     sectionId: number
@@ -779,11 +783,13 @@ export function useNewCalculationState(
     area,
     co2Budget,
     totalCO2,
+    selectedCustomer,
     co2ModalOpen,
     selectedRowForCO2,
     setRate,
     setArea,
     setCo2Budget,
+    setSelectedCustomer,
     setCo2ModalOpen,
     toggleSection,
     toggleSubsection,

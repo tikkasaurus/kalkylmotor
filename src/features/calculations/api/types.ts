@@ -113,6 +113,7 @@ export type CostEstimateResponse = {
   createdBy: string,
   createdByName: string,
   created: string,
+  customerName: string,
   versionName: string,
   versionNo: string,
   versionAmount: string
@@ -157,6 +158,31 @@ export type CO2Response = {
   ]
 };
 
+export interface Customer {
+  id: number
+  name: string
+  legalEntityType: "Company" | string
+  organizationNo: string
+  customerNo: string
+  deliveryPostalArea: string
+  deliveryPostalAddress: string
+  deliveryPostalNo: string
+  hasFTax: boolean
+  hasVAT: boolean
+  hasWarning: boolean
+  hasEmployerContributions: boolean
+  ediNumber: string
+  glnNumber: string
+  peppolId: string
+  contactEmail: string
+  linkUrl: string
+}
+
+export interface CustomerSearchResponse {
+  count: number
+  data: Customer[]
+}
+
 export type CreateCalculationRequest = {
   name: string
   co2Budget: number
@@ -165,6 +191,8 @@ export type CreateCalculationRequest = {
   calculatedFeeAmount: number
   fee: number
   squareMeter: number
+  customerId?: number
+  customer?: Customer
   sections: CalculationSectionPayload[]
   optionBudgetRows: OptionBudgetRowPayload[]
 }

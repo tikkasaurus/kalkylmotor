@@ -272,6 +272,7 @@ export function CalculationsPage() {
                 <TableHead className="text-left">Kalkyl</TableHead>
                 <TableHead className="text-left">Status</TableHead>
                 <TableHead className="text-left">Kalkylsumma</TableHead>
+                <TableHead className="text-left">Kund</TableHead>
                 <TableHead className="text-left">Skapad</TableHead>
                 <TableHead className="text-left">Skapad av</TableHead>
               </TableRow>
@@ -279,7 +280,7 @@ export function CalculationsPage() {
             <TableBody>
               {isLoading ? (
                 <motion.tr>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     <motion.div
                       animate={{
                         opacity: [1, 0.6, 1],
@@ -304,7 +305,7 @@ export function CalculationsPage() {
                 </motion.tr>
               ) : error ? (
                 <motion.tr>
-                  <TableCell colSpan={5} className="text-center text-destructive py-8">
+                  <TableCell colSpan={6} className="text-center text-destructive py-8">
                     <div>
                       <p className="font-medium">Fel vid hämtning av kalkyler</p>
                       <p className="text-sm text-muted-foreground mt-1">
@@ -318,7 +319,7 @@ export function CalculationsPage() {
                 </motion.tr>
               ) : costEstimates.length === 0 ? (
                 <motion.tr>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     Inga kalkyler skapade ännu
                   </TableCell>
                 </motion.tr>
@@ -343,6 +344,9 @@ export function CalculationsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-left font-medium">{calc.versionAmount}</TableCell>
+                  <TableCell className="text-left text-muted-foreground">
+                    {calc.customerName || '-'}
+                  </TableCell>
                   <TableCell className="text-left text-muted-foreground">
                     {calc.created.split('T')[0]}
                   </TableCell>
