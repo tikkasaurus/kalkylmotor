@@ -1,0 +1,20 @@
+# See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+
+name: Deploy to QA
+on:
+  push:
+    branches:
+      - qa
+      - develop
+
+jobs:
+  deploy:
+    name: Deploy to QA
+    runs-on: ubuntu-latest
+    concurrency: deploy-qa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --config fly.qa.toml --build-arg ENV=qa --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

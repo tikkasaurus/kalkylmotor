@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for kalkylmodul on 2025-12-18T13:52:31+01:00
+# fly.toml app configuration file for QA environment
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'kalkylmodul-dev'
+app = 'kalkylmodul-qa'
 primary_region = 'arn'
 
 [build]
