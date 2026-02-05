@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:dev": "npm run build",
     "build:qa": "tsc -b && vite build --mode qa",
     "build:prod": "tsc -b && vite build --mode prod",
+    "deploy:dev": "flyctl deploy --config fly.toml --build-arg ENV=dev",
     "deploy:qa": "flyctl deploy --config fly.qa.toml --build-arg ENV=qa",
     "deploy:prod": "flyctl deploy --config fly.prod.toml --build-arg ENV=prod",
     "lint": "eslint .",

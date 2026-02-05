@@ -1,6 +1,6 @@
 # build stage
 FROM node:20-alpine AS build
-ARG ENV=qa
+ARG ENV=dev
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -8,7 +8,7 @@ COPY . .
 # Copy environment-specific .env file
 RUN if [ "$ENV" = "prod" ]; then \
       cp .env.prod .env; \
-    else \
+    elif [ "$ENV" = "qa" ]; then \
       cp .env.qa .env; \
     fi
 RUN npm run build:${ENV}

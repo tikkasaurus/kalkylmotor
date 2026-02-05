@@ -14,5 +14,5 @@ export const loginRequest = {
 
 // when calling your API:
 export const apiRequest = {
-  scopes: ["api://dev-brikkz/user_impersonation"],
+  scopes: (import.meta.env.VITE_API_SCOPES || "api://dev-brikkz/user_impersonation").split(","),
 };
