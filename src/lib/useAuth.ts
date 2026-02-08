@@ -51,7 +51,9 @@ export function useAuth() {
    * Redirect to login if not authenticated
    */
   const login = useCallback(() => {
-    instance.loginRedirect(loginRequest).catch((error) => {
+    const scopes = [...new Set(loginRequest.scopes.concat(apiRequest.scopes))];
+
+    instance.loginRedirect({scopes}).catch((error) => {
       console.error('Login redirect failed:', error)
     })
   }, [instance])

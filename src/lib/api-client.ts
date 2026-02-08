@@ -5,6 +5,7 @@
  * Compatible with TanStack Query and supports all common HTTP methods.
  */
 
+import { getRuntimeAuthMode } from './authMode'
 import { tokenProvider } from './tokenProvider'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -89,18 +90,21 @@ async function handleResponse<T>(response: Response): Promise<T> {
  * Get default headers for requests
  * Includes MSAL access token if available
  */
-async function getDefaultHeaders(): Promise<HeadersInit> {
+export async function getDefaultHeaders(): Promise<HeadersInit> {
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  }
+    "Content-Type": "application/json",
+  };
 
-  // Get MSAL access token for API calls
-  const token = await tokenProvider.getAccessToken()
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
+  const mode = getRuntimeAuthMode();
+  if (mode === "msal") {
+    const token = await tokenProvider.getAccessToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    // cookie mode: NEVER send bearer token
+    // (important if you previously logged in with MSAL in same tab)
+    // no Authorization header here.
   }
-
-  return headers
+  return headers;
 }
 
 /**
@@ -121,6 +125,7 @@ async function request<T>(
       ...defaultHeaders,
       ...headers,
     },
+    credentials: "include",
   })
 
   return handleResponse<T>(response)

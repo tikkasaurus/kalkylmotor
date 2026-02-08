@@ -4,6 +4,7 @@ export const msalConfig = {
     authority:
       "https://login.microsoftonline.com/6169ca83-37bf-4372-8d32-a7a754f87192/v2.0",
     redirectUri: import.meta.env.VITE_REDIRECT_URI,
+    navigateToLoginRequestUrl: false,
   },
 };
 
@@ -14,5 +15,5 @@ export const loginRequest = {
 
 // when calling your API:
 export const apiRequest = {
-  scopes: (import.meta.env.VITE_API_SCOPES || "api://dev-brikkz/user_impersonation").split(","),
+  scopes: (import.meta.env.VITE_API_SCOPES).split(","),
 };
