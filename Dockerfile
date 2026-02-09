@@ -7,10 +7,12 @@ RUN npm ci
 COPY . .
 # Copy environment-specific .env file
 RUN if [ "$ENV" = "prod" ]; then \
-      cp .env.prod .env; \
-    elif [ "$ENV" = "qa" ]; then \
-      cp .env.qa .env; \
-    fi
+  cp .env.prod .env; \
+  elif [ "$ENV" = "qa" ]; then \
+  cp .env.qa .env; \
+  elif [ "$ENV" = "dev" ]; then \
+  cp .env.dev .env; \
+  fi
 RUN npm run build:${ENV}
 
 # serve stage
