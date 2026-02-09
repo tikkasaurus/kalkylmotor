@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/table'
 import { TextAnimate } from '@/components/ui/text-animate'
 import { Highlighter } from '@/components/ui/highlighter'
-import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 import { NewCalculationPage } from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
@@ -247,7 +246,6 @@ export function CalculationsPage() {
               )}
             </div>
             <div className="flex gap-3">
-              <AnimatedThemeToggler />
               <Button 
                 variant="default"
                 onClick={() => setIsModalOpen(true)}
