@@ -2,7 +2,9 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function Input({ className, type, value, ...props }: React.ComponentProps<"input">) {
+  const displayValue = type === "number" && (value === 0 || value === "0") ? "" : value;
+
   return (
     <input
       type={type}
@@ -14,6 +16,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         type === "number" && "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
         className
       )}
+      value={displayValue}
       {...props}
     />
   )
