@@ -420,7 +420,7 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
 
   return (
     <div className="bg-background p-8 pb-32">
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-[2000px] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -539,7 +539,7 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
       
       {/* Progress Indicator - Fixed at bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-6">
-        <div className="max-w-[1400px] mx-auto">
+        <div className="max-w-[2000px] mx-auto">
           <ProgressIndicator currentStep={step} />
         </div>
       </div>

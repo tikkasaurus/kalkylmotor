@@ -40,7 +40,7 @@ export function NewCalculationHeader({
   }
   return (
     <div className="border-b bg-card">
-      <div className="max-w-[1400px] mx-auto px-6 py-4">
+      <div className="max-w-[2000px] mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Logo */}

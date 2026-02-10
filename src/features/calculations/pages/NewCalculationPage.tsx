@@ -347,7 +347,7 @@ export function NewCalculationPage({
             initialCalculationName={calculationName}
           />
 
-          <div className="max-w-[1400px] mx-auto px-6 py-8">
+          <div className="max-w-[2000px] mx-auto px-6 py-8">
             <RateSection
               rate={state.rate}
               area={state.area}

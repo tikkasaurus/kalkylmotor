@@ -217,7 +217,7 @@ export function CalculationsPage() {
   return (
     <>
       <div className="bg-background p-8">
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-[2000px] mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between mb-6">
