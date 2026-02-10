@@ -7,6 +7,9 @@ app = 'kalkylmodul'
 primary_region = 'arn'
 
 [build]
+[build.args]
+  ENV = "prod"
+
 
 [http_service]
   internal_port = 8080

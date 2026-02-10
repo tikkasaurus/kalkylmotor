@@ -7,6 +7,10 @@ app = 'kalkylmodul-qa'
 primary_region = 'arn'
 
 [build]
+[env]
+  ENV = "qa"
+  NODE_ENV = "production"
+
 
 [http_service]
   internal_port = 8080
