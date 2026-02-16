@@ -186,7 +186,7 @@ function BudgetPreview({ calculationData }: { calculationData: GetCalculationsRe
       if (row.accountNo === 0) return
       
       if (!grouped.has(row.accountNo)) {
-        const account = accounts.find((a) => a.accountNumber === row.accountNo)
+        const account = accounts.find((a: { accountNumber: number }) => a.accountNumber === row.accountNo)
         grouped.set(row.accountNo, {
           accountNo: row.accountNo,
           accountName: account ? `${row.accountNo} ${account.description}` : `${row.accountNo}`,
