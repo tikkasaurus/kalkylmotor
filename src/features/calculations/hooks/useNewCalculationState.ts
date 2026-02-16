@@ -171,7 +171,9 @@ export function useNewCalculationState(
     subSubsectionId?: number
     rowId: number
   } | null>(null)
-
+  const [isDirty, setIsDirty] = useState(false)
+  const markDirty = () => setIsDirty(true)
+  const markSaved = () => setIsDirty(false)
   const { data: co2Items = [] } = useGetCO2Database()
   const co2ValueById = useMemo(() => {
     const map = new Map<number, number>()
@@ -185,10 +187,17 @@ export function useNewCalculationState(
     if (existingCalculation) {
       setSections(buildSectionsFromPayload(existingCalculation))
       setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
+      setIsDirty(false)
     }
   }, [existingCalculation])
 
+  const wrappedSetRate = (value: number) => { markDirty(); setRate(value) }
+  const wrappedSetArea = (value: number) => { markDirty(); setArea(value) }
+  const wrappedSetCo2Budget = (value: number) => { markDirty(); setCo2Budget(value) }
+  const wrappedSetSelectedCustomer = (value: Customer | null) => { markDirty(); setSelectedCustomer(value) }
+
   const toggleSection = (id: number) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === id ? { ...section, expanded: !section.expanded } : section
@@ -197,6 +206,7 @@ export function useNewCalculationState(
   }
 
   const toggleSubsection = (sectionId: number, subsectionId: number) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -214,6 +224,7 @@ export function useNewCalculationState(
   }
 
   const toggleSubSubsection = (sectionId: number, subsectionId: number, subSubsectionId: number) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -275,6 +286,7 @@ export function useNewCalculationState(
   }
 
   const handleCO2Select = (item: { id: number; co2Value: number }) => {
+    markDirty()
     if (selectedRowForCO2) {
       setSections(
         sections.map((section) =>
@@ -317,6 +329,7 @@ export function useNewCalculationState(
   }
 
   const updateRowCO2 = (sectionId: number, subsectionId: number, rowId: number, co2Value: number, subSubsectionId?: number) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -360,6 +373,7 @@ export function useNewCalculationState(
     value: string | number,
     subSubsectionId?: number
   ) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -399,6 +413,7 @@ export function useNewCalculationState(
     quantity?: number,
     subSubsectionId?: number
   ) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -447,6 +462,7 @@ export function useNewCalculationState(
   }
 
   const addNewSubsection = (sectionId: number) => {
+    markDirty()
     setSections(
       sections.map((section) => {
         if (section.id === sectionId) {
@@ -470,6 +486,7 @@ export function useNewCalculationState(
   }
 
   const addNewSubSubsection = (sectionId: number, subsectionId: number) => {
+    markDirty()
     setSections(
       sections.map((section) => {
         if (section.id !== sectionId) return section
@@ -503,6 +520,7 @@ export function useNewCalculationState(
   }
 
   const updateSubSubsectionName = (sectionId: number, subsectionId: number, subSubsectionId: number, newName: string) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -525,6 +543,7 @@ export function useNewCalculationState(
   }
 
   const deleteSubSubsection = (sectionId: number, subsectionId: number, subSubsectionId: number) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -545,6 +564,7 @@ export function useNewCalculationState(
   }
 
   const addNewRow = (sectionId: number, subsectionId: number, subSubsectionId?: number) => {
+    markDirty()
     setSections(
       sections.map((section) => {
         if (section.id === sectionId) {
@@ -599,6 +619,7 @@ export function useNewCalculationState(
   }
 
   const updateSubsectionName = (sectionId: number, subsectionId: number, newName: string) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -616,6 +637,7 @@ export function useNewCalculationState(
   }
 
   const deleteSubsection = (sectionId: number, subsectionId: number) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -631,6 +653,7 @@ export function useNewCalculationState(
   }
 
   const addNewSection = () => {
+    markDirty()
     const newSectionId = Math.max(0, ...sections.map(s => s.id || 0)) + 1
     const newSection: CalculationSection = {
       id: newSectionId,
@@ -645,6 +668,7 @@ export function useNewCalculationState(
   }
 
   const updateSectionName = (sectionId: number, newName: string) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId ? { ...section, name: newName } : section
@@ -653,10 +677,12 @@ export function useNewCalculationState(
   }
 
   const deleteSection = (sectionId: number) => {
+    markDirty()
     setSections(sections.filter((section) => section.id !== sectionId))
   }
 
   const deleteRow = (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => {
+    markDirty()
     setSections(
       sections.map((section) =>
         section.id === sectionId
@@ -686,6 +712,7 @@ export function useNewCalculationState(
   }
 
   const addNewOption = () => {
+    markDirty()
     const newOptionId = Math.max(0, ...options.map(o => o.id || 0)) + 1
     const newOption: OptionRow = {
       id: newOptionId,
@@ -698,6 +725,7 @@ export function useNewCalculationState(
   }
 
   const updateOptionField = (optionId: number, field: keyof OptionRow, value: string | number) => {
+    markDirty()
     setOptions(
       options.map((option) =>
         option.id === optionId ? { ...option, [field]: value } : option
@@ -706,6 +734,7 @@ export function useNewCalculationState(
   }
 
   const deleteOption = (optionId: number) => {
+    markDirty()
     setOptions(options.filter((option) => option.id !== optionId))
   }
 
@@ -786,10 +815,12 @@ export function useNewCalculationState(
     selectedCustomer,
     co2ModalOpen,
     selectedRowForCO2,
-    setRate,
-    setArea,
-    setCo2Budget,
-    setSelectedCustomer,
+    isDirty,
+    markSaved,
+    setRate: wrappedSetRate,
+    setArea: wrappedSetArea,
+    setCo2Budget: wrappedSetCo2Budget,
+    setSelectedCustomer: wrappedSetSelectedCustomer,
     setCo2ModalOpen,
     toggleSection,
     toggleSubsection,

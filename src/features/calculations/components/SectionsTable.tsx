@@ -19,6 +19,7 @@ import type { CalculationSection, CalculationRow } from '@/features/calculations
 import { Button } from '@/components/ui/button'
 import { useGetBookkeepingAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
 import { evaluateIntegerArithmeticExpression } from '@/features/calculations/utils/evaluateArithmeticExpression'
+import { AccountCombobox } from '@/features/calculations/components/AccountComboboxComponent'
 
 function getDisplayNameAndIndex(name: string, baseLabel: string, fallbackIndex: number) {
   const exact = name.trim() === baseLabel
@@ -371,18 +372,13 @@ export function SectionsTable({
                                   {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
-                                  <select 
-                                    value={row.account}
-                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'account', e.target.value)}
-                                    className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
-                                  >
-                                    <option value="Välj konto">Välj konto</option>
-                                    {accounts.map((account) => (
-                                      <option key={account.id} value={String(account.accountNumber)}>
-                                        {account.accountNumber} - {account.description}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <AccountCombobox
+                                      accounts={accounts}
+                                      value={row.account}
+                                      onChange={(val) =>
+                                          updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'account', val)
+                                      }
+                                  />
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <Input 
@@ -649,27 +645,20 @@ export function SectionsTable({
                                           {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                         </TableCell>
                                         <TableCell className="border-r border-border p-0 h-10 align-middle">
-                                          <select
-                                            value={row.account}
-                                            onChange={(e) =>
-                                              updateRowField(
-                                                section.id ?? 0,
-                                                subsection.id ?? 0,
-                                                row.id ?? 0,
-                                                'account',
-                                                e.target.value,
-                                                subSub.id ?? 0
-                                              )
-                                            }
-                                            className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
-                                          >
-                                            <option value="Välj konto">Välj konto</option>
-                                            {accounts.map((account) => (
-                                              <option key={account.id} value={String(account.accountNumber)}>
-                                                {account.accountNumber} - {account.description}
-                                              </option>
-                                            ))}
-                                          </select>
+                                          <AccountCombobox
+                                              accounts={accounts}
+                                              value={row.account}
+                                              onChange={(val) =>
+                                                  updateRowField(
+                                                      section.id ?? 0,
+                                                      subsection.id ?? 0,
+                                                      row.id ?? 0,
+                                                      'account',
+                                                      val,
+                                                      subSub.id ?? 0
+                                                  )
+                                              }
+                                          />
                                         </TableCell>
                                         <TableCell className="border-r border-border p-0 h-10 align-middle">
                                           <Input

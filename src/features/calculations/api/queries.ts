@@ -212,13 +212,50 @@ export function useGetBookkeepingAccounts() {
   return useQuery({
     queryKey: ['bookkeeping-accounts'],
     queryFn: async () => {
-      const res = await apiClient.get<BookkeepingAccountResponse>(`/CostEstimate/bookkeeping-accounts`)
-      return res.data.map((account) => ({
+      const CACHE_KEY = 'bookkeeping-accounts-cache'
+      const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached)
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          return data
+        }
+      }
+
+      const TAKE = 500
+      let allAccounts: Array<{ id: number; accountNumber: number; description: string }> = []
+      let skip = 0
+
+      // First request to get count
+      const firstRes = await apiClient.get<BookkeepingAccountResponse>(`/CostEstimate/bookkeeping-accounts?Take=${TAKE}&Skip=${skip}&SortDesc=false&SortColumn=accountno&IncludeCount=true`)
+      const totalCount = firstRes.count
+      allAccounts = firstRes.data.map((account) => ({
         id: account.accountNo,
         accountNumber: account.accountNo,
         description: account.name,
       }))
-    }
+
+      // Fetch remaining batches if count > skip + take
+      while (totalCount > skip + TAKE) {
+        skip += TAKE
+        const res = await apiClient.get<BookkeepingAccountResponse>(`/CostEstimate/bookkeeping-accounts?Take=${TAKE}&Skip=${skip}&SortDesc=false&SortColumn=accountno&IncludeCount=false`)
+        const batch = res.data.map((account) => ({
+          id: account.accountNo,
+          accountNumber: account.accountNo,
+          description: account.name,
+        }))
+        allAccounts = [...allAccounts, ...batch]
+      }
+
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data: allAccounts,
+        timestamp: Date.now()
+      }))
+
+      return allAccounts
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
 

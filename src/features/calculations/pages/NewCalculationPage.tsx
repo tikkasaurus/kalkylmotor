@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'motion/react'
 import { CO2DatabaseModal } from '@/features/co2-database/components/CO2DatabaseModal'
 import type {
@@ -21,7 +21,7 @@ import { useCreateCalculation, useGetTenantIcon } from '../api/queries'
 import { toast } from '@/components/ui/toast'
 import { useAuth } from '@/lib/useAuth'
 
-export function NewCalculationPage({ 
+function NewCalculationPage({ 
   template, 
   existingCalculation,
   existingCalculationLoading,
@@ -38,6 +38,28 @@ export function NewCalculationPage({
 
   const loadingExisting = !!existingCalculationLoading
   const existingError = existingCalculationError
+
+  const isDirty = state.isDirty
+
+  React.useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return
+      e.preventDefault()
+      e.returnValue = "" // required for Chrome
+    }
+
+    window.addEventListener("beforeunload", onBeforeUnload)
+    return () => window.removeEventListener("beforeunload", onBeforeUnload)
+  }, [isDirty])
+
+  const handleClose = () => {
+    if (isDirty) {
+      const confirmed = window.confirm('Du har osparade ändringar. Är du säker på att du vill lämna sidan?')
+      if (!confirmed) return
+    }
+    onClose()
+  }
+  
 
   const parseAccountNo = (account: string): number => {
     if (!account || account === 'Välj konto') return 0
@@ -294,6 +316,7 @@ export function NewCalculationPage({
         data: payload,
       })
 
+      state.markSaved()
       toast.success('Kalkylen sparades framgångsrikt!')
     } catch (error) {
       toast.error('Kunde inte spara kalkylen. Försök igen.')
@@ -328,7 +351,7 @@ export function NewCalculationPage({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-        onClick={onClose}
+        onClick={handleClose}
       />
       
       <motion.div
@@ -339,8 +362,8 @@ export function NewCalculationPage({
         className="fixed inset-0 bg-background z-50 overflow-auto"
         onClick={(e) => e.stopPropagation()}
       >
-          <NewCalculationHeader 
-            onClose={onClose} 
+          <NewCalculationHeader
+            onClose={handleClose}
             onExportCSV={exportToCSV}
             onExportPDF={handleExportPDF}
             onSave={handleSave}
@@ -415,3 +438,5 @@ export function NewCalculationPage({
     </>
   )
 }
+
+export default NewCalculationPage
