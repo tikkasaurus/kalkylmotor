@@ -86,13 +86,13 @@ export function NewCalculationHeader({
               <FileText className="w-4 h-4" />
               Exportera som PDF (Full)
             </button>
-            <button 
-              onClick={onExportCSV}
-              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              Exportera som Excel
-            </button>
+            {/*<button */}
+            {/*  onClick={onExportCSV}*/}
+            {/*  className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"*/}
+            {/*>*/}
+            {/*  <FileSpreadsheet className="w-4 h-4" />*/}
+            {/*  Exportera som Excel*/}
+            {/*</button>*/}
             <Button variant="default" onClick={handleSave} disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
               {isSaving ? 'Sparar...' : 'Spara'}
