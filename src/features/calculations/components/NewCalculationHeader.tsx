@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 interface NewCalculationHeaderProps {
   onClose: () => void
   onExportCSV: () => void
-  onExportPDF?: () => void
+  onExportPDF?: (format: 'a4' | 'full') => void
   onSave?: (calculationName: string) => Promise<void> | void
   initialCalculationName?: string
 }
@@ -72,12 +72,19 @@ export function NewCalculationHeader({
               <Home className="w-4 h-4" />
               Hem
             </button>
-            <button 
-              onClick={onExportPDF}
+            <button
+              onClick={() => onExportPDF?.('a4')}
               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
             >
               <FileText className="w-4 h-4" />
-              Exportera som PDF
+              Exportera som PDF (A4)
+            </button>
+            <button
+              onClick={() => onExportPDF?.('full')}
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Exportera som PDF (Full)
             </button>
             <button 
               onClick={onExportCSV}

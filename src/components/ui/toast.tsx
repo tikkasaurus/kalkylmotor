@@ -96,7 +96,7 @@ export function ToastContainer() {
   }, [])
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] pointer-events-none">
+    <div className="fixed top-4 right-4 z-[100] pointer-events-none">
       <AnimatePresence>
         {currentToasts.map((toastItem, index) => (
           <div key={toastItem.id} style={{ marginTop: index > 0 ? '0.5rem' : 0 }} className="pointer-events-auto">

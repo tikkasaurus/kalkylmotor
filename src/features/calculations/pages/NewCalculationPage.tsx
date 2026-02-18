@@ -17,7 +17,7 @@ import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 import { exportToPDF } from '@/features/calculations/utils/pdfExport'
-import { useCreateCalculation, useGetTenantIcon } from '../api/queries'
+import { useCreateCalculation, useGetTenantIcon, useGetBookkeepingAccounts } from '../api/queries'
 import { toast } from '@/components/ui/toast'
 import { useAuth } from '@/lib/useAuth'
 
@@ -34,6 +34,7 @@ function NewCalculationPage({
   const createCalculation = useCreateCalculation()
   const [calculationName, setCalculationName] = useState(initialCalculationName)
   const { data: tenantIcon } = useGetTenantIcon()
+  const { data: bookkeepingAccounts } = useGetBookkeepingAccounts()
   const { account } = useAuth()
 
   const loadingExisting = !!existingCalculationLoading
@@ -256,10 +257,10 @@ function NewCalculationPage({
     })
   }
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (format: 'a4' | 'full' = 'a4') => {
     try {
       const tenantLogoDataUrl = await fetchAsDataUrl(tenantIcon)
-      exportToPDF({
+      await exportToPDF({
         calculationName,
         date: new Date().toISOString().split('T')[0],
         createdBy: account?.name || account?.username || 'Okänd',
@@ -272,6 +273,8 @@ function NewCalculationPage({
         sections: state.sections,
         options: state.options,
         tenantLogoDataUrl,
+        format,
+        bookkeepingAccounts,
       })
     } catch (error) {
       console.error('Error exporting PDF:', error)
@@ -301,12 +304,12 @@ function NewCalculationPage({
         squareMeter: state.area,
         customerId: state.selectedCustomer?.id,
         customer: state.selectedCustomer ?? undefined,
-        sections: state.sections.map((section) => 
+        sections: state.sections.map((section) =>
           mapSectionToPayload(section, !isNewCalculation, existingCalculation?.sections)
         ),
         optionBudgetRows: mapOptionsToPayload(
-          state.options, 
-          !isNewCalculation, 
+          state.options,
+          !isNewCalculation,
           existingCalculation?.optionBudgetRows
         ),
       }
@@ -319,8 +322,28 @@ function NewCalculationPage({
       state.markSaved()
       toast.success('Kalkylen sparades framgångsrikt!')
     } catch (error) {
-      toast.error('Kunde inte spara kalkylen. Försök igen.')
       console.error('Error saving calculation:', error)
+
+      // Keep isDirty as true since save failed
+      let errorMessage = 'Kunde inte spara kalkylen.'
+
+      if (error instanceof Error) {
+        if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Nätverksfel. Kontrollera din internetanslutning och försök igen.'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Tidsgränsen överskreds. Försök igen.'
+        } else if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          errorMessage = 'Du är inte behörig. Logga in igen och försök igen.'
+        } else if (error.message.includes('403') || error.message.includes('forbidden')) {
+          errorMessage = 'Du har inte tillåtelse att spara denna kalkyl.'
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Kalkylen kunde inte hittas.'
+        } else if (error.message.includes('500')) {
+          errorMessage = 'Serverfel. Kontakta support om problemet kvarstår.'
+        }
+      }
+
+      toast.error(errorMessage)
     }
   }
 
@@ -395,30 +418,31 @@ function NewCalculationPage({
               formatCurrency={formatCurrency}
             />
 
-        <SectionsTable
-          sections={state.sections}
-          formatCurrency={formatCurrency}
-          toggleSection={state.toggleSection}
-          toggleSubsection={state.toggleSubsection}
-          toggleSubSubsection={state.toggleSubSubsection}
-          expandAll={state.expandAll}
-          collapseAll={state.collapseAll}
-          addNewSection={state.addNewSection}
-          addNewSubsection={state.addNewSubsection}
-          addNewSubSubsection={state.addNewSubSubsection}
-          addNewRow={state.addNewRow}
-          updateSectionName={state.updateSectionName}
-          updateSubsectionName={state.updateSubsectionName}
-          updateSubSubsectionName={state.updateSubSubsectionName}
-          updateRowField={state.updateRowField}
-          updateRowFormulaAndQuantity={state.updateRowFormulaAndQuantity}
-          updateRowCO2={state.updateRowCO2}
-          openCO2Modal={state.openCO2Modal}
-          deleteSection={state.deleteSection}
-          deleteSubsection={state.deleteSubsection}
-          deleteSubSubsection={state.deleteSubSubsection}
-          deleteRow={state.deleteRow}
-        />
+        <div data-pdf-export>
+          <SectionsTable
+            sections={state.sections}
+            formatCurrency={formatCurrency}
+            toggleSection={state.toggleSection}
+            toggleSubsection={state.toggleSubsection}
+            toggleSubSubsection={state.toggleSubSubsection}
+            expandAll={state.expandAll}
+            collapseAll={state.collapseAll}
+            addNewSection={state.addNewSection}
+            addNewSubsection={state.addNewSubsection}
+            addNewSubSubsection={state.addNewSubSubsection}
+            addNewRow={state.addNewRow}
+            updateSectionName={state.updateSectionName}
+            updateSubsectionName={state.updateSubsectionName}
+            updateSubSubsectionName={state.updateSubSubsectionName}
+            updateRowField={state.updateRowField}
+            updateRowFormulaAndQuantity={state.updateRowFormulaAndQuantity}
+            updateRowCO2={state.updateRowCO2}
+            openCO2Modal={state.openCO2Modal}
+            deleteSection={state.deleteSection}
+            deleteSubsection={state.deleteSubsection}
+            deleteSubSubsection={state.deleteSubSubsection}
+            deleteRow={state.deleteRow}
+          />
 
             <OptionsTable
               options={state.options}
@@ -427,6 +451,7 @@ function NewCalculationPage({
               updateOptionField={state.updateOptionField}
               deleteOption={state.deleteOption}
             />
+        </div>
           </div>
           
           <CO2DatabaseModal 

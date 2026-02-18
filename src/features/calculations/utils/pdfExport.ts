@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import html2canvas from 'html2canvas-pro'
 import type { CalculationSection, OptionRow } from '@/features/calculations/api/types'
 
 type AutoTableCapableDoc = jsPDF & { lastAutoTable?: { finalY: number } }
@@ -17,6 +18,8 @@ interface PDFExportData {
   sections: CalculationSection[]
   options: OptionRow[]
   tenantLogoDataUrl?: string
+  format?: 'a4' | 'full'
+  bookkeepingAccounts?: Array<{ accountNumber: number; description: string }>
 }
 
 const getImageFormat = (dataUrl: string): 'PNG' | 'JPEG' | 'WEBP' => {
@@ -41,7 +44,289 @@ const formatNumber = (num: number): string => {
   }).format(num)
 }
 
+// Helper function to format account with name
+const formatAccount = (
+  accountField: string,
+  bookkeepingAccounts?: Array<{ accountNumber: number; description: string }>
+): string => {
+  if (!accountField || accountField === 'Välj konto') return ''
+
+  // If bookkeeping accounts are not provided, return as-is
+  if (!bookkeepingAccounts) return accountField
+
+  // Try to extract account number from the field
+  const accountNo = parseInt(accountField.split(' ')[0])
+  if (isNaN(accountNo)) return accountField
+
+  // Find the account
+  const account = bookkeepingAccounts.find(acc => acc.accountNumber === accountNo)
+  if (!account) return accountField
+
+  return `${account.accountNumber} - ${account.description}`
+}
+
+export async function exportToPDFFromHTML(data: PDFExportData) {
+  console.log('PDF Export: Using html2canvas-pro full-width export v7 - 1440px width')
+
+  // Create a temporary container with the full content
+  const container = document.createElement('div')
+  container.style.position = 'absolute'
+  container.style.left = '-9999px'
+  container.style.top = '0'
+  container.style.width = '1440px'
+  container.style.padding = '60px'
+  container.style.backgroundColor = '#ffffff'
+  container.style.fontFamily = 'Arial, sans-serif'
+
+  // Add header with logo and title
+  const header = document.createElement('div')
+  header.style.display = 'flex'
+  header.style.alignItems = 'center'
+  header.style.gap = '20px'
+  header.style.marginBottom = '30px'
+
+  if (data.tenantLogoDataUrl) {
+    const logo = document.createElement('img')
+    logo.src = data.tenantLogoDataUrl
+    logo.style.height = '50px'
+    logo.style.objectFit = 'contain'
+    header.appendChild(logo)
+  }
+
+  const titleContainer = document.createElement('div')
+  const title = document.createElement('h1')
+  title.textContent = data.calculationName
+  title.style.margin = '0'
+  title.style.fontSize = '24px'
+  title.style.fontWeight = 'bold'
+
+  const dateText = document.createElement('p')
+  dateText.textContent = data.date
+  dateText.style.margin = '5px 0 0 0'
+  dateText.style.fontSize = '14px'
+  dateText.style.color = '#666'
+
+  if (data.createdBy) {
+    const createdByText = document.createElement('p')
+    createdByText.textContent = `Skapad av: ${data.createdBy}`
+    createdByText.style.margin = '2px 0 0 0'
+    createdByText.style.fontSize = '14px'
+    createdByText.style.color = '#666'
+    titleContainer.appendChild(createdByText)
+  }
+
+  titleContainer.appendChild(title)
+  titleContainer.appendChild(dateText)
+  header.appendChild(titleContainer)
+  container.appendChild(header)
+
+  // Add summary box
+  const summary = document.createElement('div')
+  summary.style.display = 'grid'
+  summary.style.gridTemplateColumns = 'repeat(3, 1fr)'
+  summary.style.gap = '20px'
+  summary.style.padding = '20px'
+  summary.style.border = '1px solid #ccc'
+  summary.style.borderRadius = '8px'
+  summary.style.marginBottom = '30px'
+
+  const summaryItems = [
+    { label: 'Arvode (%)', value: `${data.rate}%` },
+    { label: 'Area (kvm)', value: formatNumber(data.area) },
+    { label: 'CO2 Budget', value: `${formatNumber(data.co2Budget)} kg/kvm` },
+    { label: 'Budget exkl. arvode', value: formatCurrency(data.budgetExclRate) },
+    { label: `Fastarvode ${data.rate}%`, value: formatCurrency(data.fixedRate) },
+    { label: 'Anbudssumma', value: formatCurrency(data.bidAmount), highlight: true },
+  ]
+
+  summaryItems.forEach(item => {
+    const itemDiv = document.createElement('div')
+
+    const label = document.createElement('div')
+    label.textContent = item.label
+    label.style.fontSize = '12px'
+    label.style.color = item.highlight ? '#0064c8' : '#666'
+    label.style.marginBottom = '5px'
+
+    const value = document.createElement('div')
+    value.textContent = item.value
+    value.style.fontSize = '18px'
+    value.style.fontWeight = 'bold'
+    value.style.color = item.highlight ? '#0064c8' : '#000'
+
+    itemDiv.appendChild(label)
+    itemDiv.appendChild(value)
+    summary.appendChild(itemDiv)
+  })
+
+  container.appendChild(summary)
+
+  // Add section title
+  const sectionTitle = document.createElement('h2')
+  sectionTitle.textContent = 'Kostnadskalkyl'
+  sectionTitle.style.fontSize = '18px'
+  sectionTitle.style.fontWeight = 'bold'
+  sectionTitle.style.marginBottom = '15px'
+  container.appendChild(sectionTitle)
+
+  // Build the calculation table from data
+  const calcTable = document.createElement('table')
+  calcTable.style.width = '100%'
+  calcTable.style.borderCollapse = 'collapse'
+  calcTable.style.fontSize = '13px'
+
+  // Table header
+  const thead = document.createElement('thead')
+  thead.innerHTML = `
+    <tr>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: left; font-weight: bold;">Benämning</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: right; font-weight: bold;">Antal</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: left; font-weight: bold;">Enhet</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: right; font-weight: bold;">Pris/enhet</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: right; font-weight: bold;">Spill</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: right; font-weight: bold;">CO2</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: right; font-weight: bold;">Summa</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: left; font-weight: bold;">Konto</th>
+      <th style="border: 1px solid #ccc; padding: 12px; background: #f0f0f0; text-align: left; font-weight: bold;">Anteckning</th>
+    </tr>
+  `
+  calcTable.appendChild(thead)
+
+  const tbody = document.createElement('tbody')
+
+  // Iterate through sections (all expanded)
+  data.sections.forEach(section => {
+    // Section row (Level 1)
+    const sectionRow = document.createElement('tr')
+    sectionRow.innerHTML = `
+      <td style="border: 1px solid #ccc; padding: 12px; font-weight: bold; background: #f5f5f5;">${section.name || ''}</td>
+      <td style="border: 1px solid #ccc; padding: 12px; background: #f5f5f5;"></td>
+      <td style="border: 1px solid #ccc; padding: 12px; background: #f5f5f5;"></td>
+      <td style="border: 1px solid #ccc; padding: 12px; background: #f5f5f5;"></td>
+      <td style="border: 1px solid #ccc; padding: 12px; background: #f5f5f5;"></td>
+      <td style="border: 1px solid #ccc; padding: 12px; background: #f5f5f5;"></td>
+      <td style="border: 1px solid #ccc; padding: 12px; text-align: right; font-weight: bold; background: #f5f5f5;">${formatCurrency(section.amount)}</td>
+      <td style="border: 1px solid #ccc; padding: 12px; background: #f5f5f5;"></td>
+      <td style="border: 1px solid #ccc; padding: 12px; background: #f5f5f5;"></td>
+    `
+    tbody.appendChild(sectionRow)
+
+    // Subsections (Level 2)
+    section.subsections?.forEach(subsection => {
+      const subsectionRow = document.createElement('tr')
+      subsectionRow.innerHTML = `
+        <td style="border: 1px solid #ccc; padding: 12px; padding-left: 32px; font-weight: bold;">${subsection.name || ''}</td>
+        <td style="border: 1px solid #ccc; padding: 12px;"></td>
+        <td style="border: 1px solid #ccc; padding: 12px;"></td>
+        <td style="border: 1px solid #ccc; padding: 12px;"></td>
+        <td style="border: 1px solid #ccc; padding: 12px;"></td>
+        <td style="border: 1px solid #ccc; padding: 12px;"></td>
+        <td style="border: 1px solid #ccc; padding: 12px; text-align: right; font-weight: bold;">${formatCurrency(subsection.amount)}</td>
+        <td style="border: 1px solid #ccc; padding: 12px;"></td>
+        <td style="border: 1px solid #ccc; padding: 12px;"></td>
+      `
+      tbody.appendChild(subsectionRow)
+
+      // Rows directly on subsection
+      subsection.rows?.forEach(row => {
+        const rowEl = document.createElement('tr')
+        rowEl.innerHTML = `
+          <td style="border: 1px solid #ccc; padding: 12px; padding-left: 52px;">${row.description || ''}</td>
+          <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.quantity)}</td>
+          <td style="border: 1px solid #ccc; padding: 12px;">${row.unit || ''}</td>
+          <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.pricePerUnit)}</td>
+          <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.waste * 100)}</td>
+          <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.co2 || 0)}</td>
+          <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}</td>
+          <td style="border: 1px solid #ccc; padding: 12px;">${formatAccount(row.account, data.bookkeepingAccounts)}</td>
+          <td style="border: 1px solid #ccc; padding: 12px;">${row.note || ''}</td>
+        `
+        tbody.appendChild(rowEl)
+      })
+
+      // Sub-subsections (Level 3)
+      subsection.subSubsections?.forEach(subSub => {
+        const subSubRow = document.createElement('tr')
+        subSubRow.innerHTML = `
+          <td style="border: 1px solid #ccc; padding: 12px; padding-left: 52px; font-weight: bold;">${subSub.name || ''}</td>
+          <td style="border: 1px solid #ccc; padding: 12px;"></td>
+          <td style="border: 1px solid #ccc; padding: 12px;"></td>
+          <td style="border: 1px solid #ccc; padding: 12px;"></td>
+          <td style="border: 1px solid #ccc; padding: 12px;"></td>
+          <td style="border: 1px solid #ccc; padding: 12px;"></td>
+          <td style="border: 1px solid #ccc; padding: 12px; text-align: right; font-weight: bold;">${formatCurrency(subSub.amount)}</td>
+          <td style="border: 1px solid #ccc; padding: 12px;"></td>
+          <td style="border: 1px solid #ccc; padding: 12px;"></td>
+        `
+        tbody.appendChild(subSubRow)
+
+        // Rows on sub-subsection
+        subSub.rows?.forEach(row => {
+          const rowEl = document.createElement('tr')
+          rowEl.innerHTML = `
+            <td style="border: 1px solid #ccc; padding: 12px; padding-left: 72px;">${row.description || ''}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.quantity)}</td>
+            <td style="border: 1px solid #ccc; padding: 12px;">${row.unit || ''}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.pricePerUnit)}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.waste * 100)}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatNumber(row.co2 || 0)}</td>
+            <td style="border: 1px solid #ccc; padding: 12px; text-align: right;">${formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}</td>
+            <td style="border: 1px solid #ccc; padding: 12px;">${formatAccount(row.account, data.bookkeepingAccounts)}</td>
+            <td style="border: 1px solid #ccc; padding: 12px;">${row.note || ''}</td>
+          `
+          tbody.appendChild(rowEl)
+        })
+      })
+    })
+  })
+
+  calcTable.appendChild(tbody)
+  container.appendChild(calcTable)
+
+  document.body.appendChild(container)
+
+  try {
+    // Capture the element as canvas with high quality
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      logging: false,
+      useCORS: true,
+    })
+
+    // Calculate PDF dimensions based on canvas
+    const imgWidth = canvas.width
+    const imgHeight = canvas.height
+    const imgData = canvas.toDataURL('image/png')
+
+    // Create PDF with exact canvas dimensions (no scaling)
+    // Convert pixels to mm for PDF (assuming 96 DPI: 1 inch = 96px = 25.4mm)
+    const pdfWidthMM = (imgWidth / 96) * 25.4
+    const pdfHeightMM = (imgHeight / 96) * 25.4
+
+    const doc = new jsPDF({
+      orientation: pdfWidthMM > pdfHeightMM ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: [pdfWidthMM, pdfHeightMM],
+    })
+
+    // Add the full image to the PDF
+    doc.addImage(imgData, 'PNG', 0, 0, pdfWidthMM, pdfHeightMM)
+
+    // Save the PDF
+    const fileName = `${data.calculationName || 'kalkyl'}_${data.date}_full.pdf`
+    doc.save(fileName)
+  } finally {
+    // Clean up
+    document.body.removeChild(container)
+  }
+}
+
 export function exportToPDF(data: PDFExportData) {
+  // If format is 'full', use HTML to canvas approach
+  if (data.format === 'full') {
+    return exportToPDFFromHTML(data)
+  }
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
