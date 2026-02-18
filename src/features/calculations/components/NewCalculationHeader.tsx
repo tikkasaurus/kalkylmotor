@@ -5,7 +5,7 @@ import {
   FileText,
   Save,
   X,
-  FileSpreadsheet,
+  // FileSpreadsheet,
 } from 'lucide-react'
 import { useGetTenantIcon } from '../api/queries'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ interface NewCalculationHeaderProps {
 
 export function NewCalculationHeader({ 
   onClose, 
-  onExportCSV,
+  // onExportCSV,
   onExportPDF,
   onSave,
   initialCalculationName = 'Kalkylnamn',
