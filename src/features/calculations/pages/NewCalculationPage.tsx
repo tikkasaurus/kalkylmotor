@@ -52,6 +52,17 @@ function NewCalculationPage({
     window.addEventListener("beforeunload", onBeforeUnload)
     return () => window.removeEventListener("beforeunload", onBeforeUnload)
   }, [isDirty])
+  
+  React.useEffect(() => {
+    window.parent.postMessage(
+        {
+          source: 'kalkyl-app',
+          type: 'editor-state',
+          hasUnsavedChanges: isDirty,
+        },
+        window.location.origin
+    )
+  }, [isDirty])
 
   const handleClose = () => {
     if (isDirty) {
@@ -186,7 +197,17 @@ function NewCalculationPage({
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
+      useGrouping: true,
     }).format(amount) + ' kr'
+  }
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('sv-SE', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      useGrouping: true,
+    }).format(num)
   }
 
   const formatNumberForCSV = (num: number) => {

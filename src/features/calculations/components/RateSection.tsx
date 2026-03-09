@@ -36,6 +36,7 @@ export function RateSection({
     return new Intl.NumberFormat('sv-SE', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
+      useGrouping: true,
     }).format(num)
   }
 
@@ -107,7 +108,7 @@ export function RateSection({
               CO2-budgeten överskriden
             </p>
             <p className="text-sm text-destructive/90">
-              Den totala CO2-mängden ({totalCO2.toFixed(0)} kg) överskrider budgeten ({co2BudgetTotal.toFixed(0)} kg) med {(totalCO2 - co2BudgetTotal).toFixed(0)} kg.
+              Den totala CO2-mängden ({formatNumber(totalCO2)} kg) överskrider budgeten ({formatNumber(co2BudgetTotal)} kg) med {formatNumber(totalCO2 - co2BudgetTotal)} kg.
             </p>
           </div>
         </div>

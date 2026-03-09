@@ -25,6 +25,7 @@ export function SummaryCards({
     return new Intl.NumberFormat('sv-SE', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
+      useGrouping: true,
     }).format(num)
   }
 

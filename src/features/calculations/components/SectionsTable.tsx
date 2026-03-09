@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -18,8 +19,73 @@ import {
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
 import { useGetBookkeepingAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
-import { evaluateIntegerArithmeticExpression } from '@/features/calculations/utils/evaluateArithmeticExpression'
+import { evaluateArithmeticExpression } from '@/features/calculations/utils/evaluateArithmeticExpression'
 import { AccountCombobox } from '@/features/calculations/components/AccountComboboxComponent'
+
+function formatNumber(num: number): string {
+  return new Intl.NumberFormat('sv-SE', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  }).format(num)
+}
+
+function parseFormattedNumber(str: string): number {
+  // Remove spaces (thousand separators) and replace comma with dot
+  const cleaned = str.replace(/\s/g, '').replace(',', '.')
+  return Number(cleaned) || 0
+}
+
+interface FormattedNumberInputProps {
+  value: number
+  onChange: (value: number) => void
+  className?: string
+  min?: number
+}
+
+function FormattedNumberInput({ value, onChange, className, min = 0 }: FormattedNumberInputProps) {
+  const [displayValue, setDisplayValue] = useState(formatNumber(value))
+  const [isFocused, setIsFocused] = useState(false)
+
+  const handleFocus = () => {
+    setIsFocused(true)
+    // Show raw number when focused
+    setDisplayValue(String(value))
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+    const parsed = parseFormattedNumber(displayValue)
+    if (parsed >= min) {
+      onChange(parsed)
+      setDisplayValue(formatNumber(parsed))
+    } else {
+      setDisplayValue(formatNumber(value))
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDisplayValue(e.target.value)
+  }
+
+  // Update display value when value prop changes externally
+  React.useEffect(() => {
+    if (!isFocused) {
+      setDisplayValue(formatNumber(value))
+    }
+  }, [value, isFocused])
+
+  return (
+    <Input
+      type="text"
+      value={displayValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={className}
+    />
+  )
+}
 
 function getDisplayNameAndIndex(name: string, baseLabel: string, fallbackIndex: number) {
   const exact = name.trim() === baseLabel
@@ -102,7 +168,7 @@ export function SectionsTable({
     subSubsectionId?: number
   }) => {
     return (value: string) => {
-      const computed = evaluateIntegerArithmeticExpression(value)
+      const computed = evaluateArithmeticExpression(value)
       updateRowFormulaAndQuantity(
         params.sectionId,
         params.subsectionId,
@@ -163,16 +229,18 @@ export function SectionsTable({
                 {(() => {
                   const { displayName, displayIndex } = getDisplayNameAndIndex(section.name, 'Nivå 1', sectionIdx + 1)
                   return (
-                    <div className="flex items-center">
+                    <div className="flex items-center max-w-[80%]">
                       <Input
                         type="text"
                         value={displayName}
                         onChange={(e) => updateSectionName(section.id ?? 0, e.target.value)}
-                        className="h-7 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs"
+                        className="h-7 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 w-auto min-w-[100px] max-w-full truncate"
                         onClick={(e) => e.stopPropagation()}
+                        style={{ width: `${Math.min(Math.max(100, displayName.length * 8 + 20), 600)}px` }}
+                        title={displayName}
                       />
                       {displayIndex && (
-                        <span className="text-xs text-muted-foreground pr-2">({displayIndex})</span>
+                        <span className="text-xs text-muted-foreground pr-2 flex-shrink-0">({displayIndex})</span>
                       )}
                     </div>
                   )
@@ -212,16 +280,18 @@ export function SectionsTable({
                         {(() => {
                           const { displayName, displayIndex } = getDisplayNameAndIndex(subsection.name, 'Nivå 2', subsectionIdx + 1)
                           return (
-                            <div className="flex items-center">
+                            <div className="flex items-center max-w-[80%]">
                               <Input
                                 type="text"
                                 value={displayName}
                                 onChange={(e) => updateSubsectionName(section.id ?? 0, subsection.id ?? 0, e.target.value)}
-                                className="h-6 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs text-sm"
+                                className="h-6 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 w-auto min-w-[100px] max-w-full truncate text-sm"
                                 onClick={(e) => e.stopPropagation()}
+                                style={{ width: `${Math.min(Math.max(100, displayName.length * 7 + 20), 500)}px` }}
+                                title={displayName}
                               />
                               {displayIndex && (
-                                <span className="text-xs text-muted-foreground pr-2">({displayIndex})</span>
+                                <span className="text-xs text-muted-foreground pr-2 flex-shrink-0">({displayIndex})</span>
                               )}
                             </div>
                           )
@@ -289,17 +359,11 @@ export function SectionsTable({
                                   />
                                 </TableCell>
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                                  <Input 
-                                    type="number" 
-                                    min="0"
-                                    value={row.quantity} 
-                                    onChange={(e) => {
-                                      const value = Number(e.target.value)
-                                      if (value >= 0 || e.target.value === '') {
-                                        updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'quantity', value)
-                                      }
-                                    }}
+                                  <FormattedNumberInput
+                                    value={row.quantity}
+                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'quantity', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                    min={0}
                                   />
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
@@ -316,17 +380,11 @@ export function SectionsTable({
                                   </select>
                                 </TableCell>
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                                  <Input 
-                                    type="number" 
-                                    min="0"
-                                    value={row.pricePerUnit} 
-                                    onChange={(e) => {
-                                      const value = Number(e.target.value)
-                                      if (value >= 0 || e.target.value === '') {
-                                        updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'pricePerUnit', value)
-                                      }
-                                    }}
+                                  <FormattedNumberInput
+                                    value={row.pricePerUnit}
+                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'pricePerUnit', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                    min={0}
                                   />
                                 </TableCell>
                                 <TableCell className="text-center border-r border-border p-0 h-10 align-middle">
@@ -433,7 +491,7 @@ export function SectionsTable({
                                 {(() => {
                                   const { displayName, displayIndex } = getDisplayNameAndIndex(subSub.name, 'Nivå 3', subSubIdx + 1)
                                   return (
-                                    <div className="flex items-center">
+                                    <div className="flex items-center max-w-[80%]">
                                       <Input
                                         type="text"
                                         value={displayName}
@@ -445,11 +503,13 @@ export function SectionsTable({
                                             e.target.value
                                           )
                                         }
-                                        className="h-6 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 max-w-xs text-sm"
+                                        className="h-6 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 w-auto min-w-[100px] max-w-full truncate text-sm"
                                         onClick={(e) => e.stopPropagation()}
+                                        style={{ width: `${Math.min(Math.max(100, displayName.length * 7 + 20), 500)}px` }}
+                                        title={displayName}
                                       />
                                       {displayIndex && (
-                                        <span className="text-xs text-muted-foreground pr-2">({displayIndex})</span>
+                                        <span className="text-xs text-muted-foreground pr-2 flex-shrink-0">({displayIndex})</span>
                                       )}
                                     </div>
                                   )
@@ -526,24 +586,20 @@ export function SectionsTable({
                                           />
                                         </TableCell>
                                         <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                                          <Input
-                                            type="number"
-                                            min="0"
+                                          <FormattedNumberInput
                                             value={row.quantity}
-                                            onChange={(e) => {
-                                              const value = Number(e.target.value)
-                                              if (value >= 0 || e.target.value === '') {
-                                                updateRowField(
-                                                  section.id ?? 0,
-                                                  subsection.id ?? 0,
-                                                  row.id ?? 0,
-                                                  'quantity',
-                                                  value,
-                                                  subSub.id ?? 0
-                                                )
-                                              }
-                                            }}
+                                            onChange={(value) =>
+                                              updateRowField(
+                                                section.id ?? 0,
+                                                subsection.id ?? 0,
+                                                row.id ?? 0,
+                                                'quantity',
+                                                value,
+                                                subSub.id ?? 0
+                                              )
+                                            }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                            min={0}
                                           />
                                         </TableCell>
                                         <TableCell className="border-r border-border p-0 h-10 align-middle">
@@ -569,24 +625,20 @@ export function SectionsTable({
                                           </select>
                                         </TableCell>
                                         <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                                          <Input
-                                            type="number"
-                                            min="0"
+                                          <FormattedNumberInput
                                             value={row.pricePerUnit}
-                                            onChange={(e) => {
-                                              const value = Number(e.target.value)
-                                              if (value >= 0 || e.target.value === '') {
-                                                updateRowField(
-                                                  section.id ?? 0,
-                                                  subsection.id ?? 0,
-                                                  row.id ?? 0,
-                                                  'pricePerUnit',
-                                                  value,
-                                                  subSub.id ?? 0
-                                                )
-                                              }
-                                            }}
+                                            onChange={(value) =>
+                                              updateRowField(
+                                                section.id ?? 0,
+                                                subsection.id ?? 0,
+                                                row.id ?? 0,
+                                                'pricePerUnit',
+                                                value,
+                                                subSub.id ?? 0
+                                              )
+                                            }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                            min={0}
                                           />
                                         </TableCell>
                                         <TableCell className="text-center border-r border-border p-0 h-10 align-middle">

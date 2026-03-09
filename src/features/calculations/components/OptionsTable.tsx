@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -11,6 +12,68 @@ import { Calculator, Plus, X } from 'lucide-react'
 import type { OptionRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
 import { useGetUnitTypes } from '../api/queries'
+
+function formatNumber(num: number): string {
+  return new Intl.NumberFormat('sv-SE', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  }).format(num)
+}
+
+function parseFormattedNumber(str: string): number {
+  const cleaned = str.replace(/\s/g, '').replace(',', '.')
+  return Number(cleaned) || 0
+}
+
+interface FormattedNumberInputProps {
+  value: number
+  onChange: (value: number) => void
+  className?: string
+  min?: number
+}
+
+function FormattedNumberInput({ value, onChange, className, min = 0 }: FormattedNumberInputProps) {
+  const [displayValue, setDisplayValue] = useState(formatNumber(value))
+  const [isFocused, setIsFocused] = useState(false)
+
+  const handleFocus = () => {
+    setIsFocused(true)
+    setDisplayValue(String(value))
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+    const parsed = parseFormattedNumber(displayValue)
+    if (parsed >= min) {
+      onChange(parsed)
+      setDisplayValue(formatNumber(parsed))
+    } else {
+      setDisplayValue(formatNumber(value))
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDisplayValue(e.target.value)
+  }
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      setDisplayValue(formatNumber(value))
+    }
+  }, [value, isFocused])
+
+  return (
+    <Input
+      type="text"
+      value={displayValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={className}
+    />
+  )
+}
 
 interface OptionsTableProps {
   options: OptionRow[]
@@ -63,17 +126,11 @@ export function OptionsTable({
                 />
               </TableCell>
               <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                <Input 
-                  type="number" 
-                  min="0"
-                  value={option.quantity} 
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    if (value >= 0 || e.target.value === '') {
-                      updateOptionField(option.id ?? 0, 'quantity', value)
-                    }
-                  }}
+                <FormattedNumberInput
+                  value={option.quantity}
+                  onChange={(value) => updateOptionField(option.id ?? 0, 'quantity', value)}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                  min={0}
                 />
               </TableCell>
               <TableCell className="border-r border-border p-0 h-10 align-middle">
@@ -90,17 +147,11 @@ export function OptionsTable({
                 </select>
               </TableCell>
               <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                <Input 
-                  type="number" 
-                  min="0"
-                  value={option.pricePerUnit} 
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    if (value >= 0 || e.target.value === '') {
-                      updateOptionField(option.id ?? 0, 'pricePerUnit', value)
-                    }
-                  }}
+                <FormattedNumberInput
+                  value={option.pricePerUnit}
+                  onChange={(value) => updateOptionField(option.id ?? 0, 'pricePerUnit', value)}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                  min={0}
                 />
               </TableCell>
               <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">

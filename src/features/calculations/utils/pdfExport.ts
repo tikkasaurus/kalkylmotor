@@ -33,6 +33,7 @@ const formatCurrency = (amount: number): string => {
     style: 'decimal',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
+    useGrouping: true,
   }).format(amount) + ' kr'
 }
 
@@ -41,6 +42,7 @@ const formatNumber = (num: number): string => {
     style: 'decimal',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
+    useGrouping: true,
   }).format(num)
 }
 
