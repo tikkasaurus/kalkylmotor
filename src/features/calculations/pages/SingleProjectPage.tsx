@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -19,11 +20,13 @@ import { NewCalculationModal } from '../components/NewCalculationModal'
 import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate, useGetTenantIcon } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import type { GetCalculationsReponse } from '../api/types'
-import { FileText, Trash } from 'lucide-react'
+import { FileText, Trash, ArrowLeft } from 'lucide-react'
 import { toast } from '@/components/ui/toast'
 
-export function CalculationsPage() {
-  const { data: costEstimates = [], isLoading, error } = useCostEstimatesQuery()
+export function SingleProjectPage() {
+  const { projectId } = useParams<{ projectId: string }>()
+  const navigate = useNavigate()
+  const { data: projectCalculations = [], isLoading, error } = useCostEstimatesQuery(projectId)
   const { mutate: createTemplate } = useCreateTemplate()
   const { mutate: initializeCostEstimate } = useInitializeCostEstimate()
   const { mutate: copyCostEstimate } = useCopyCostEstimate()
@@ -52,56 +55,50 @@ export function CalculationsPage() {
   })
   const contextMenuRef = useRef<HTMLDivElement>(null)
 
+  const projectName = projectCalculations.length > 0
+    ? projectCalculations[0].projectName || 'Utan projekt'
+    : 'Projekt'
+
+  const currentProject = projectId
+    ? { id: Number(projectId), name: projectName }
+    : null
+
   // Re-trigger animation while loading
   useEffect(() => {
     if (isLoading) {
       const interval = setInterval(() => {
         setAnimationKey((prev) => prev + 1)
-      }, 2000) // Re-animate every 2 seconds
+      }, 2000)
       return () => clearInterval(interval)
     }
   }, [isLoading])
 
-  // Debug state changes
-  useEffect(() => {
-    console.log('State update:', {
-      showCalculationView,
-      newCostEstimateId,
-      copiedCalculationData: !!copiedCalculationData,
-      selectedTemplate,
-      selectedCalculation,
-    })
-  }, [showCalculationView, newCostEstimateId, copiedCalculationData, selectedTemplate, selectedCalculation])
-
   const handleTemplateSelect = (templateId: number | string) => {
     const templateIdStr = String(templateId)
     setIsModalOpen(false)
-    
+
     if (templateIdStr === 'empty') {
-      // Initialize a new cost estimate
-      initializeCostEstimate(undefined, {
-        onSuccess: (response) => {
-          console.log('Initialize success:', response)
-          setNewCostEstimateId(String(response.id))
-          setCopiedCalculationData(null)
-          setSelectedTemplate(null)
-          setSelectedCalculation(null)
-          setShowCalculationView(true)
+      initializeCostEstimate(
+        projectId ? { projectId: Number(projectId) } : undefined,
+        {
+          onSuccess: (response) => {
+            setNewCostEstimateId(String(response.id))
+            setCopiedCalculationData(null)
+            setSelectedTemplate(null)
+            setSelectedCalculation(null)
+            setShowCalculationView(true)
+          },
+          onError: (error) => {
+            console.error('Error initializing cost estimate:', error)
+          },
         },
-        onError: (error) => {
-          console.error('Error initializing cost estimate:', error)
-        },
-      })
+      )
     } else {
-      // Copy the cost estimate
       const costEstimateId = Number(templateIdStr)
       copyCostEstimate(costEstimateId, {
         onSuccess: (response) => {
-          console.log('Copy success:', response)
-          // The response contains the copied calculation data
-          // We'll use it as existingCalculation in NewCalculationPage
           setCopiedCalculationData(response)
-          setNewCostEstimateId(null) // Will be set when saving
+          setNewCostEstimateId(null)
           setSelectedTemplate(null)
           setSelectedCalculation(null)
           setShowCalculationView(true)
@@ -144,9 +141,9 @@ export function CalculationsPage() {
 
   const handleCreateTemplate = async () => {
     if (contextMenu.calculation) {
-      await createTemplate({ 
-        costEstimateId: contextMenu.calculation.id, 
-        templateName: contextMenu.calculation.name 
+      await createTemplate({
+        costEstimateId: contextMenu.calculation.id,
+        templateName: contextMenu.calculation.name
       });
       setContextMenu({ open: false, x: 0, y: 0, calculation: null })
       toast.success('Mall skapad')
@@ -167,7 +164,6 @@ export function CalculationsPage() {
       onSuccess: () => {
         setShowDeleteConfirm(false)
         setDeleteTarget(null)
-        // Reset view if the deleted calc was open
         if (selectedCalculation?.id === deleteTarget.id) {
           handleCloseCalculationView()
         }
@@ -185,7 +181,6 @@ export function CalculationsPage() {
     error: existingCalculationError,
   } = useGetCalculation(costEstimateId)
 
-  // Close context menu when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
@@ -209,7 +204,6 @@ export function CalculationsPage() {
     }
   }, [contextMenu.open])
 
-  // Show budget overview if active
   if (showBudgetOverview) {
     return <BudgetOverviewPage onClose={handleCloseBudgetOverview} />
   }
@@ -222,6 +216,14 @@ export function CalculationsPage() {
         <div className="mb-8">
           <div className="flex items-start justify-between mb-6">
             <div className="text-left">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="mb-4 -ml-4"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Tillbaka till projekt
+              </Button>
               {tenantIcon ? (
                 <img
                   src={tenantIcon}
@@ -232,7 +234,7 @@ export function CalculationsPage() {
                 <>
                   <h1 className="text-3xl font-bold mb-2">
                     <Highlighter action="underline" color="#0099FF">
-                      Kalkylmodul
+                      {projectName}
                     </Highlighter>
                   </h1>
                   <TextAnimate
@@ -240,19 +242,19 @@ export function CalculationsPage() {
                     className="text-muted-foreground"
                     delay={0.2}
                   >
-                    Hantera och skapa projektkalkyler
+                    {projectCalculations.length} kalkyl{projectCalculations.length !== 1 ? 'er' : ''}
                   </TextAnimate>
                 </>
               )}
             </div>
             <div className="flex gap-3">
-              <Button 
+              <Button
                 variant="default"
                 onClick={() => setIsModalOpen(true)}
               >
                 <span className="mr-2">+</span> Starta ny kalkyl
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setShowBudgetOverview(true)}
               >
@@ -268,7 +270,6 @@ export function CalculationsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-left">Kalkyl</TableHead>
-                <TableHead className="text-left">Projekt</TableHead>
                 <TableHead className="text-left">Status</TableHead>
                 <TableHead className="text-left">Kalkylsumma</TableHead>
                 <TableHead className="text-left">Kund</TableHead>
@@ -279,7 +280,7 @@ export function CalculationsPage() {
             <TableBody>
               {isLoading ? (
                 <motion.tr>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     <motion.div
                       animate={{
                         opacity: [1, 0.6, 1],
@@ -304,26 +305,23 @@ export function CalculationsPage() {
                 </motion.tr>
               ) : error ? (
                 <motion.tr>
-                  <TableCell colSpan={7} className="text-center text-destructive py-8">
+                  <TableCell colSpan={6} className="text-center text-destructive py-8">
                     <div>
                       <p className="font-medium">Fel vid hämtning av kalkyler</p>
                       <p className="text-sm text-muted-foreground mt-1">
                         {error instanceof Error ? error.message : 'Okänt fel'}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Kontrollera att API-servern körs på rätt port och URL.
-                      </p>
                     </div>
                   </TableCell>
                 </motion.tr>
-              ) : costEstimates.length === 0 ? (
+              ) : projectCalculations.length === 0 ? (
                 <motion.tr>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    Inga kalkyler skapade ännu
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    Inga kalkyler för detta projekt
                   </TableCell>
                 </motion.tr>
               ) : (
-                costEstimates.map((calc) => (
+                projectCalculations.map((calc) => (
                 <TableRow
                   key={calc.id}
                   className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors cursor-pointer"
@@ -332,9 +330,6 @@ export function CalculationsPage() {
                 >
                   <TableCell className="text-left">
                     <div className="font-medium">{calc.name}</div>
-                  </TableCell>
-                  <TableCell className="text-left text-muted-foreground">
-                    {calc.projectName || '-'}
                   </TableCell>
                   <TableCell className="text-left">
                     <Badge
@@ -370,12 +365,10 @@ export function CalculationsPage() {
       />
       </div>
 
-      {/* Budget Overview Page */}
       {showBudgetOverview && (
         <BudgetOverviewPage onClose={handleCloseBudgetOverview} />
       )}
 
-      {/* NewCalculationPage as modal overlay */}
       {!showBudgetOverview && (
         <AnimatePresence mode="wait">
           {showCalculationView && (
@@ -384,6 +377,7 @@ export function CalculationsPage() {
                 <NewCalculationPage
                   costEstimateId={newCostEstimateId}
                   onClose={handleCloseCalculationView}
+                  defaultProject={currentProject}
                 />
               </motion.div>
             ) : copiedCalculationData ? (
@@ -391,6 +385,7 @@ export function CalculationsPage() {
                 <NewCalculationPage
                   existingCalculation={copiedCalculationData}
                   onClose={handleCloseCalculationView}
+                  defaultProject={currentProject}
                 />
               </motion.div>
             ) : selectedTemplate ? (
@@ -399,6 +394,7 @@ export function CalculationsPage() {
                   template={getTemplateById(String(selectedTemplate))}
                   onClose={handleCloseCalculationView}
                   initialCalculationName={selectedCalculation?.name}
+                  defaultProject={currentProject}
                 />
               </motion.div>
             ) : selectedCalculation ? (
@@ -410,6 +406,7 @@ export function CalculationsPage() {
                   existingCalculationError={existingCalculationError}
                   onClose={handleCloseCalculationView}
                   initialCalculationName={selectedCalculation.name}
+                  defaultProject={currentProject}
                 />
               </motion.div>
             ) : null
@@ -417,7 +414,6 @@ export function CalculationsPage() {
         </AnimatePresence>
       )}
 
-      {/* Context Menu */}
       {contextMenu.open && (
         <div
           ref={contextMenuRef}
@@ -472,4 +468,3 @@ export function CalculationsPage() {
     </>
   )
 }
-

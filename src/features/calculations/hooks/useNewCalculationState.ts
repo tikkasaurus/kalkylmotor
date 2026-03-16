@@ -12,6 +12,7 @@ import type {
   OptionBudgetRowPayload,
   Customer,
 } from '@/features/calculations/api/types'
+import type { Project } from '@/features/calculations/components/ProjectSearchCombobox'
 import { useGetCO2Database } from '@/features/calculations/api/queries'
 
 // Factory function to create sections from template
@@ -59,7 +60,7 @@ function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
     id: row.id,
     description: row.name,
     quantity: row.quantity,
-    formula: '',
+    formula: row.formula || '',
     unit: 'st',
     pricePerUnit: row.price,
     co2: 0,
@@ -147,7 +148,8 @@ function mapOptionsFromPayload(optionBudgetRows?: OptionBudgetRowPayload[]): Opt
 
 export function useNewCalculationState(
   template?: CalculationTemplate,
-  existingCalculation?: CreateCalculationRequest
+  existingCalculation?: CreateCalculationRequest,
+  defaultProject?: { id: number; name: string } | null,
 ) {
   // Use template if provided, otherwise prefer existing calculation, otherwise default
   const defaultSections: CalculationSection[] = template
@@ -162,7 +164,15 @@ export function useNewCalculationState(
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    existingCalculation?.customer || null
+    existingCalculation?.customer ||
+    (existingCalculation?.customerId && existingCalculation?.customerName
+      ? { id: existingCalculation.customerId, name: existingCalculation.customerName }
+      : null)
+  )
+  const [selectedProject, setSelectedProject] = useState<Project | null>(
+    existingCalculation?.projectId && existingCalculation?.projectName
+      ? { id: existingCalculation.projectId, name: existingCalculation.projectName }
+      : defaultProject || null
   )
   const [co2ModalOpen, setCo2ModalOpen] = useState(false)
   const [selectedRowForCO2, setSelectedRowForCO2] = useState<{
@@ -187,14 +197,28 @@ export function useNewCalculationState(
     if (existingCalculation) {
       setSections(buildSectionsFromPayload(existingCalculation))
       setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
+      setArea(existingCalculation.squareMeter ?? 0)
+      setCo2Budget(existingCalculation.co2Budget ?? 0)
+      setSelectedCustomer(
+        existingCalculation.customer ||
+        (existingCalculation.customerId && existingCalculation.customerName
+          ? { id: existingCalculation.customerId, name: existingCalculation.customerName }
+          : null)
+      )
+      setSelectedProject(
+        existingCalculation.projectId && existingCalculation.projectName
+          ? { id: existingCalculation.projectId, name: existingCalculation.projectName }
+          : defaultProject || null
+      )
       setIsDirty(false)
     }
-  }, [existingCalculation])
+  }, [existingCalculation, defaultProject])
 
   const wrappedSetRate = (value: number) => { markDirty(); setRate(value) }
   const wrappedSetArea = (value: number) => { markDirty(); setArea(value) }
   const wrappedSetCo2Budget = (value: number) => { markDirty(); setCo2Budget(value) }
   const wrappedSetSelectedCustomer = (value: Customer | null) => { markDirty(); setSelectedCustomer(value) }
+  const wrappedSetSelectedProject = (value: Project | null) => { markDirty(); setSelectedProject(value) }
 
   const toggleSection = (id: number) => {
     markDirty()
@@ -813,6 +837,7 @@ export function useNewCalculationState(
     co2Budget,
     totalCO2,
     selectedCustomer,
+    selectedProject,
     co2ModalOpen,
     selectedRowForCO2,
     isDirty,
@@ -821,6 +846,7 @@ export function useNewCalculationState(
     setArea: wrappedSetArea,
     setCo2Budget: wrappedSetCo2Budget,
     setSelectedCustomer: wrappedSetSelectedCustomer,
+    setSelectedProject: wrappedSetSelectedProject,
     setCo2ModalOpen,
     toggleSection,
     toggleSubsection,

@@ -13,6 +13,8 @@ interface ComboboxProps<T> {
   isLoading?: boolean
   onSearchChange?: (search: string) => void
   searchValue?: string
+  onScrollEnd?: () => void
+  isFetchingMore?: boolean
 }
 
 export function Combobox<T>({
@@ -26,6 +28,8 @@ export function Combobox<T>({
   isLoading = false,
   onSearchChange,
   searchValue = "",
+  onScrollEnd,
+  isFetchingMore = false,
 }: ComboboxProps<T>) {
   const [open, setOpen] = React.useState(false)
   const [internalSearch, setInternalSearch] = React.useState(searchValue)
@@ -64,6 +68,15 @@ export function Combobox<T>({
     inputRef.current?.focus()
   }
 
+  const handleScroll = React.useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (!onScrollEnd) return
+    const target = e.currentTarget
+    const nearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 40
+    if (nearBottom) {
+      onScrollEnd()
+    }
+  }, [onScrollEnd])
+
   const displayValue = value ? getOptionLabel(value) : ""
 
   return (
@@ -98,6 +111,7 @@ export function Combobox<T>({
         <div
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-auto"
+          onScroll={handleScroll}
         >
           {isLoading ? (
             <div className="p-2 text-sm text-muted-foreground">Loading...</div>
@@ -115,6 +129,9 @@ export function Combobox<T>({
                   {getOptionLabel(option)}
                 </button>
               ))}
+              {isFetchingMore && (
+                <div className="p-2 text-sm text-center text-muted-foreground">Laddar fler...</div>
+              )}
             </div>
           )}
         </div>

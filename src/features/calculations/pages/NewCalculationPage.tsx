@@ -21,16 +21,17 @@ import { useCreateCalculation, useGetTenantIcon, useGetBookkeepingAccounts } fro
 import { toast } from '@/components/ui/toast'
 import { useAuth } from '@/lib/useAuth'
 
-function NewCalculationPage({ 
-  template, 
+function NewCalculationPage({
+  template,
   existingCalculation,
   existingCalculationLoading,
   existingCalculationError,
   costEstimateId,
   onClose,
   initialCalculationName = 'Kalkylnamn',
+  defaultProject,
 }: NewCalculationProps) {
-  const state = useNewCalculationState(template, existingCalculation)
+  const state = useNewCalculationState(template, existingCalculation, defaultProject)
   const createCalculation = useCreateCalculation()
   const [calculationName, setCalculationName] = useState(initialCalculationName)
   const { data: tenantIcon } = useGetTenantIcon()
@@ -102,6 +103,7 @@ function NewCalculationPage({
       notes: row.note,
       co2CostId: row.co2CostId || 0,
       waste: row.waste,
+      formula: row.formula || undefined,
     }
     
     // Only include ID if it exists in the original payload
@@ -199,15 +201,6 @@ function NewCalculationPage({
       maximumFractionDigits: 0,
       useGrouping: true,
     }).format(amount) + ' kr'
-  }
-
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('sv-SE', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    }).format(num)
   }
 
   const formatNumberForCSV = (num: number) => {
@@ -323,8 +316,11 @@ function NewCalculationPage({
         calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
         fee: state.bidAmount - state.budgetExclRate,
         squareMeter: state.area,
-        customerId: state.selectedCustomer?.id,
-        customer: state.selectedCustomer ?? undefined,
+        customerId: state.selectedCustomer?.id ?? existingCalculation?.customerId,
+        customerName: state.selectedCustomer?.name ?? existingCalculation?.customerName,
+        customer: state.selectedCustomer ?? existingCalculation?.customer ?? undefined,
+        projectId: state.selectedProject?.id ?? existingCalculation?.projectId,
+        projectName: state.selectedProject?.name ?? existingCalculation?.projectName,
         sections: state.sections.map((section) =>
           mapSectionToPayload(section, !isNewCalculation, existingCalculation?.sections)
         ),
@@ -422,10 +418,12 @@ function NewCalculationPage({
               totalCO2={state.totalCO2}
               bidAmount={state.bidAmount}
               selectedCustomer={state.selectedCustomer}
+              selectedProject={state.selectedProject}
               onChangeRate={state.setRate}
               onChangeArea={state.setArea}
               onChangeCo2Budget={state.setCo2Budget}
               onCustomerChange={state.setSelectedCustomer}
+              onProjectChange={state.setSelectedProject}
             />
 
             <SummaryCards

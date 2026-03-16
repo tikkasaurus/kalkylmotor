@@ -291,21 +291,19 @@ export function BudgetOverviewPage({ onClose }: BudgetOverviewPageProps) {
   const [projectSearchQuery, setProjectSearchQuery] = useState('')
   const [importProgress, setImportProgress] = useState(0)
   const [isImporting, setIsImporting] = useState(false)
-  const { data: projects = [], isLoading: projectsLoading } = useGetProjects()
+  const { data: projectsData, isLoading: projectsLoading } = useGetProjects(projectSearchQuery)
+  const projects = useMemo(() => {
+    if (!projectsData?.pages) return []
+    return projectsData.pages.flatMap(page =>
+      page.data.map(p => ({ id: p.id, name: p.name }))
+    )
+  }, [projectsData])
   const { data: costEstimates = [], isLoading: costEstimatesLoading } = useCostEstimatesQuery()
   const { mutate: connectCostEstimateToProject } = useConnectCostEstimateToProject()
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId)
 
-  const filteredProjects = useMemo(() => {
-    if (!projectSearchQuery.trim()) {
-      return projects
-    }
-    const query = projectSearchQuery.toLowerCase()
-    return projects.filter((project) =>
-      project.name.toLowerCase().includes(query)
-    )
-  }, [projects, projectSearchQuery])
+  const filteredProjects = projects
 
   const handleSelectProject = (id: number) => {
     setSelectedProjectId(id)

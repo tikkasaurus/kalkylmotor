@@ -99,6 +99,7 @@ export interface NewCalculationProps {
   costEstimateId?: string
   onClose: () => void
   initialCalculationName?: string
+  defaultProject?: { id: number; name: string } | null
 }
 
 
@@ -116,8 +117,30 @@ export type CostEstimateResponse = {
   customerName: string,
   versionName: string,
   versionNo: string,
-  versionAmount: string
+  versionAmount: string,
+  versions?: CostEstimateVersion[]
 }[];
+
+export type CostEstimateVersion = {
+  id: number,
+  versionNo: string,
+  versionName: string,
+  amount: string,
+  created: string,
+  createdBy: string,
+  createdByName: string,
+  isCurrent: boolean
+};
+
+export type InitializeCostEstimateRequest = {
+  id?: number
+  name?: string
+  currentVersionId?: number
+  currentVersionName?: string
+  projectId?: number
+  customerId?: number
+  status?: "Created"
+}
 
 export type InitializeCostEstimateResponse = {
   id: number
@@ -161,21 +184,21 @@ export type CO2Response = {
 export interface Customer {
   id: number
   name: string
-  legalEntityType: "Company" | string
-  organizationNo: string
-  customerNo: string
-  deliveryPostalArea: string
-  deliveryPostalAddress: string
-  deliveryPostalNo: string
-  hasFTax: boolean
-  hasVAT: boolean
-  hasWarning: boolean
-  hasEmployerContributions: boolean
-  ediNumber: string
-  glnNumber: string
-  peppolId: string
-  contactEmail: string
-  linkUrl: string
+  legalEntityType?: "Company" | string
+  organizationNo?: string
+  customerNo?: string
+  deliveryPostalArea?: string
+  deliveryPostalAddress?: string
+  deliveryPostalNo?: string
+  hasFTax?: boolean
+  hasVAT?: boolean
+  hasWarning?: boolean
+  hasEmployerContributions?: boolean
+  ediNumber?: string
+  glnNumber?: string
+  peppolId?: string
+  contactEmail?: string
+  linkUrl?: string
 }
 
 export interface CustomerSearchResponse {
@@ -192,13 +215,20 @@ export type CreateCalculationRequest = {
   fee: number
   squareMeter: number
   customerId?: number
+  customerName?: string
   customer?: Customer
+  projectId?: number
+  projectName?: string
   sections: CalculationSectionPayload[]
   optionBudgetRows: OptionBudgetRowPayload[]
 }
 
 export type GetCalculationsReponse = CreateCalculationRequest & {
   id: number
+  currentVersionId?: number
+  versionNo?: string
+  versionName?: string
+  versions?: CostEstimateVersion[]
 };
 
 export type CopyCostEstimateResponse = GetCalculationsReponse;
@@ -221,6 +251,7 @@ export type BudgetRowPayload = {
   notes: string
   co2CostId: number
   waste: number
+  formula?: string
 }
 
 export type OptionBudgetRowPayload = {

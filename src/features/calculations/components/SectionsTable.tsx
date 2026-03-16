@@ -20,6 +20,8 @@ import type { CalculationSection, CalculationRow } from '@/features/calculations
 import { Button } from '@/components/ui/button'
 import { useGetBookkeepingAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
 import { evaluateArithmeticExpression } from '@/features/calculations/utils/evaluateArithmeticExpression'
+
+const FORMULA_CHARS_REGEX = /^[0-9+\-*\/().,\s]*$/
 import { AccountCombobox } from '@/features/calculations/components/AccountComboboxComponent'
 
 function formatNumber(num: number): string {
@@ -168,6 +170,7 @@ export function SectionsTable({
     subSubsectionId?: number
   }) => {
     return (value: string) => {
+      if (value !== '' && !FORMULA_CHARS_REGEX.test(value)) return
       const computed = evaluateArithmeticExpression(value)
       updateRowFormulaAndQuantity(
         params.sectionId,
@@ -354,7 +357,7 @@ export function SectionsTable({
                                         rowId: row.id ?? 0,
                                       })(e.target.value)
                                     }
-                                    className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                    className={`!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none${row.formula && evaluateArithmeticExpression(row.formula) === null ? ' text-destructive bg-destructive/10' : ''}`}
                                     placeholder="t.ex. 10/3"
                                   />
                                 </TableCell>
@@ -581,7 +584,7 @@ export function SectionsTable({
                                                 subSubsectionId: subSub.id ?? 0,
                                               })(e.target.value)
                                             }
-                                            className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                            className={`!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none${row.formula && evaluateArithmeticExpression(row.formula) === null ? ' text-destructive bg-destructive/10' : ''}`}
                                             placeholder="t.ex. 10/3"
                                           />
                                         </TableCell>

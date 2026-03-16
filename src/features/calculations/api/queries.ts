@@ -1,25 +1,29 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { 
+import type {
   BookkeepingAccountResponse,
-  Calculation, 
-  CO2Response, 
-  CopyCostEstimateResponse, 
-  CostEstimateResponse, 
-  CreateCalculationRequest, 
+  Calculation,
+  CO2Response,
+  CopyCostEstimateResponse,
+  CostEstimateResponse,
+  CreateCalculationRequest,
   CustomerSearchResponse,
-  GetCalculationsReponse, 
-  InitializeCostEstimateResponse, 
-  ProjectsResponse, 
-  UnitTypeResponse 
+  GetCalculationsReponse,
+  InitializeCostEstimateRequest,
+  InitializeCostEstimateResponse,
+  ProjectsResponse,
+  UnitTypeResponse
 } from './types'
 
-export function useCostEstimatesQuery() {
+export function useCostEstimatesQuery(projectId?: string) {
   return useQuery({
-    queryKey: ['calculations'],
+    queryKey: projectId ? ['calculations', { projectId }] : ['calculations'],
     queryFn: async () => {
       try {
-        const data = await apiClient.get<CostEstimateResponse>('/CostEstimate')
+        const url = projectId
+          ? `/CostEstimate?projectId=${encodeURIComponent(projectId)}`
+          : '/CostEstimate'
+        const data = await apiClient.get<CostEstimateResponse>(url)
         console.log('API response:', data)
         return data;
       } catch (error) {
@@ -136,8 +140,8 @@ export function useGetCalculation(costEstimateId: string) {
 
 export function useInitializeCostEstimate() {
   return useMutation({
-    mutationFn: () =>
-      apiClient.post<InitializeCostEstimateResponse>(`/CostEstimate/init`),
+    mutationFn: (data?: InitializeCostEstimateRequest) =>
+      apiClient.post<InitializeCostEstimateResponse>(`/CostEstimate/init`, data),
   })
 }
 
@@ -259,16 +263,30 @@ export function useGetBookkeepingAccounts() {
   })
 }
 
-export const useGetProjects = () => {
-  return useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      const res = await apiClient.get<ProjectsResponse>(`/CostEstimate/projects`)
-      return res.data.map((p) => ({
-        id: p.id,
-        name: p.name,
-      }));
-    }
+const PROJECTS_PAGE_SIZE = 20
+
+export const useGetProjects = (search: string = '') => {
+  return useInfiniteQuery({
+    queryKey: ['projects', search],
+    queryFn: async ({ pageParam = 0 }) => {
+      const params = new URLSearchParams({
+        Take: String(PROJECTS_PAGE_SIZE),
+        Skip: String(pageParam),
+        onlyActiveProject: 'true',
+      })
+      if (search) {
+        params.set('Search', search)
+      }
+      const res = await apiClient.get<ProjectsResponse>(
+        `/CostEstimate/projects?${params.toString()}`
+      )
+      return res
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + page.data.length, 0)
+      return loaded < lastPage.count ? loaded : undefined
+    },
   })
 }
 
