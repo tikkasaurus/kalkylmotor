@@ -242,7 +242,7 @@ export function SingleProjectPage() {
                     className="text-muted-foreground"
                     delay={0.2}
                   >
-                    {projectCalculations.length} kalkyl{projectCalculations.length !== 1 ? 'er' : ''}
+                    {`${projectCalculations.length} kalkyl${projectCalculations.length !== 1 ? 'er' : ''}`}
                   </TextAnimate>
                 </>
               )}

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, Fragment } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -32,7 +31,6 @@ interface GroupedCalculations {
 }
 
 export function ProjectsPage() {
-  const navigate = useNavigate()
   const { data: costEstimates = [], isLoading, error } = useCostEstimatesQuery()
   const { mutate: createTemplate } = useCreateTemplate()
   const { mutate: initializeCostEstimate } = useInitializeCostEstimate()
@@ -419,26 +417,6 @@ export function ProjectsPage() {
                           <TableCell className="text-left text-muted-foreground">{calc.created.split('T')[0]}</TableCell>
                           <TableCell className="text-left text-muted-foreground">{calc.createdByName}</TableCell>
                         </TableRow>
-                        {expandedCalcs.has(calc.id) && calc.versions?.map((version, idx) => (
-                          <TableRow key={version.id} className="bg-muted/10 hover:bg-muted/20 border-b">
-                            <TableCell className="text-left pl-10">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">Rev {idx + 1}</span>
-                                {version.versionName && (
-                                  <span className="text-sm text-muted-foreground/70">– {version.versionName}</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell />
-                            <TableCell className="text-left">
-                              <Badge variant="secondary">Avslutad</Badge>
-                            </TableCell>
-                            <TableCell className="text-left text-sm text-muted-foreground">{version.amount}</TableCell>
-                            <TableCell className="text-left text-sm text-muted-foreground">{calc.customerName || '-'}</TableCell>
-                            <TableCell className="text-left text-sm text-muted-foreground">{version.created.split('T')[0]}</TableCell>
-                            <TableCell className="text-left text-sm text-muted-foreground">{version.createdByName}</TableCell>
-                          </TableRow>
-                        ))}
                       </Fragment>
                     ))}
                   </Fragment>
