@@ -30,10 +30,9 @@ interface FormattedNumberInputProps {
   value: number
   onChange: (value: number) => void
   className?: string
-  min?: number
 }
 
-function FormattedNumberInput({ value, onChange, className, min = 0 }: FormattedNumberInputProps) {
+function FormattedNumberInput({ value, onChange, className }: FormattedNumberInputProps) {
   const [displayValue, setDisplayValue] = useState(formatNumber(value))
   const [isFocused, setIsFocused] = useState(false)
 
@@ -45,12 +44,8 @@ function FormattedNumberInput({ value, onChange, className, min = 0 }: Formatted
   const handleBlur = () => {
     setIsFocused(false)
     const parsed = parseFormattedNumber(displayValue)
-    if (parsed >= min) {
-      onChange(parsed)
-      setDisplayValue(formatNumber(parsed))
-    } else {
-      setDisplayValue(formatNumber(value))
-    }
+    onChange(parsed)
+    setDisplayValue(formatNumber(parsed))
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,7 +125,6 @@ export function OptionsTable({
                   value={option.quantity}
                   onChange={(value) => updateOptionField(option.id ?? 0, 'quantity', value)}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                  min={0}
                 />
               </TableCell>
               <TableCell className="border-r border-border p-0 h-10 align-middle">
@@ -151,7 +145,6 @@ export function OptionsTable({
                   value={option.pricePerUnit}
                   onChange={(value) => updateOptionField(option.id ?? 0, 'pricePerUnit', value)}
                   className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                  min={0}
                 />
               </TableCell>
               <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">

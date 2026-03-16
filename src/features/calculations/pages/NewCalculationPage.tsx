@@ -331,11 +331,12 @@ function NewCalculationPage({
         ),
       }
 
-      await createCalculation.mutateAsync({
+      const savedResponse = await createCalculation.mutateAsync({
         costEstimateId: String(estimateId),
         data: payload,
       })
 
+      state.mergeIdsFromSave(savedResponse)
       state.markSaved()
       toast.success('Kalkylen sparades framgångsrikt!')
     } catch (error) {

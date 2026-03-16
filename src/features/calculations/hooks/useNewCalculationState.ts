@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import type {
   CalculationTemplate,
   CalculationSection,
@@ -7,6 +7,7 @@ import type {
   CalculationSubSubsection,
   OptionRow,
   CreateCalculationRequest,
+  GetCalculationsReponse,
   CalculationSectionPayload,
   BudgetRowPayload,
   OptionBudgetRowPayload,
@@ -184,6 +185,7 @@ export function useNewCalculationState(
   const [isDirty, setIsDirty] = useState(false)
   const markDirty = () => setIsDirty(true)
   const markSaved = () => setIsDirty(false)
+  const lastInitializedIdRef = useRef<number | undefined>(undefined)
   const { data: co2Items = [] } = useGetCO2Database()
   const co2ValueById = useMemo(() => {
     const map = new Map<number, number>()
@@ -194,25 +196,29 @@ export function useNewCalculationState(
   }, [co2Items])
 
   useEffect(() => {
-    if (existingCalculation) {
-      setSections(buildSectionsFromPayload(existingCalculation))
-      setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
-      setArea(existingCalculation.squareMeter ?? 0)
-      setCo2Budget(existingCalculation.co2Budget ?? 0)
-      setSelectedCustomer(
-        existingCalculation.customer ||
-        (existingCalculation.customerId && existingCalculation.customerName
-          ? { id: existingCalculation.customerId, name: existingCalculation.customerName }
-          : null)
-      )
-      setSelectedProject(
-        existingCalculation.projectId && existingCalculation.projectName
-          ? { id: existingCalculation.projectId, name: existingCalculation.projectName }
-          : defaultProject || null
-      )
-      setIsDirty(false)
-    }
-  }, [existingCalculation, defaultProject])
+    if (!existingCalculation) return
+    const calcId = (existingCalculation as { id?: number }).id
+    if (calcId !== undefined && calcId === lastInitializedIdRef.current) return
+    lastInitializedIdRef.current = calcId
+
+    setSections(buildSectionsFromPayload(existingCalculation))
+    setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
+    setArea(existingCalculation.squareMeter ?? 0)
+    setCo2Budget(existingCalculation.co2Budget ?? 0)
+    setSelectedCustomer(
+      existingCalculation.customer ||
+      (existingCalculation.customerId && existingCalculation.customerName
+        ? { id: existingCalculation.customerId, name: existingCalculation.customerName }
+        : null)
+    )
+    setSelectedProject(
+      existingCalculation.projectId && existingCalculation.projectName
+        ? { id: existingCalculation.projectId, name: existingCalculation.projectName }
+        : defaultProject || null
+    )
+    setIsDirty(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingCalculation])
 
   const wrappedSetRate = (value: number) => { markDirty(); setRate(value) }
   const wrappedSetArea = (value: number) => { markDirty(); setArea(value) }
@@ -829,6 +835,52 @@ export function useNewCalculationState(
   const fixedRate = budgetExclRate * (rate / 100)
   const bidAmount = budgetExclRate + fixedRate
 
+  // After save: patch IDs from the BE response by position without touching expanded state or values
+  const mergeIdsFromSave = (response: GetCalculationsReponse) => {
+    setSections((prev) =>
+      prev.map((section, si) => {
+        const rSection = response.sections?.[si]
+        if (!rSection) return section
+        return {
+          ...section,
+          id: rSection.id ?? section.id,
+          subsections: (section.subsections || []).map((subsection, subi) => {
+            const rSub = rSection.subSections?.[subi]
+            if (!rSub) return subsection
+            return {
+              ...subsection,
+              id: rSub.id ?? subsection.id,
+              rows: (subsection.rows || []).map((row, ri) => {
+                const rRow = rSub.budgetRows?.[ri]
+                return rRow?.id !== undefined ? { ...row, id: rRow.id } : row
+              }),
+              subSubsections: (subsection.subSubsections || []).map((subSub, ssi) => {
+                const rSubSub = rSub.subSections?.[ssi]
+                if (!rSubSub) return subSub
+                return {
+                  ...subSub,
+                  id: rSubSub.id ?? subSub.id,
+                  rows: (subSub.rows || []).map((row, ri) => {
+                    const rRow = rSubSub.budgetRows?.[ri]
+                    return rRow?.id !== undefined ? { ...row, id: rRow.id } : row
+                  }),
+                }
+              }),
+            }
+          }),
+        }
+      })
+    )
+    setOptions((prev) =>
+      prev.map((option, i) => {
+        const rOption = response.optionBudgetRows?.[i]
+        return rOption?.id !== undefined ? { ...option, id: rOption.id } : option
+      })
+    )
+    // Update the initialized ref so close+reopen picks up the fresh cache
+    lastInitializedIdRef.current = response.id
+  }
+
   return {
     sections: sectionsWithAmounts,
     options,
@@ -842,6 +894,7 @@ export function useNewCalculationState(
     selectedRowForCO2,
     isDirty,
     markSaved,
+    mergeIdsFromSave,
     setRate: wrappedSetRate,
     setArea: wrappedSetArea,
     setCo2Budget: wrappedSetCo2Budget,

@@ -42,10 +42,9 @@ interface FormattedNumberInputProps {
   value: number
   onChange: (value: number) => void
   className?: string
-  min?: number
 }
 
-function FormattedNumberInput({ value, onChange, className, min = 0 }: FormattedNumberInputProps) {
+function FormattedNumberInput({ value, onChange, className }: FormattedNumberInputProps) {
   const [displayValue, setDisplayValue] = useState(formatNumber(value))
   const [isFocused, setIsFocused] = useState(false)
 
@@ -58,12 +57,8 @@ function FormattedNumberInput({ value, onChange, className, min = 0 }: Formatted
   const handleBlur = () => {
     setIsFocused(false)
     const parsed = parseFormattedNumber(displayValue)
-    if (parsed >= min) {
-      onChange(parsed)
-      setDisplayValue(formatNumber(parsed))
-    } else {
-      setDisplayValue(formatNumber(value))
-    }
+    onChange(parsed)
+    setDisplayValue(formatNumber(parsed))
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,9 +359,8 @@ export function SectionsTable({
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <FormattedNumberInput
                                     value={row.quantity}
-                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'quantity', value)}
+                                    onChange={(value) => updateRowFormulaAndQuantity(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, '', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                                    min={0}
                                   />
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
@@ -387,7 +381,6 @@ export function SectionsTable({
                                     value={row.pricePerUnit}
                                     onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'pricePerUnit', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                                    min={0}
                                   />
                                 </TableCell>
                                 <TableCell className="text-center border-r border-border p-0 h-10 align-middle">
@@ -592,17 +585,16 @@ export function SectionsTable({
                                           <FormattedNumberInput
                                             value={row.quantity}
                                             onChange={(value) =>
-                                              updateRowField(
+                                              updateRowFormulaAndQuantity(
                                                 section.id ?? 0,
                                                 subsection.id ?? 0,
                                                 row.id ?? 0,
-                                                'quantity',
+                                                '',
                                                 value,
                                                 subSub.id ?? 0
                                               )
                                             }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                                            min={0}
                                           />
                                         </TableCell>
                                         <TableCell className="border-r border-border p-0 h-10 align-middle">
@@ -641,7 +633,6 @@ export function SectionsTable({
                                               )
                                             }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                                            min={0}
                                           />
                                         </TableCell>
                                         <TableCell className="text-center border-r border-border p-0 h-10 align-middle">

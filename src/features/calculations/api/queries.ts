@@ -109,18 +109,13 @@ export function useGetTemplates() {
  */
 export function useCreateCalculation() {
   const queryClient = useQueryClient()
-  
-  return useMutation<Calculation, unknown, { costEstimateId: string; data: CreateCalculationRequest }>({
+
+  return useMutation<GetCalculationsReponse, unknown, { costEstimateId: string; data: CreateCalculationRequest }>({
     mutationFn: ({ costEstimateId, data }: { costEstimateId: string; data: CreateCalculationRequest }) =>
-      apiClient.post<Calculation>(`/CostEstimate/${costEstimateId}/calculations`, data),
-    onSuccess: (_data, variables) => {
+      apiClient.post<GetCalculationsReponse>(`/CostEstimate/${costEstimateId}/calculations`, data),
+    onSuccess: (responseData, variables) => {
+      queryClient.setQueryData(['calculation', variables.costEstimateId], responseData)
       queryClient.invalidateQueries({ queryKey: ['calculations'] })
-      // Invalidate the calculation detail cache so reopening the same calc fetches updated data
-      // but don't refetch while the calculation view is open (keeps expand/collapse state)
-      queryClient.invalidateQueries({
-        queryKey: ['calculation', variables.costEstimateId],
-        refetchType: 'inactive',
-      })
     },
   })
 }
@@ -309,6 +304,6 @@ export function useCustomerSearch(searchTerm: string) {
       )
     },
     enabled: searchTerm.length >= 2,
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 30000,
   })
 }
