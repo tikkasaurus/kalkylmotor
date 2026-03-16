@@ -35,3 +35,4 @@ server/node_modules
 server/.env
 
 .cursor
+.claude
