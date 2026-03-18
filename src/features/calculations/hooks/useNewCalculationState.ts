@@ -204,6 +204,7 @@ export function useNewCalculationState(
     setSections(buildSectionsFromPayload(existingCalculation))
     setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
     setArea(existingCalculation.squareMeter ?? 0)
+    setRate(existingCalculation.fee ?? 8)
     setCo2Budget(existingCalculation.co2Budget ?? 0)
     setSelectedCustomer(
       existingCalculation.customer ||

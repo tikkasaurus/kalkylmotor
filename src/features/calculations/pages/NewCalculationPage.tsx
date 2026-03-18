@@ -314,7 +314,7 @@ function NewCalculationPage({
         budget: state.budgetExclRate,
         amount: state.bidAmount,
         calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
-        fee: state.bidAmount - state.budgetExclRate,
+        fee: state.rate,
         squareMeter: state.area,
         customerId: state.selectedCustomer?.id ?? existingCalculation?.customerId,
         customerName: state.selectedCustomer?.name ?? existingCalculation?.customerName,
