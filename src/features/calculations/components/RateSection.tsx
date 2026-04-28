@@ -1,11 +1,9 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { CustomerSearchCombobox } from '@/features/calculations/components/CustomerSearchCombobox'
 import { ProjectSearchCombobox } from '@/features/calculations/components/ProjectSearchCombobox'
 import type { Customer } from '@/features/calculations/api/types'
 import type { Project } from '@/features/calculations/components/ProjectSearchCombobox'
-import { Target } from 'lucide-react'
 
 interface RateSectionProps {
   area: number
@@ -97,39 +95,19 @@ export function RateSection({
           </div>
         </div>
         <div>
-          <Label htmlFor="project">Projekt (frivillig)</Label>
+          <Label htmlFor="project">
+            Projekt <span className="text-destructive">*</span>
+          </Label>
           <div className="mt-2">
             <ProjectSearchCombobox
               value={selectedProject}
               onChange={onProjectChange}
             />
+            {!selectedProject && (
+              <p className="text-xs text-destructive mt-1">Projekt måste väljas innan kalkylen sparas.</p>
+            )}
           </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-4 mt-2">
-        <Button
-          variant={showRateGoal ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onToggleRateGoal(!showRateGoal)}
-          className="flex items-center gap-2"
-        >
-          <Target className="w-4 h-4" />
-          Arvode mål
-        </Button>
-        {showRateGoal && (
-          <div className="flex items-center gap-2">
-            <Label htmlFor="rateGoal" className="text-sm whitespace-nowrap">Mål:</Label>
-            <Input
-              id="rateGoal"
-              type="number"
-              value={rateGoal}
-              onChange={(e) => onChangeRateGoal(Number(e.target.value))}
-              className="w-20 h-8"
-            />
-            <span className="text-muted-foreground text-sm">%</span>
-          </div>
-        )}
       </div>
 
       {exceedsBudget && (

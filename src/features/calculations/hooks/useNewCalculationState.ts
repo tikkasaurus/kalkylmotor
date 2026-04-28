@@ -852,6 +852,127 @@ export function useNewCalculationState(
     setOptions(options.filter((option) => option.id !== optionId))
   }
 
+  const applyMarkupPercentToAll = (percent: number) => {
+    markDirty()
+    setSections((prev) =>
+      prev.map((section) => ({
+        ...section,
+        subsections: (section.subsections || []).map((subsection) => ({
+          ...subsection,
+          rows: (subsection.rows || []).map((row) => ({
+            ...row,
+            customerPrice: null,
+            markupAmount: null,
+            markupPercent: percent,
+          })),
+          subSubsections: (subsection.subSubsections || []).map((subSub) => ({
+            ...subSub,
+            rows: (subSub.rows || []).map((row) => ({
+              ...row,
+              customerPrice: null,
+              markupAmount: null,
+              markupPercent: percent,
+            })),
+          })),
+        })),
+      }))
+    )
+    setOptions((prev) =>
+      prev.map((option) => ({
+        ...option,
+        customerPrice: null,
+        markupAmount: null,
+        markupPercent: percent,
+      }))
+    )
+  }
+
+  const stampRowMarkup = (row: CalculationRow, percent: number): CalculationRow => ({
+    ...row,
+    customerPrice: null,
+    markupAmount: null,
+    markupPercent: percent,
+  })
+
+  const applyMarkupPercentToSection = (sectionId: number, percent: number) => {
+    markDirty()
+    setSections((prev) =>
+      prev.map((section) =>
+        section.id !== sectionId
+          ? section
+          : {
+              ...section,
+              subsections: (section.subsections || []).map((subsection) => ({
+                ...subsection,
+                rows: (subsection.rows || []).map((row) => stampRowMarkup(row, percent)),
+                subSubsections: (subsection.subSubsections || []).map((subSub) => ({
+                  ...subSub,
+                  rows: (subSub.rows || []).map((row) => stampRowMarkup(row, percent)),
+                })),
+              })),
+            }
+      )
+    )
+  }
+
+  const applyMarkupPercentToSubsection = (sectionId: number, subsectionId: number, percent: number) => {
+    markDirty()
+    setSections((prev) =>
+      prev.map((section) =>
+        section.id !== sectionId
+          ? section
+          : {
+              ...section,
+              subsections: (section.subsections || []).map((subsection) =>
+                subsection.id !== subsectionId
+                  ? subsection
+                  : {
+                      ...subsection,
+                      rows: (subsection.rows || []).map((row) => stampRowMarkup(row, percent)),
+                      subSubsections: (subsection.subSubsections || []).map((subSub) => ({
+                        ...subSub,
+                        rows: (subSub.rows || []).map((row) => stampRowMarkup(row, percent)),
+                      })),
+                    }
+              ),
+            }
+      )
+    )
+  }
+
+  const applyMarkupPercentToSubSubsection = (
+    sectionId: number,
+    subsectionId: number,
+    subSubsectionId: number,
+    percent: number
+  ) => {
+    markDirty()
+    setSections((prev) =>
+      prev.map((section) =>
+        section.id !== sectionId
+          ? section
+          : {
+              ...section,
+              subsections: (section.subsections || []).map((subsection) =>
+                subsection.id !== subsectionId
+                  ? subsection
+                  : {
+                      ...subsection,
+                      subSubsections: (subsection.subSubsections || []).map((subSub) =>
+                        subSub.id !== subSubsectionId
+                          ? subSub
+                          : {
+                              ...subSub,
+                              rows: (subSub.rows || []).map((row) => stampRowMarkup(row, percent)),
+                            }
+                      ),
+                    }
+              ),
+            }
+      )
+    )
+  }
+
   // Recalculate subsection and section amounts based on rows
   const sectionsWithAmounts = useMemo(() => {
     const resolveRowCO2 = (row: CalculationRow): CalculationRow => {
@@ -1031,6 +1152,10 @@ export function useNewCalculationState(
     updateRowCO2,
     addNewOption,
     updateOptionField,
+    applyMarkupPercentToAll,
+    applyMarkupPercentToSection,
+    applyMarkupPercentToSubsection,
+    applyMarkupPercentToSubSubsection,
     openCO2Modal,
     handleCO2Select,
     deleteSection,

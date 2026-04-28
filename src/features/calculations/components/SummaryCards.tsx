@@ -3,8 +3,6 @@ interface SummaryCardsProps {
   fixedRate: number
   bidAmount: number
   rate: number
-  rateGoal: number
-  showRateGoal: boolean
   totalCO2: number
   co2Budget: number
   area: number
@@ -16,15 +14,12 @@ export function SummaryCards({
   fixedRate,
   bidAmount,
   rate,
-  rateGoal,
-  showRateGoal,
   totalCO2,
   co2Budget,
   area,
   formatCurrency,
 }: SummaryCardsProps) {
   const co2BudgetTotal = co2Budget * area
-  const rateMatchesGoal = !showRateGoal || Math.abs(rate - rateGoal) < 0.1
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -40,13 +35,8 @@ export function SummaryCards({
         <p className="text-sm text-muted-foreground mb-1">Budget exkl. arvode</p>
         <p className="text-2xl font-semibold">{formatCurrency(budgetExclRate)}</p>
       </div>
-      <div className={`bg-card border p-4 ${!rateMatchesGoal ? 'border-destructive border-2' : ''}`}>
-        <p className="text-sm text-muted-foreground mb-1">
-          Arvode {rate.toFixed(1)}%
-          {showRateGoal && !rateMatchesGoal && (
-            <span className="text-destructive ml-1">(mål: {rateGoal}%)</span>
-          )}
-        </p>
+      <div className="bg-card border p-4">
+        <p className="text-sm text-muted-foreground mb-1">Arvode {rate.toFixed(1)}%</p>
         <p className="text-2xl font-semibold">{formatCurrency(fixedRate)}</p>
       </div>
       <div className="bg-card border rounded-md p-4">

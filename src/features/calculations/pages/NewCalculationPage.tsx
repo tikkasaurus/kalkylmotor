@@ -105,7 +105,7 @@ function NewCalculationPage({
       waste: row.waste,
       formula: row.formula || undefined,
       customerPrice: row.customerPrice ?? null,
-      markupAmount: row.markupAmount ?? null,
+      markupAmount: 0,
       markupPercent: row.markupPercent ?? null,
       revenue: row.revenue || 0,
     }
@@ -186,7 +186,7 @@ function NewCalculationPage({
         price: option.pricePerUnit,
         amount: option.quantity * option.pricePerUnit,
         customerPrice: option.customerPrice ?? null,
-        markupAmount: option.markupAmount ?? null,
+        markupAmount: 0,
         markupPercent: option.markupPercent ?? null,
         revenue: option.revenue || 0,
       }
@@ -309,6 +309,12 @@ function NewCalculationPage({
     const estimateId = costEstimateId || existingCalculation?.id;
     if (!estimateId) {
       toast.error('Ingen kalkyl är vald.')
+      return
+    }
+
+    const projectId = state.selectedProject?.id ?? existingCalculation?.projectId
+    if (!projectId) {
+      toast.error('Du måste välja ett projekt innan kalkylen sparas.')
       return
     }
 
@@ -445,8 +451,6 @@ function NewCalculationPage({
               fixedRate={state.fixedRate}
               bidAmount={state.bidAmount}
               rate={state.derivedRate}
-              rateGoal={state.rateGoal}
-              showRateGoal={state.showRateGoal}
               totalCO2={state.totalCO2}
               co2Budget={state.co2Budget}
               area={state.area}
@@ -477,8 +481,10 @@ function NewCalculationPage({
             deleteSubsection={state.deleteSubsection}
             deleteSubSubsection={state.deleteSubSubsection}
             deleteRow={state.deleteRow}
-            showRateGoal={state.showRateGoal}
-            rateGoal={state.rateGoal}
+            applyMarkupPercentToAll={state.applyMarkupPercentToAll}
+            applyMarkupPercentToSection={state.applyMarkupPercentToSection}
+            applyMarkupPercentToSubsection={state.applyMarkupPercentToSubsection}
+            applyMarkupPercentToSubSubsection={state.applyMarkupPercentToSubSubsection}
           />
 
             <OptionsTable
@@ -487,8 +493,6 @@ function NewCalculationPage({
               addNewOption={state.addNewOption}
               updateOptionField={state.updateOptionField}
               deleteOption={state.deleteOption}
-              showRateGoal={state.showRateGoal}
-              rateGoal={state.rateGoal}
             />
         </div>
           </div>

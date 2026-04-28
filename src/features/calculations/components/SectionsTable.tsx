@@ -15,9 +15,17 @@ import {
   Search,
   Plus,
   X,
+  MoreVertical,
 } from 'lucide-react'
 import type { CalculationSection, CalculationRow } from '@/features/calculations/api/types'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
+import { MarkupConfirmDialog } from '@/features/calculations/components/MarkupConfirmDialog'
 import { useGetBookkeepingAccounts, useGetUnitTypes } from '@/features/calculations/api/queries'
 import { evaluateArithmeticExpression } from '@/features/calculations/utils/evaluateArithmeticExpression'
 
@@ -129,9 +137,22 @@ interface SectionsTableProps {
   deleteSubsection: (sectionId: number, subsectionId: number) => void
   deleteSubSubsection: (sectionId: number, subsectionId: number, subSubsectionId: number) => void
   deleteRow: (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => void
-  showRateGoal?: boolean
-  rateGoal?: number
+  applyMarkupPercentToAll: (percent: number) => void
+  applyMarkupPercentToSection: (sectionId: number, percent: number) => void
+  applyMarkupPercentToSubsection: (sectionId: number, subsectionId: number, percent: number) => void
+  applyMarkupPercentToSubSubsection: (
+    sectionId: number,
+    subsectionId: number,
+    subSubsectionId: number,
+    percent: number
+  ) => void
 }
+
+type PendingMarkup =
+  | { scope: 'all' }
+  | { scope: 'section'; sectionId: number; label: string }
+  | { scope: 'subsection'; sectionId: number; subsectionId: number; label: string }
+  | { scope: 'subSub'; sectionId: number; subsectionId: number; subSubsectionId: number; label: string }
 
 export function SectionsTable({
   sections,
@@ -156,11 +177,48 @@ export function SectionsTable({
   deleteSubsection,
   deleteSubSubsection,
   deleteRow,
-  showRateGoal,
-  rateGoal = 0,
+  applyMarkupPercentToAll,
+  applyMarkupPercentToSection,
+  applyMarkupPercentToSubsection,
+  applyMarkupPercentToSubSubsection,
 }: SectionsTableProps) {
   const { data: accounts = [] } = useGetBookkeepingAccounts()
   const { data: unitTypes = [] } = useGetUnitTypes()
+  const [globalMarkupPercent, setGlobalMarkupPercent] = useState<number | ''>('')
+  const [pendingMarkup, setPendingMarkup] = useState<PendingMarkup | null>(null)
+
+  const closeMarkupDialog = () => setPendingMarkup(null)
+
+  const buildDialogTitle = (target: PendingMarkup): string => {
+    if (target.scope === 'all') {
+      return 'Är du säker på att du vill uppdatera alla rader?'
+    }
+    return `Påslag på alla rader i sektion ${target.label}`
+  }
+
+  const confirmApplyMarkup = (percent: number) => {
+    if (!pendingMarkup) return
+    switch (pendingMarkup.scope) {
+      case 'all':
+        applyMarkupPercentToAll(percent)
+        break
+      case 'section':
+        applyMarkupPercentToSection(pendingMarkup.sectionId, percent)
+        break
+      case 'subsection':
+        applyMarkupPercentToSubsection(pendingMarkup.sectionId, pendingMarkup.subsectionId, percent)
+        break
+      case 'subSub':
+        applyMarkupPercentToSubSubsection(
+          pendingMarkup.sectionId,
+          pendingMarkup.subsectionId,
+          pendingMarkup.subSubsectionId,
+          percent
+        )
+        break
+    }
+    closeMarkupDialog()
+  }
 
   const handleFormulaChange = (params: {
     sectionId: number
@@ -190,6 +248,30 @@ export function SectionsTable({
           <h2 className="text-lg font-semibold">Kostnadskalkyl</h2>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 mr-2">
+            <span className="text-sm text-gray-600 font-medium whitespace-nowrap">Påslag alla rader:</span>
+            <Input
+              type="number"
+              value={globalMarkupPercent}
+              onChange={(e) => {
+                const v = e.target.value
+                setGlobalMarkupPercent(v === '' ? '' : Number(v))
+              }}
+              className="w-20 h-8"
+              placeholder="%"
+            />
+            <Button
+              onClick={() => {
+                if (globalMarkupPercent === '') return
+                setPendingMarkup({ scope: 'all' })
+              }}
+              variant="outline"
+              className="text-sm h-8 px-3 text-gray-600 hover:text-foreground transition-colors"
+              disabled={globalMarkupPercent === ''}
+            >
+              Tillämpa
+            </Button>
+          </div>
           <button
             onClick={expandAll}
             className="text-sm text-gray-600 font-medium hover:text-foreground transition-colors"
@@ -202,7 +284,7 @@ export function SectionsTable({
           >
             Kollapsa alla
           </button>
-          <Button 
+          <Button
             onClick={addNewSection}
             variant="outline"
             className="text-sm h-8 px-3 flex items-center gap-1 text-gray-600 hover:text-foreground transition-colors"
@@ -250,6 +332,30 @@ export function SectionsTable({
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold">{formatCurrency(section.amount)}</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-6 w-6 flex items-center justify-center hover:bg-accent transition-colors"
+                      title="Mer"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        setPendingMarkup({
+                          scope: 'section',
+                          sectionId: section.id ?? 0,
+                          label: section.name,
+                        })
+                      }
+                    >
+                      Påslag på sektion
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -301,6 +407,31 @@ export function SectionsTable({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm">{formatCurrency(subsection.amount)}</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-5 w-5 flex items-center justify-center hover:bg-accent transition-colors"
+                              title="Mer"
+                            >
+                              <MoreVertical className="w-3 h-3" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                setPendingMarkup({
+                                  scope: 'subsection',
+                                  sectionId: section.id ?? 0,
+                                  subsectionId: subsection.id ?? 0,
+                                  label: subsection.name,
+                                })
+                              }
+                            >
+                              Påslag på sektion
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
@@ -330,7 +461,6 @@ export function SectionsTable({
                               <TableHead className="text-gray-600 w-[80px] text-right border-r border-border bg-muted/50 font-semibold">SPILL</TableHead>
                               <TableHead className="text-gray-600 w-[140px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD KOSTNAD</TableHead>
                               <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">À-PRIS</TableHead>
-                              <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG</TableHead>
                               <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG (%)</TableHead>
                               <TableHead className="text-gray-600 w-[160px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD INTÄKT</TableHead>
                               <TableHead className="text-gray-600 w-[220px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
@@ -431,7 +561,7 @@ export function SectionsTable({
                                     placeholder="0"
                                   />
                                 </TableCell>
-                                <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
+                                <TableCell className="text-right font-bold border-r border-border h-10 px-2 align-middle">
                                   {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                 </TableCell>
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
@@ -443,33 +573,13 @@ export function SectionsTable({
                                 </TableCell>
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <FormattedNumberInput
-                                    value={row.markupAmount ?? 0}
-                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupAmount', value)}
-                                    className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                                  />
-                                </TableCell>
-                                <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                                  <FormattedNumberInput
                                     value={row.markupPercent ?? 0}
                                     onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupPercent', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
-                                <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <span>{formatCurrency(row.revenue)}</span>
-                                    {showRateGoal && (() => {
-                                      const cost = row.quantity * row.pricePerUnit * (1 + row.waste)
-                                      if (cost <= 0) return null
-                                      const actualPct = ((row.revenue - cost) / cost) * 100
-                                      if (Math.abs(actualPct - rateGoal) < 0.1) return null
-                                      return (
-                                        <span className="text-xs font-normal text-destructive">
-                                          {actualPct.toFixed(1)}%
-                                        </span>
-                                      )
-                                    })()}
-                                  </div>
+                                <TableCell className="text-right font-bold border-r border-border h-10 px-2 align-middle">
+                                  {formatCurrency(row.revenue)}
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <AccountCombobox
@@ -560,6 +670,32 @@ export function SectionsTable({
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="font-semibold text-sm">{formatCurrency(subSub.amount)}</span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="h-5 w-5 flex items-center justify-center hover:bg-accent transition-colors"
+                                      title="Mer"
+                                    >
+                                      <MoreVertical className="w-3 h-3" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem
+                                      onSelect={() =>
+                                        setPendingMarkup({
+                                          scope: 'subSub',
+                                          sectionId: section.id ?? 0,
+                                          subsectionId: subsection.id ?? 0,
+                                          subSubsectionId: subSub.id ?? 0,
+                                          label: subSub.name,
+                                        })
+                                      }
+                                    >
+                                      Påslag på sektion
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -588,7 +724,6 @@ export function SectionsTable({
                                       <TableHead className="text-gray-600 w-[80px] text-right border-r border-border bg-muted/50 font-semibold">SPILL</TableHead>
                                       <TableHead className="text-gray-600 w-[140px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD KOSTNAD</TableHead>
                                       <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">À-PRIS</TableHead>
-                                      <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG</TableHead>
                                       <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG (%)</TableHead>
                                       <TableHead className="text-gray-600 w-[160px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD INTÄKT</TableHead>
                                       <TableHead className="text-gray-600 w-[220px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
@@ -739,7 +874,7 @@ export function SectionsTable({
                                             placeholder="0"
                                           />
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
+                                        <TableCell className="text-right font-bold border-r border-border h-10 px-2 align-middle">
                                           {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                         </TableCell>
                                         <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
@@ -753,15 +888,6 @@ export function SectionsTable({
                                         </TableCell>
                                         <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                           <FormattedNumberInput
-                                            value={row.markupAmount ?? 0}
-                                            onChange={(value) =>
-                                              updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupAmount', value, subSub.id ?? 0)
-                                            }
-                                            className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
-                                          />
-                                        </TableCell>
-                                        <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
-                                          <FormattedNumberInput
                                             value={row.markupPercent ?? 0}
                                             onChange={(value) =>
                                               updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupPercent', value, subSub.id ?? 0)
@@ -769,22 +895,8 @@ export function SectionsTable({
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                           />
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
-                                          <div className="flex items-center justify-end gap-1">
-                                            <span>{formatCurrency(row.revenue)}</span>
-                                            {showRateGoal && (() => {
-                                              const cost = row.quantity * row.pricePerUnit * (1 + row.waste)
-                                              if (cost <= 0) return null
-                                              const actualPct = ((row.revenue - cost) / cost) * 100
-                                              const diff = actualPct - rateGoal
-                                              if (Math.abs(diff) < 0.1) return null
-                                              return (
-                                                <span className={`text-xs font-normal ${diff > 0 ? 'text-green-600' : 'text-destructive'}`}>
-                                                  {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
-                                                </span>
-                                              )
-                                            })()}
-                                          </div>
+                                        <TableCell className="text-right font-bold border-r border-border h-10 px-2 align-middle">
+                                          {formatCurrency(row.revenue)}
                                         </TableCell>
                                         <TableCell className="border-r border-border p-0 h-10 align-middle">
                                           <AccountCombobox
@@ -880,6 +992,21 @@ export function SectionsTable({
           </div>
         ))}
       </div>
+
+      <MarkupConfirmDialog
+        open={pendingMarkup !== null}
+        title={pendingMarkup ? buildDialogTitle(pendingMarkup) : ''}
+        requireInput={pendingMarkup?.scope !== 'all'}
+        onCancel={closeMarkupDialog}
+        onConfirm={(percent) => {
+          if (pendingMarkup?.scope === 'all') {
+            if (globalMarkupPercent === '') return
+            confirmApplyMarkup(Number(globalMarkupPercent))
+          } else {
+            confirmApplyMarkup(percent)
+          }
+        }}
+      />
     </div>
   )
 }
