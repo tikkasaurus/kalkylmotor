@@ -76,6 +76,8 @@ interface OptionsTableProps {
   addNewOption: () => void
   updateOptionField: (optionId: number, field: keyof OptionRow, value: string | number) => void
   deleteOption: (optionId: number) => void
+  showRateGoal?: boolean
+  rateGoal?: number
 }
 
 export function OptionsTable({
@@ -84,6 +86,8 @@ export function OptionsTable({
   addNewOption,
   updateOptionField,
   deleteOption,
+  showRateGoal,
+  rateGoal = 0,
 }: OptionsTableProps) {
 
   const { data: unitTypes = [] } = useGetUnitTypes()
@@ -97,14 +101,19 @@ export function OptionsTable({
         </div>
       </div>
 
-      <Table className="border border-border">
+      <div className="overflow-x-auto">
+      <Table className="border border-border min-w-[1400px]">
         <TableHeader>
           <TableRow className="border-b border-border">
             <TableHead className="text-gray-600 w-[300px] border-r border-border bg-muted/50 font-semibold">BENÄMNING</TableHead>
             <TableHead className="text-gray-600 w-[150px] text-right border-r border-border bg-muted/50 font-semibold">ANTAL</TableHead>
             <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">ENHET</TableHead>
             <TableHead className="text-gray-600 w-[150px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
-            <TableHead className="text-gray-600 w-[150px] text-right border-r border-border bg-muted/50 font-semibold">SUMMA</TableHead>
+            <TableHead className="text-gray-600 w-[150px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD KOSTNAD</TableHead>
+            <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">À-PRIS</TableHead>
+            <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG</TableHead>
+            <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG (%)</TableHead>
+            <TableHead className="text-gray-600 w-[160px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD INTÄKT</TableHead>
             <TableHead className="w-[50px] bg-muted/50 font-semibold"></TableHead>
           </TableRow>
         </TableHeader>
@@ -150,6 +159,43 @@ export function OptionsTable({
               <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
                 {formatCurrency(option.quantity * option.pricePerUnit)}
               </TableCell>
+              <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                <FormattedNumberInput
+                  value={option.customerPrice ?? 0}
+                  onChange={(value) => updateOptionField(option.id ?? 0, 'customerPrice', value)}
+                  className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                />
+              </TableCell>
+              <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                <FormattedNumberInput
+                  value={option.markupAmount ?? 0}
+                  onChange={(value) => updateOptionField(option.id ?? 0, 'markupAmount', value)}
+                  className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                />
+              </TableCell>
+              <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                <FormattedNumberInput
+                  value={option.markupPercent ?? 0}
+                  onChange={(value) => updateOptionField(option.id ?? 0, 'markupPercent', value)}
+                  className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                />
+              </TableCell>
+              <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
+                <div className="flex items-center justify-end gap-1">
+                  <span>{formatCurrency(option.revenue)}</span>
+                  {showRateGoal && (() => {
+                    const cost = option.quantity * option.pricePerUnit
+                    if (cost <= 0) return null
+                    const actualPct = ((option.revenue - cost) / cost) * 100
+                    if (Math.abs(actualPct - rateGoal) < 0.1) return null
+                    return (
+                      <span className="text-xs font-normal text-destructive">
+                        {actualPct.toFixed(1)}%
+                      </span>
+                    )
+                  })()}
+                </div>
+              </TableCell>
               <TableCell className="p-0 h-10 align-middle">
                 <button
                   onClick={() => deleteOption(option.id ?? 0)}
@@ -163,7 +209,8 @@ export function OptionsTable({
           ))}
         </TableBody>
       </Table>
-      
+      </div>
+
       <div className="mt-4">
         <Button 
           onClick={addNewOption}

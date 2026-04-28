@@ -129,6 +129,8 @@ interface SectionsTableProps {
   deleteSubsection: (sectionId: number, subsectionId: number) => void
   deleteSubSubsection: (sectionId: number, subsectionId: number, subSubsectionId: number) => void
   deleteRow: (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => void
+  showRateGoal?: boolean
+  rateGoal?: number
 }
 
 export function SectionsTable({
@@ -154,6 +156,8 @@ export function SectionsTable({
   deleteSubsection,
   deleteSubSubsection,
   deleteRow,
+  showRateGoal,
+  rateGoal = 0,
 }: SectionsTableProps) {
   const { data: accounts = [] } = useGetBookkeepingAccounts()
   const { data: unitTypes = [] } = useGetUnitTypes()
@@ -313,7 +317,8 @@ export function SectionsTable({
                     {/* Subsection Rows */}
                     {subsection.expanded && (
                       <div className="bg-card pl-6">
-                        <Table className="border border-border">
+                        <div className="overflow-x-auto">
+                        <Table className="border border-border min-w-[1900px]">
                           <TableHeader>
                             <TableRow className="border-b border-border">
                               <TableHead className="text-gray-600 w-[200px] border-r border-border bg-muted/50 font-semibold">BENÄMNING</TableHead>
@@ -323,9 +328,13 @@ export function SectionsTable({
                               <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
                               <TableHead className="text-gray-600 w-[80px] text-center border-r border-border bg-muted/50 font-semibold">CO2</TableHead>
                               <TableHead className="text-gray-600 w-[80px] text-right border-r border-border bg-muted/50 font-semibold">SPILL</TableHead>
-                              <TableHead className="text-gray-600 w-[130px] text-right border-r border-border bg-muted/50 font-semibold">SUMMA</TableHead>
-                              <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
-                              <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
+                              <TableHead className="text-gray-600 w-[140px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD KOSTNAD</TableHead>
+                              <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">À-PRIS</TableHead>
+                              <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG</TableHead>
+                              <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG (%)</TableHead>
+                              <TableHead className="text-gray-600 w-[160px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD INTÄKT</TableHead>
+                              <TableHead className="text-gray-600 w-[220px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
+                              <TableHead className="text-gray-600 w-[180px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
                               <TableHead className="w-[50px] bg-muted/50 font-semibold"></TableHead>
                             </TableRow>
                           </TableHeader>
@@ -425,6 +434,43 @@ export function SectionsTable({
                                 <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
                                   {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                 </TableCell>
+                                <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                  <FormattedNumberInput
+                                    value={row.customerPrice ?? 0}
+                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'customerPrice', value)}
+                                    className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                  <FormattedNumberInput
+                                    value={row.markupAmount ?? 0}
+                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupAmount', value)}
+                                    className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                  <FormattedNumberInput
+                                    value={row.markupPercent ?? 0}
+                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupPercent', value)}
+                                    className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <span>{formatCurrency(row.revenue)}</span>
+                                    {showRateGoal && (() => {
+                                      const cost = row.quantity * row.pricePerUnit * (1 + row.waste)
+                                      if (cost <= 0) return null
+                                      const actualPct = ((row.revenue - cost) / cost) * 100
+                                      if (Math.abs(actualPct - rateGoal) < 0.1) return null
+                                      return (
+                                        <span className="text-xs font-normal text-destructive">
+                                          {actualPct.toFixed(1)}%
+                                        </span>
+                                      )
+                                    })()}
+                                  </div>
+                                </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <AccountCombobox
                                       accounts={accounts}
@@ -435,9 +481,9 @@ export function SectionsTable({
                                   />
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
-                                  <Input 
-                                    type="text" 
-                                    value={row.note} 
+                                  <Input
+                                    type="text"
+                                    value={row.note}
                                     onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'note', e.target.value)}
                                     className="!h-10 w-full text-sm border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Anteckning..."
@@ -456,8 +502,9 @@ export function SectionsTable({
                             ))}
                           </TableBody>
                         </Table>
+                        </div>
                         <div className="py-2">
-                          <Button 
+                          <Button
                             onClick={() => addNewRow(section.id ?? 0, subsection.id ?? 0)}
                             variant="outline"
                             className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
@@ -528,7 +575,8 @@ export function SectionsTable({
 
                             {subSub.expanded && (
                               <div className="bg-card">
-                                <Table className="border border-border">
+                                <div className="overflow-x-auto">
+                                <Table className="border border-border min-w-[1900px]">
                                   <TableHeader>
                                     <TableRow className="border-b border-border">
                                       <TableHead className="text-gray-600 w-[200px] border-r border-border bg-muted/50 font-semibold">BENÄMNING</TableHead>
@@ -538,9 +586,13 @@ export function SectionsTable({
                                       <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PRIS/ENHET</TableHead>
                                       <TableHead className="text-gray-600 w-[80px] text-center border-r border-border bg-muted/50 font-semibold">CO2</TableHead>
                                       <TableHead className="text-gray-600 w-[80px] text-right border-r border-border bg-muted/50 font-semibold">SPILL</TableHead>
-                                      <TableHead className="text-gray-600 w-[130px] text-right border-r border-border bg-muted/50 font-semibold">SUMMA</TableHead>
-                                      <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
-                                      <TableHead className="text-gray-600 w-[150px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
+                                      <TableHead className="text-gray-600 w-[140px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD KOSTNAD</TableHead>
+                                      <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">À-PRIS</TableHead>
+                                      <TableHead className="text-gray-600 w-[120px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG</TableHead>
+                                      <TableHead className="text-gray-600 w-[100px] text-right border-r border-border bg-muted/50 font-semibold">PÅSLAG (%)</TableHead>
+                                      <TableHead className="text-gray-600 w-[160px] text-right border-r border-border bg-muted/50 font-semibold">KALKYLERAD INTÄKT</TableHead>
+                                      <TableHead className="text-gray-600 w-[220px] border-r border-border bg-muted/50 font-semibold">KONTO</TableHead>
+                                      <TableHead className="text-gray-600 w-[180px] border-r border-border bg-muted/50 font-semibold">ANTECKNING</TableHead>
                                       <TableHead className="w-[50px] bg-muted/50 font-semibold"></TableHead>
                                     </TableRow>
                                   </TableHeader>
@@ -690,6 +742,50 @@ export function SectionsTable({
                                         <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
                                           {formatCurrency(row.quantity * row.pricePerUnit * (1 + row.waste))}
                                         </TableCell>
+                                        <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                          <FormattedNumberInput
+                                            value={row.customerPrice ?? 0}
+                                            onChange={(value) =>
+                                              updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'customerPrice', value, subSub.id ?? 0)
+                                            }
+                                            className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                          />
+                                        </TableCell>
+                                        <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                          <FormattedNumberInput
+                                            value={row.markupAmount ?? 0}
+                                            onChange={(value) =>
+                                              updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupAmount', value, subSub.id ?? 0)
+                                            }
+                                            className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                          />
+                                        </TableCell>
+                                        <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
+                                          <FormattedNumberInput
+                                            value={row.markupPercent ?? 0}
+                                            onChange={(value) =>
+                                              updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupPercent', value, subSub.id ?? 0)
+                                            }
+                                            className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
+                                          />
+                                        </TableCell>
+                                        <TableCell className="text-right font-semibold border-r border-border h-10 px-2 align-middle">
+                                          <div className="flex items-center justify-end gap-1">
+                                            <span>{formatCurrency(row.revenue)}</span>
+                                            {showRateGoal && (() => {
+                                              const cost = row.quantity * row.pricePerUnit * (1 + row.waste)
+                                              if (cost <= 0) return null
+                                              const actualPct = ((row.revenue - cost) / cost) * 100
+                                              const diff = actualPct - rateGoal
+                                              if (Math.abs(diff) < 0.1) return null
+                                              return (
+                                                <span className={`text-xs font-normal ${diff > 0 ? 'text-green-600' : 'text-destructive'}`}>
+                                                  {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
+                                                </span>
+                                              )
+                                            })()}
+                                          </div>
+                                        </TableCell>
                                         <TableCell className="border-r border-border p-0 h-10 align-middle">
                                           <AccountCombobox
                                               accounts={accounts}
@@ -739,6 +835,7 @@ export function SectionsTable({
                                     ))}
                                   </TableBody>
                                 </Table>
+                                </div>
                                 <div className="py-2 px-2">
                                   <Button
                                     onClick={() => addNewRow(section.id ?? 0, subsection.id ?? 0, subSub.id ?? 0)}

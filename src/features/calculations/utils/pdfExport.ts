@@ -133,11 +133,11 @@ export async function exportToPDFFromHTML(data: PDFExportData) {
   summary.style.marginBottom = '30px'
 
   const summaryItems = [
-    { label: 'Arvode (%)', value: `${data.rate}%` },
+    { label: 'Arvode (%)', value: `${data.rate.toFixed(1)}%` },
     { label: 'Area (kvm)', value: formatNumber(data.area) },
     { label: 'CO2 Budget', value: `${formatNumber(data.co2Budget)} kg/kvm` },
     { label: 'Budget exkl. arvode', value: formatCurrency(data.budgetExclRate) },
-    { label: `Fastarvode ${data.rate}%`, value: formatCurrency(data.fixedRate) },
+    { label: `Arvode ${data.rate.toFixed(1)}%`, value: formatCurrency(data.fixedRate) },
     { label: 'Anbudssumma', value: formatCurrency(data.bidAmount), highlight: true },
   ]
 
@@ -430,13 +430,13 @@ export function exportToPDF(data: PDFExportData) {
   }
 
   // Row 1 (3 items)
-  drawMetric(0, 1, 'Arvode (%)', `${data.rate}%`)
+  drawMetric(0, 1, 'Arvode (%)', `${data.rate.toFixed(1)}%`)
   drawMetric(1, 1, 'Area (kvm)', formatNumber(data.area))
   drawMetric(2, 1, 'CO2 Budget', `${formatNumber(data.co2Budget)} kg/kvm`)
 
   // Row 2 (3 items)
   drawMetric(0, 2, 'Budget exkl. arvode', formatCurrency(data.budgetExclRate))
-  drawMetric(1, 2, `Fastarvode ${data.rate}%`, formatCurrency(data.fixedRate))
+  drawMetric(1, 2, `Arvode ${data.rate.toFixed(1)}%`, formatCurrency(data.fixedRate))
   drawMetric(2, 2, 'Anbudssumma', formatCurrency(data.bidAmount), true)
 
   yPos += summaryH + 2
@@ -648,7 +648,7 @@ export function exportToPDF(data: PDFExportData) {
     doc.setFontSize(9)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(100, 100, 100)
-    doc.text(`Samtliga optioner är exklusive ${data.rate}% entreprenörsarvode`, margin, yPos - 1)
+    doc.text(`Samtliga optioner är exklusive ${data.rate.toFixed(1)}% entreprenörsarvode`, margin, yPos - 1)
 
     const optionsData = data.options.map((option, idx) => [
       String(idx + 1),

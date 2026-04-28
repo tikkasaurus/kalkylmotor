@@ -16,6 +16,54 @@ import type {
 import type { Project } from '@/features/calculations/components/ProjectSearchCombobox'
 import { useGetCO2Database } from '@/features/calculations/api/queries'
 
+function applyRowFieldUpdate(row: CalculationRow, field: keyof CalculationRow, value: string | number): CalculationRow {
+  if (field === 'customerPrice' || field === 'markupAmount' || field === 'markupPercent') {
+    const numValue = (typeof value === 'number' ? value : Number(value)) || 0
+    if (numValue === 0) {
+      // Just clear this field, keep the others untouched
+      return { ...row, [field]: null }
+    }
+    // Non-zero: set this field and clear the others
+    return {
+      ...row,
+      customerPrice: field === 'customerPrice' ? numValue : null,
+      markupAmount: field === 'markupAmount' ? numValue : null,
+      markupPercent: field === 'markupPercent' ? numValue : null,
+    }
+  }
+  return { ...row, [field]: value }
+}
+
+function computeRowRevenue(row: CalculationRow): number {
+  const cost = row.quantity * row.pricePerUnit * (1 + row.waste)
+  if (row.customerPrice != null && row.customerPrice !== 0) {
+    return row.quantity * row.customerPrice
+  }
+  if (row.markupAmount != null && row.markupAmount !== 0) {
+    return cost + row.markupAmount
+  }
+  if (row.markupPercent != null && row.markupPercent !== 0) {
+    return cost * (1 + row.markupPercent / 100)
+  }
+  // No pricing set: revenue equals cost
+  return cost
+}
+
+function computeOptionRevenue(option: OptionRow): number {
+  const cost = option.quantity * option.pricePerUnit
+  if (option.customerPrice != null && option.customerPrice !== 0) {
+    return option.quantity * option.customerPrice
+  }
+  if (option.markupAmount != null && option.markupAmount !== 0) {
+    return cost + option.markupAmount
+  }
+  if (option.markupPercent != null && option.markupPercent !== 0) {
+    return cost * (1 + option.markupPercent / 100)
+  }
+  // No pricing set: revenue equals cost
+  return cost
+}
+
 // Factory function to create sections from template
 function createSectionsFromTemplate(template: CalculationTemplate): CalculationSection[] {
   return template.sections.map((section, index) => {
@@ -34,6 +82,10 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
       resource: row.resource || '',
       note: row.note || '',
       waste: 0,
+      customerPrice: null,
+      markupAmount: null,
+      markupPercent: null,
+      revenue: 0,
     }))
 
     const subsectionAmount = rows.reduce((sum, row) => sum + (row.quantity * row.pricePerUnit * (1 + row.waste)), 0)
@@ -70,6 +122,10 @@ function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
     resource: '',
     note: row.notes,
     waste: row.waste || 0,
+    customerPrice: row.customerPrice ?? null,
+    markupAmount: row.markupAmount ?? null,
+    markupPercent: (row as any).markupPercent ?? null,
+    revenue: row.revenue || 0,
   }
 }
 
@@ -144,6 +200,10 @@ function mapOptionsFromPayload(optionBudgetRows?: OptionBudgetRowPayload[]): Opt
     quantity: row.quantity,
     unit: 'st',
     pricePerUnit: row.price,
+    customerPrice: row.customerPrice ?? null,
+    markupAmount: row.markupAmount ?? null,
+    markupPercent: (row as any).markupPercent ?? null,
+    revenue: row.revenue || 0,
   }))
 }
 
@@ -161,7 +221,8 @@ export function useNewCalculationState(
   const [options, setOptions] = useState<OptionRow[]>(
     template ? [] : mapOptionsFromPayload(existingCalculation?.optionBudgetRows)
   )
-  const [rate, setRate] = useState(8)
+  const [rateGoal, setRateGoal] = useState(existingCalculation?.feeGoal ?? 8)
+  const [showRateGoal, setShowRateGoal] = useState(existingCalculation?.showFeeGoal ?? false)
   const [area, setArea] = useState(0)
   const [co2Budget, setCo2Budget] = useState(0)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
@@ -204,7 +265,8 @@ export function useNewCalculationState(
     setSections(buildSectionsFromPayload(existingCalculation))
     setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
     setArea(existingCalculation.squareMeter ?? 0)
-    setRate(existingCalculation.fee ?? 8)
+    setRateGoal(existingCalculation.feeGoal ?? 8)
+    setShowRateGoal(existingCalculation.showFeeGoal ?? false)
     setCo2Budget(existingCalculation.co2Budget ?? 0)
     setSelectedCustomer(
       existingCalculation.customer ||
@@ -221,7 +283,7 @@ export function useNewCalculationState(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingCalculation])
 
-  const wrappedSetRate = (value: number) => { markDirty(); setRate(value) }
+  const wrappedSetRateGoal = (value: number) => { markDirty(); setRateGoal(value) }
   const wrappedSetArea = (value: number) => { markDirty(); setArea(value) }
   const wrappedSetCo2Budget = (value: number) => { markDirty(); setCo2Budget(value) }
   const wrappedSetSelectedCustomer = (value: Customer | null) => { markDirty(); setSelectedCustomer(value) }
@@ -419,14 +481,14 @@ export function useNewCalculationState(
                           subSub.id === subSubsectionId
                             ? {
                                 ...subSub,
-                                rows: subSub.rows?.map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
+                                rows: subSub.rows?.map((row) => (row.id === rowId ? applyRowFieldUpdate(row, field, value) : row)),
                               }
                             : subSub
                         ),
                       }
                     : {
                         ...subsection,
-                        rows: subsection.rows?.map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
+                        rows: subsection.rows?.map((row) => (row.id === rowId ? applyRowFieldUpdate(row, field, value) : row)),
                       }
                   : subsection
               ),
@@ -623,6 +685,10 @@ export function useNewCalculationState(
                   resource: '',
                   note: '',
                   waste: 0,
+                  customerPrice: null,
+                  markupAmount: null,
+                  markupPercent: null,
+                  revenue: 0,
                 }
                 return subSubsectionId !== undefined
                   ? {
@@ -751,6 +817,10 @@ export function useNewCalculationState(
       quantity: 0,
       unit: 'm2',
       pricePerUnit: 0,
+      customerPrice: null,
+      markupAmount: null,
+      markupPercent: null,
+      revenue: 0,
     }
     setOptions([...options, newOption])
   }
@@ -758,9 +828,22 @@ export function useNewCalculationState(
   const updateOptionField = (optionId: number, field: keyof OptionRow, value: string | number) => {
     markDirty()
     setOptions(
-      options.map((option) =>
-        option.id === optionId ? { ...option, [field]: value } : option
-      )
+      options.map((option) => {
+        if (option.id !== optionId) return option
+        if (field === 'customerPrice' || field === 'markupAmount' || field === 'markupPercent') {
+          const numValue = (typeof value === 'number' ? value : Number(value)) || 0
+          if (numValue === 0) {
+            return { ...option, [field]: null }
+          }
+          return {
+            ...option,
+            customerPrice: field === 'customerPrice' ? numValue : null,
+            markupAmount: field === 'markupAmount' ? numValue : null,
+            markupPercent: field === 'markupPercent' ? numValue : null,
+          }
+        }
+        return { ...option, [field]: value }
+      })
     )
   }
 
@@ -781,15 +864,20 @@ export function useNewCalculationState(
       return row
     }
 
+    const resolveRow = (row: CalculationRow): CalculationRow => {
+      const resolved = resolveRowCO2(row)
+      return { ...resolved, revenue: computeRowRevenue(resolved) }
+    }
+
     return sections.map((section) => {
       const subsectionsWithAmounts = (section.subsections || []).map((subsection) => {
         const subSubsectionsWithAmounts = (subsection.subSubsections || []).map((subSub) => {
-          const resolvedRows = (subSub.rows || []).map(resolveRowCO2)
+          const resolvedRows = (subSub.rows || []).map(resolveRow)
           const subSubAmount = resolvedRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit * (1 + row.waste), 0)
           return { ...subSub, amount: subSubAmount, rows: resolvedRows }
         })
 
-        const resolvedSubsectionRows = (subsection.rows || []).map(resolveRowCO2)
+        const resolvedSubsectionRows = (subsection.rows || []).map(resolveRow)
         const subsectionRowsAmount = resolvedSubsectionRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit * (1 + row.waste), 0)
         const subsectionAmount = subsectionRowsAmount + subSubsectionsWithAmounts.reduce((sum, s) => sum + s.amount, 0)
 
@@ -809,6 +897,11 @@ export function useNewCalculationState(
       return { ...section, amount: sectionAmount, subsections: subsectionsWithAmounts }
     })
   }, [sections, co2ValueById])
+
+  // Compute revenue for options
+  const optionsWithRevenue = useMemo(() => {
+    return options.map((option) => ({ ...option, revenue: computeOptionRevenue(option) }))
+  }, [options])
 
   // Calculate options total
   const optionsTotal = useMemo(() => {
@@ -833,8 +926,25 @@ export function useNewCalculationState(
 
   // Derived values - includes both sections and options
   const budgetExclRate = sectionsWithAmounts.reduce((sum, section) => sum + section.amount, 0) + optionsTotal
-  const fixedRate = budgetExclRate * (rate / 100)
-  const bidAmount = budgetExclRate + fixedRate
+
+  // Total revenue = sum of all Kalkylerad intäkt from all rows
+  const totalRevenue = useMemo(() => {
+    const sectionsRevenue = sectionsWithAmounts.reduce((sum, section) => {
+      return sum + (section.subsections || []).reduce((subSum, subsection) => {
+        const rowsRevenue = (subsection.rows || []).reduce((rSum, row) => rSum + row.revenue, 0)
+        const subSubRevenue = (subsection.subSubsections || []).reduce((ssSum, subSub) => {
+          return ssSum + (subSub.rows || []).reduce((rSum, row) => rSum + row.revenue, 0)
+        }, 0)
+        return subSum + rowsRevenue + subSubRevenue
+      }, 0)
+    }, 0)
+    const optionsRevenue = optionsWithRevenue.reduce((sum, option) => sum + option.revenue, 0)
+    return sectionsRevenue + optionsRevenue
+  }, [sectionsWithAmounts, optionsWithRevenue])
+
+  const bidAmount = totalRevenue
+  const fixedRate = totalRevenue - budgetExclRate
+  const derivedRate = budgetExclRate > 0 ? ((totalRevenue / budgetExclRate) - 1) * 100 : 0
 
   // After save: patch IDs from the BE response by position without touching expanded state or values
   const mergeIdsFromSave = (response: GetCalculationsReponse) => {
@@ -884,8 +994,9 @@ export function useNewCalculationState(
 
   return {
     sections: sectionsWithAmounts,
-    options,
-    rate,
+    options: optionsWithRevenue,
+    rateGoal,
+    showRateGoal,
     area,
     co2Budget,
     totalCO2,
@@ -896,7 +1007,8 @@ export function useNewCalculationState(
     isDirty,
     markSaved,
     mergeIdsFromSave,
-    setRate: wrappedSetRate,
+    setRateGoal: wrappedSetRateGoal,
+    setShowRateGoal,
     setArea: wrappedSetArea,
     setCo2Budget: wrappedSetCo2Budget,
     setSelectedCustomer: wrappedSetSelectedCustomer,
@@ -929,6 +1041,7 @@ export function useNewCalculationState(
     budgetExclRate,
     fixedRate,
     bidAmount,
+    derivedRate,
   }
 }
 

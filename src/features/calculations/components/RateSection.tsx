@@ -1,38 +1,44 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import { CustomerSearchCombobox } from '@/features/calculations/components/CustomerSearchCombobox'
 import { ProjectSearchCombobox } from '@/features/calculations/components/ProjectSearchCombobox'
 import type { Customer } from '@/features/calculations/api/types'
 import type { Project } from '@/features/calculations/components/ProjectSearchCombobox'
+import { Target } from 'lucide-react'
 
 interface RateSectionProps {
-  rate: number
   area: number
   co2Budget: number
   totalCO2: number
   bidAmount: number
+  rateGoal: number
+  showRateGoal: boolean
   selectedCustomer?: Customer | null
   selectedProject?: Project | null
-  onChangeRate: (value: number) => void
   onChangeArea: (value: number) => void
   onChangeCo2Budget: (value: number) => void
   onCustomerChange: (customer: Customer | null) => void
   onProjectChange: (project: Project | null) => void
+  onChangeRateGoal: (value: number) => void
+  onToggleRateGoal: (value: boolean) => void
 }
 
 export function RateSection({
-  rate,
   area,
   co2Budget,
   totalCO2,
   bidAmount,
+  rateGoal,
+  showRateGoal,
   selectedCustomer,
   selectedProject,
-  onChangeRate,
   onChangeArea,
   onChangeCo2Budget,
   onCustomerChange,
   onProjectChange,
+  onChangeRateGoal,
+  onToggleRateGoal,
 }: RateSectionProps) {
   const co2BudgetTotal = co2Budget * area
   const exceedsBudget = totalCO2 > co2BudgetTotal && co2BudgetTotal > 0
@@ -48,24 +54,8 @@ export function RateSection({
 
   return (
     <div className="bg-card border p-6 mb-6">
-      <h2 className="text-lg font-semibold mb-4 text-left">Arvode och projektinformation</h2>
-      <div className="grid grid-cols-5 gap-6 mb-4">
-        <div>
-          <Label htmlFor="arvode">Arvode (%)</Label>
-          <div className="flex items-center gap-2 mt-2">
-            <Input
-              id="arvode"
-              type="number"
-              value={rate}
-              onChange={(e) => onChangeRate(Number(e.target.value))}
-              className="flex-1"
-            />
-            <span className="text-muted-foreground">%</span>
-          </div>
-          <p className="text-sm text-muted-foreground text-left mt-2">
-            Procentuellt arvode på totalkostnaden
-          </p>
-        </div>
+      <h2 className="text-lg font-semibold mb-4 text-left">Projektinformation</h2>
+      <div className="grid grid-cols-4 gap-6 mb-4">
         <div>
           <Label htmlFor="area">Area (kvm)</Label>
           <div className="flex items-center gap-2 mt-2">
@@ -116,6 +106,32 @@ export function RateSection({
           </div>
         </div>
       </div>
+
+      <div className="flex items-center gap-4 mt-2">
+        <Button
+          variant={showRateGoal ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onToggleRateGoal(!showRateGoal)}
+          className="flex items-center gap-2"
+        >
+          <Target className="w-4 h-4" />
+          Arvode mål
+        </Button>
+        {showRateGoal && (
+          <div className="flex items-center gap-2">
+            <Label htmlFor="rateGoal" className="text-sm whitespace-nowrap">Mål:</Label>
+            <Input
+              id="rateGoal"
+              type="number"
+              value={rateGoal}
+              onChange={(e) => onChangeRateGoal(Number(e.target.value))}
+              className="w-20 h-8"
+            />
+            <span className="text-muted-foreground text-sm">%</span>
+          </div>
+        )}
+      </div>
+
       {exceedsBudget && (
         <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-md flex items-start gap-3">
           <div className="flex-1">
@@ -131,4 +147,3 @@ export function RateSection({
     </div>
   )
 }
-

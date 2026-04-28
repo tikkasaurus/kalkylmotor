@@ -56,6 +56,10 @@ export interface CalculationRow {
   resource: string
   note: string
   waste: number
+  customerPrice: number | null
+  markupAmount: number | null
+  markupPercent: number | null
+  revenue: number
 }
 
 export interface CalculationSubSubsection {
@@ -72,6 +76,10 @@ export interface OptionRow {
   quantity: number
   unit: string
   pricePerUnit: number
+  customerPrice: number | null
+  markupAmount: number | null
+  markupPercent: number | null
+  revenue: number
 }
 
 export interface CalculationSubsection {
@@ -212,7 +220,10 @@ export type CreateCalculationRequest = {
   budget: number
   amount: number
   calculatedFeeAmount: number
+  calculatedFeePercent: number
   fee: number
+  feeGoal: number
+  showFeeGoal: boolean
   squareMeter: number
   customerId?: number
   customerName?: string
@@ -252,6 +263,10 @@ export type BudgetRowPayload = {
   co2CostId: number
   waste: number
   formula?: string
+  customerPrice?: number | null
+  markupAmount?: number | null
+  markupPercent?: number | null
+  revenue: number
 }
 
 export type OptionBudgetRowPayload = {
@@ -261,4 +276,8 @@ export type OptionBudgetRowPayload = {
   quantity: number
   price: number
   amount: number
+  customerPrice?: number | null
+  markupAmount?: number | null
+  markupPercent?: number | null
+  revenue: number
 }

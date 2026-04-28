@@ -104,8 +104,12 @@ function NewCalculationPage({
       co2CostId: row.co2CostId || 0,
       waste: row.waste,
       formula: row.formula || undefined,
+      customerPrice: row.customerPrice ?? null,
+      markupAmount: row.markupAmount ?? null,
+      markupPercent: row.markupPercent ?? null,
+      revenue: row.revenue || 0,
     }
-    
+
     // Only include ID if it exists in the original payload
     // Both sectionId and subsectionId must be defined to find the original row
     if (includeId && row.id && originalSections && sectionId !== undefined && subsectionId !== undefined) {
@@ -181,6 +185,10 @@ function NewCalculationPage({
         quantity: option.quantity,
         price: option.pricePerUnit,
         amount: option.quantity * option.pricePerUnit,
+        customerPrice: option.customerPrice ?? null,
+        markupAmount: option.markupAmount ?? null,
+        markupPercent: option.markupPercent ?? null,
+        revenue: option.revenue || 0,
       }
       
       // Only include ID if it exists in the original payload
@@ -278,7 +286,7 @@ function NewCalculationPage({
         calculationName,
         date: new Date().toISOString().split('T')[0],
         createdBy: account?.name || account?.username || 'Okänd',
-        rate: state.rate,
+        rate: state.derivedRate,
         area: state.area,
         co2Budget: state.co2Budget,
         budgetExclRate: state.budgetExclRate,
@@ -313,8 +321,11 @@ function NewCalculationPage({
         co2Budget: state.co2Budget,
         budget: state.budgetExclRate,
         amount: state.bidAmount,
-        calculatedFeeAmount: state.bidAmount - state.budgetExclRate,
-        fee: state.rate,
+        calculatedFeeAmount: state.fixedRate,
+        calculatedFeePercent: state.derivedRate,
+        fee: state.derivedRate,
+        feeGoal: state.rateGoal,
+        showFeeGoal: state.showRateGoal,
         squareMeter: state.area,
         customerId: state.selectedCustomer?.id ?? existingCalculation?.customerId,
         customerName: state.selectedCustomer?.name ?? existingCalculation?.customerName,
@@ -413,25 +424,29 @@ function NewCalculationPage({
 
           <div className="max-w-[2000px] mx-auto px-6 py-8">
             <RateSection
-              rate={state.rate}
               area={state.area}
               co2Budget={state.co2Budget}
               totalCO2={state.totalCO2}
               bidAmount={state.bidAmount}
+              rateGoal={state.rateGoal}
+              showRateGoal={state.showRateGoal}
               selectedCustomer={state.selectedCustomer}
               selectedProject={state.selectedProject}
-              onChangeRate={state.setRate}
               onChangeArea={state.setArea}
               onChangeCo2Budget={state.setCo2Budget}
               onCustomerChange={state.setSelectedCustomer}
               onProjectChange={state.setSelectedProject}
+              onChangeRateGoal={state.setRateGoal}
+              onToggleRateGoal={state.setShowRateGoal}
             />
 
             <SummaryCards
               budgetExclRate={state.budgetExclRate}
               fixedRate={state.fixedRate}
               bidAmount={state.bidAmount}
-              rate={state.rate}
+              rate={state.derivedRate}
+              rateGoal={state.rateGoal}
+              showRateGoal={state.showRateGoal}
               totalCO2={state.totalCO2}
               co2Budget={state.co2Budget}
               area={state.area}
@@ -462,6 +477,8 @@ function NewCalculationPage({
             deleteSubsection={state.deleteSubsection}
             deleteSubSubsection={state.deleteSubSubsection}
             deleteRow={state.deleteRow}
+            showRateGoal={state.showRateGoal}
+            rateGoal={state.rateGoal}
           />
 
             <OptionsTable
@@ -470,6 +487,8 @@ function NewCalculationPage({
               addNewOption={state.addNewOption}
               updateOptionField={state.updateOptionField}
               deleteOption={state.deleteOption}
+              showRateGoal={state.showRateGoal}
+              rateGoal={state.rateGoal}
             />
         </div>
           </div>
