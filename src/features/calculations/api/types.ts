@@ -45,6 +45,7 @@ export interface TemplateRow {
 
 export interface CalculationRow {
   id?: number
+  clientKey: string
   description: string
   quantity: number
   formula?: string
@@ -64,6 +65,7 @@ export interface CalculationRow {
 
 export interface CalculationSubSubsection {
   id?: number
+  clientKey: string
   name: string
   amount: number
   expanded?: boolean
@@ -72,6 +74,7 @@ export interface CalculationSubSubsection {
 
 export interface OptionRow {
   id?: number
+  clientKey: string
   description: string
   quantity: number
   unit: string
@@ -84,6 +87,7 @@ export interface OptionRow {
 
 export interface CalculationSubsection {
   id?: number
+  clientKey: string
   name: string
   amount: number
   expanded?: boolean
@@ -93,6 +97,7 @@ export interface CalculationSubsection {
 
 export interface CalculationSection {
   id?: number
+  clientKey: string
   name: string
   amount: number
   expanded?: boolean

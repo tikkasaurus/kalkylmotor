@@ -16,6 +16,8 @@ import type {
 import type { Project } from '@/features/calculations/components/ProjectSearchCombobox'
 import { useGetCO2Database } from '@/features/calculations/api/queries'
 
+const newKey = () => crypto.randomUUID()
+
 function applyRowFieldUpdate(row: CalculationRow, field: keyof CalculationRow, value: string | number): CalculationRow {
   if (field === 'customerPrice' || field === 'markupAmount' || field === 'markupPercent') {
     const numValue = (typeof value === 'number' ? value : Number(value)) || 0
@@ -66,11 +68,10 @@ function computeOptionRevenue(option: OptionRow): number {
 
 // Factory function to create sections from template
 function createSectionsFromTemplate(template: CalculationTemplate): CalculationSection[] {
-  return template.sections.map((section, index) => {
-    // For now, create a default subsection with all rows
-    // This can be enhanced later to support subsections in templates
-    const rows: CalculationRow[] = (section.rows || []).map((row, rowIndex) => ({
-      id: rowIndex + 1,
+  return template.sections.map((section) => {
+    // Template-derived rows are new on the server; leave id undefined.
+    const rows: CalculationRow[] = (section.rows || []).map((row) => ({
+      clientKey: newKey(),
       description: row.description,
       quantity: row.quantity,
       formula: '',
@@ -91,7 +92,7 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
     const subsectionAmount = rows.reduce((sum, row) => sum + (row.quantity * row.pricePerUnit * (1 + row.waste)), 0)
 
     const subsection: CalculationSubsection = {
-      id: 1,
+      clientKey: newKey(),
       name: 'Nivå 2',
       amount: subsectionAmount,
       expanded: false,
@@ -99,7 +100,7 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
     }
 
     return {
-      id: index + 1,
+      clientKey: newKey(),
       name: section.name,
       amount: subsectionAmount,
       expanded: false,
@@ -111,6 +112,7 @@ function createSectionsFromTemplate(template: CalculationTemplate): CalculationS
 function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
   return {
     id: row.id,
+    clientKey: newKey(),
     description: row.name,
     quantity: row.quantity,
     formula: row.formula || '',
@@ -131,7 +133,6 @@ function mapBudgetRowToCalculationRow(row: BudgetRowPayload): CalculationRow {
 
 function buildSubsectionsFromPayload(
   section: CalculationSectionPayload,
-  counter: { current: number }
 ): CalculationSubsection[] {
   const subsections: CalculationSubsection[] = []
 
@@ -146,7 +147,8 @@ function buildSubsectionsFromPayload(
         const subAmount = subRows.reduce((sum, row) => sum + row.quantity * row.pricePerUnit * (1 + row.waste), 0)
 
         return {
-          id: payloadSubSubsection.id ?? counter.current++,
+          id: payloadSubSubsection.id,
+          clientKey: newKey(),
           name: payloadSubSubsection.title || 'Nivå 3',
           amount: subAmount,
           expanded: false,
@@ -159,7 +161,8 @@ function buildSubsectionsFromPayload(
     const subsectionAmount = subsectionOwnRowsAmount + subSubAmount
 
     subsections.push({
-      id: payloadSubsection.id ?? counter.current++,
+      id: payloadSubsection.id,
+      clientKey: newKey(),
       name: payloadSubsection.title || 'Nivå 2',
       amount: subsectionAmount,
       expanded: false,
@@ -177,12 +180,12 @@ function buildSectionsFromPayload(payload?: CreateCalculationRequest): Calculati
   }
 
   return payload.sections.map((section) => {
-    const counter = { current: 1 }
-    const subsections = buildSubsectionsFromPayload(section, counter)
+    const subsections = buildSubsectionsFromPayload(section)
     const sectionAmount = subsections.reduce((sum, sub) => sum + sub.amount, 0)
 
     return {
       id: section.id,
+      clientKey: newKey(),
       name: section.title,
       amount: sectionAmount,
       expanded: false,
@@ -196,6 +199,7 @@ function mapOptionsFromPayload(optionBudgetRows?: OptionBudgetRowPayload[]): Opt
 
   return optionBudgetRows.map((row) => ({
     id: row.id,
+    clientKey: newKey(),
     description: row.name,
     quantity: row.quantity,
     unit: 'st',
@@ -216,7 +220,7 @@ export function useNewCalculationState(
   const defaultSections: CalculationSection[] = template
     ? createSectionsFromTemplate(template)
     : buildSectionsFromPayload(existingCalculation)
-  
+
   const [sections, setSections] = useState(defaultSections)
   const [options, setOptions] = useState<OptionRow[]>(
     template ? [] : mapOptionsFromPayload(existingCalculation?.optionBudgetRows)
@@ -238,10 +242,10 @@ export function useNewCalculationState(
   )
   const [co2ModalOpen, setCo2ModalOpen] = useState(false)
   const [selectedRowForCO2, setSelectedRowForCO2] = useState<{
-    sectionId: number
-    subsectionId: number
-    subSubsectionId?: number
-    rowId: number
+    sectionKey: string
+    subsectionKey: string
+    subSubsectionKey?: string
+    rowKey: string
   } | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const markDirty = () => setIsDirty(true)
@@ -289,24 +293,24 @@ export function useNewCalculationState(
   const wrappedSetSelectedCustomer = (value: Customer | null) => { markDirty(); setSelectedCustomer(value) }
   const wrappedSetSelectedProject = (value: Project | null) => { markDirty(); setSelectedProject(value) }
 
-  const toggleSection = (id: number) => {
+  const toggleSection = (sectionKey: string) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === id ? { ...section, expanded: !section.expanded } : section
+        section.clientKey === sectionKey ? { ...section, expanded: !section.expanded } : section
       )
     )
   }
 
-  const toggleSubsection = (sectionId: number, subsectionId: number) => {
+  const toggleSubsection = (sectionKey: string, subsectionKey: string) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
+                subsection.clientKey === subsectionKey
                   ? { ...subsection, expanded: !subsection.expanded }
                   : subsection
               ),
@@ -316,19 +320,19 @@ export function useNewCalculationState(
     )
   }
 
-  const toggleSubSubsection = (sectionId: number, subsectionId: number, subSubsectionId: number) => {
+  const toggleSubSubsection = (sectionKey: string, subsectionKey: string, subSubsectionKey: string) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
+                subsection.clientKey === subsectionKey
                   ? {
                       ...subsection,
                       subSubsections: subsection.subSubsections?.map((subSub) =>
-                        subSub.id === subSubsectionId ? { ...subSub, expanded: !subSub.expanded } : subSub
+                        subSub.clientKey === subSubsectionKey ? { ...subSub, expanded: !subSub.expanded } : subSub
                       ),
                     }
                   : subsection
@@ -373,8 +377,13 @@ export function useNewCalculationState(
     )
   }
 
-  const openCO2Modal = (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => {
-    setSelectedRowForCO2({ sectionId, subsectionId, subSubsectionId, rowId })
+  const openCO2Modal = (
+    sectionKey: string,
+    subsectionKey: string,
+    rowKey: string,
+    subSubsectionKey?: string,
+  ) => {
+    setSelectedRowForCO2({ sectionKey, subsectionKey, subSubsectionKey, rowKey })
     setCo2ModalOpen(true)
   }
 
@@ -383,20 +392,20 @@ export function useNewCalculationState(
     if (selectedRowForCO2) {
       setSections(
         sections.map((section) =>
-          section.id === selectedRowForCO2.sectionId
+          section.clientKey === selectedRowForCO2.sectionKey
             ? {
                 ...section,
                 subsections: section.subsections?.map((subsection) =>
-                  subsection.id === selectedRowForCO2.subsectionId
-                    ? selectedRowForCO2.subSubsectionId !== undefined
+                  subsection.clientKey === selectedRowForCO2.subsectionKey
+                    ? selectedRowForCO2.subSubsectionKey !== undefined
                       ? {
                           ...subsection,
                           subSubsections: subsection.subSubsections?.map((subSub) =>
-                            subSub.id === selectedRowForCO2.subSubsectionId
+                            subSub.clientKey === selectedRowForCO2.subSubsectionKey
                               ? {
                                   ...subSub,
                                   rows: subSub.rows?.map((row) =>
-                                    row.id === selectedRowForCO2.rowId
+                                    row.clientKey === selectedRowForCO2.rowKey
                                       ? { ...row, co2: item.co2Value, co2CostId: item.id }
                                       : row
                                   ),
@@ -407,7 +416,7 @@ export function useNewCalculationState(
                       : {
                           ...subsection,
                           rows: subsection.rows?.map((row) =>
-                            row.id === selectedRowForCO2.rowId
+                            row.clientKey === selectedRowForCO2.rowKey
                               ? { ...row, co2: item.co2Value, co2CostId: item.id }
                               : row
                           ),
@@ -421,24 +430,30 @@ export function useNewCalculationState(
     }
   }
 
-  const updateRowCO2 = (sectionId: number, subsectionId: number, rowId: number, co2Value: number, subSubsectionId?: number) => {
+  const updateRowCO2 = (
+    sectionKey: string,
+    subsectionKey: string,
+    rowKey: string,
+    co2Value: number,
+    subSubsectionKey?: string,
+  ) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
-                  ? subSubsectionId !== undefined
+                subsection.clientKey === subsectionKey
+                  ? subSubsectionKey !== undefined
                     ? {
                         ...subsection,
                         subSubsections: subsection.subSubsections?.map((subSub) =>
-                          subSub.id === subSubsectionId
+                          subSub.clientKey === subSubsectionKey
                             ? {
                                 ...subSub,
                                 rows: subSub.rows?.map((row) =>
-                                  row.id === rowId ? { ...row, co2: co2Value, co2CostId: 0 } : row
+                                  row.clientKey === rowKey ? { ...row, co2: co2Value, co2CostId: 0 } : row
                                 ),
                               }
                             : subSub
@@ -447,7 +462,7 @@ export function useNewCalculationState(
                     : {
                         ...subsection,
                         rows: subsection.rows?.map((row) =>
-                          row.id === rowId ? { ...row, co2: co2Value, co2CostId: 0 } : row
+                          row.clientKey === rowKey ? { ...row, co2: co2Value, co2CostId: 0 } : row
                         ),
                       }
                   : subsection
@@ -459,36 +474,40 @@ export function useNewCalculationState(
   }
 
   const updateRowField = (
-    sectionId: number,
-    subsectionId: number,
-    rowId: number,
+    sectionKey: string,
+    subsectionKey: string,
+    rowKey: string,
     field: keyof CalculationRow,
     value: string | number,
-    subSubsectionId?: number
+    subSubsectionKey?: string,
   ) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
-                  ? subSubsectionId !== undefined
+                subsection.clientKey === subsectionKey
+                  ? subSubsectionKey !== undefined
                     ? {
                         ...subsection,
                         subSubsections: subsection.subSubsections?.map((subSub) =>
-                          subSub.id === subSubsectionId
+                          subSub.clientKey === subSubsectionKey
                             ? {
                                 ...subSub,
-                                rows: subSub.rows?.map((row) => (row.id === rowId ? applyRowFieldUpdate(row, field, value) : row)),
+                                rows: subSub.rows?.map((row) =>
+                                  row.clientKey === rowKey ? applyRowFieldUpdate(row, field, value) : row
+                                ),
                               }
                             : subSub
                         ),
                       }
                     : {
                         ...subsection,
-                        rows: subsection.rows?.map((row) => (row.id === rowId ? applyRowFieldUpdate(row, field, value) : row)),
+                        rows: subsection.rows?.map((row) =>
+                          row.clientKey === rowKey ? applyRowFieldUpdate(row, field, value) : row
+                        ),
                       }
                   : subsection
               ),
@@ -499,30 +518,30 @@ export function useNewCalculationState(
   }
 
   const updateRowFormulaAndQuantity = (
-    sectionId: number,
-    subsectionId: number,
-    rowId: number,
+    sectionKey: string,
+    subsectionKey: string,
+    rowKey: string,
     formula: string,
     quantity?: number,
-    subSubsectionId?: number
+    subSubsectionKey?: string,
   ) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
-                  ? subSubsectionId !== undefined
+                subsection.clientKey === subsectionKey
+                  ? subSubsectionKey !== undefined
                     ? {
                         ...subsection,
                         subSubsections: subsection.subSubsections?.map((subSub) =>
-                          subSub.id === subSubsectionId
+                          subSub.clientKey === subSubsectionKey
                             ? {
                                 ...subSub,
                                 rows: subSub.rows?.map((row) =>
-                                  row.id === rowId
+                                  row.clientKey === rowKey
                                     ? {
                                         ...row,
                                         formula,
@@ -537,7 +556,7 @@ export function useNewCalculationState(
                     : {
                         ...subsection,
                         rows: subsection.rows?.map((row) =>
-                          row.id === rowId
+                          row.clientKey === rowKey
                             ? {
                                 ...row,
                                 formula,
@@ -554,14 +573,13 @@ export function useNewCalculationState(
     )
   }
 
-  const addNewSubsection = (sectionId: number) => {
+  const addNewSubsection = (sectionKey: string) => {
     markDirty()
     setSections(
       sections.map((section) => {
-        if (section.id === sectionId) {
-          const newSubsectionId = Math.max(0, ...(section.subsections?.map(s => s.id || 0) || [])) + 1
+        if (section.clientKey === sectionKey) {
           const newSubsection: CalculationSubsection = {
-            id: newSubsectionId,
+            clientKey: newKey(),
             name: 'Nivå 2',
             amount: 0,
             expanded: false,
@@ -578,23 +596,19 @@ export function useNewCalculationState(
     )
   }
 
-  const addNewSubSubsection = (sectionId: number, subsectionId: number) => {
+  const addNewSubSubsection = (sectionKey: string, subsectionKey: string) => {
     markDirty()
     setSections(
       sections.map((section) => {
-        if (section.id !== sectionId) return section
+        if (section.clientKey !== sectionKey) return section
 
         return {
           ...section,
           subsections: section.subsections?.map((subsection) => {
-            if (subsection.id !== subsectionId) return subsection
-
-            const existingIds =
-              subsection.subSubsections?.map((s) => s.id).filter((id): id is number => id !== undefined) || []
-            const newId = existingIds.length > 0 ? Math.max(0, ...existingIds) + 1 : 1
+            if (subsection.clientKey !== subsectionKey) return subsection
 
             const newSubSub: CalculationSubSubsection = {
-              id: newId,
+              clientKey: newKey(),
               name: 'Nivå 3',
               amount: 0,
               expanded: false,
@@ -612,19 +626,24 @@ export function useNewCalculationState(
     )
   }
 
-  const updateSubSubsectionName = (sectionId: number, subsectionId: number, subSubsectionId: number, newName: string) => {
+  const updateSubSubsectionName = (
+    sectionKey: string,
+    subsectionKey: string,
+    subSubsectionKey: string,
+    newName: string,
+  ) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
+                subsection.clientKey === subsectionKey
                   ? {
                       ...subsection,
                       subSubsections: subsection.subSubsections?.map((subSub) =>
-                        subSub.id === subSubsectionId ? { ...subSub, name: newName } : subSub
+                        subSub.clientKey === subSubsectionKey ? { ...subSub, name: newName } : subSub
                       ),
                     }
                   : subsection
@@ -635,18 +654,18 @@ export function useNewCalculationState(
     )
   }
 
-  const deleteSubSubsection = (sectionId: number, subsectionId: number, subSubsectionId: number) => {
+  const deleteSubSubsection = (sectionKey: string, subsectionKey: string, subSubsectionKey: string) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
+                subsection.clientKey === subsectionKey
                   ? {
                       ...subsection,
-                      subSubsections: subsection.subSubsections?.filter((s) => s.id !== subSubsectionId),
+                      subSubsections: subsection.subSubsections?.filter((s) => s.clientKey !== subSubsectionKey),
                     }
                   : subsection
               ),
@@ -656,24 +675,17 @@ export function useNewCalculationState(
     )
   }
 
-  const addNewRow = (sectionId: number, subsectionId: number, subSubsectionId?: number) => {
+  const addNewRow = (sectionKey: string, subsectionKey: string, subSubsectionKey?: string) => {
     markDirty()
     setSections(
       sections.map((section) => {
-        if (section.id === sectionId) {
+        if (section.clientKey === sectionKey) {
           return {
             ...section,
             subsections: section.subsections?.map((subsection) => {
-              if (subsection.id === subsectionId) {
-                const targetRows =
-                  subSubsectionId !== undefined
-                    ? subsection.subSubsections?.find((s) => s.id === subSubsectionId)?.rows
-                    : subsection.rows
-
-                const existingIds = targetRows?.map((r) => r.id).filter((id): id is number => id !== undefined) || []
-                const newRowId = existingIds.length > 0 ? Math.max(0, ...existingIds) + 1 : 1
+              if (subsection.clientKey === subsectionKey) {
                 const newRow: CalculationRow = {
-                  id: newRowId,
+                  clientKey: newKey(),
                   description: '',
                   quantity: 0,
                   formula: '',
@@ -690,11 +702,11 @@ export function useNewCalculationState(
                   markupPercent: null,
                   revenue: 0,
                 }
-                return subSubsectionId !== undefined
+                return subSubsectionKey !== undefined
                   ? {
                       ...subsection,
                       subSubsections: subsection.subSubsections?.map((subSub) =>
-                        subSub.id === subSubsectionId
+                        subSub.clientKey === subSubsectionKey
                           ? { ...subSub, rows: [...(subSub.rows || []), newRow], expanded: true }
                           : subSub
                       ),
@@ -715,15 +727,15 @@ export function useNewCalculationState(
     )
   }
 
-  const updateSubsectionName = (sectionId: number, subsectionId: number, newName: string) => {
+  const updateSubsectionName = (sectionKey: string, subsectionKey: string, newName: string) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
+                subsection.clientKey === subsectionKey
                   ? { ...subsection, name: newName }
                   : subsection
               ),
@@ -733,15 +745,15 @@ export function useNewCalculationState(
     )
   }
 
-  const deleteSubsection = (sectionId: number, subsectionId: number) => {
+  const deleteSubsection = (sectionKey: string, subsectionKey: string) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.filter(
-                (subsection) => subsection.id !== subsectionId
+                (subsection) => subsection.clientKey !== subsectionKey
               ),
             }
           : section
@@ -751,54 +763,58 @@ export function useNewCalculationState(
 
   const addNewSection = () => {
     markDirty()
-    const newSectionId = Math.max(0, ...sections.map(s => s.id || 0)) + 1
     const newSection: CalculationSection = {
-      id: newSectionId,
+      clientKey: newKey(),
       name: 'Nivå 1',
       amount: 0,
       expanded: true,
       subsections: [
-        { id: 1, name: 'Nivå 2', amount: 0, expanded: false, rows: [], subSubsections: [] }
+        { clientKey: newKey(), name: 'Nivå 2', amount: 0, expanded: false, rows: [], subSubsections: [] },
       ],
     }
     setSections([...sections, newSection])
   }
 
-  const updateSectionName = (sectionId: number, newName: string) => {
+  const updateSectionName = (sectionKey: string, newName: string) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId ? { ...section, name: newName } : section
+        section.clientKey === sectionKey ? { ...section, name: newName } : section
       )
     )
   }
 
-  const deleteSection = (sectionId: number) => {
+  const deleteSection = (sectionKey: string) => {
     markDirty()
-    setSections(sections.filter((section) => section.id !== sectionId))
+    setSections(sections.filter((section) => section.clientKey !== sectionKey))
   }
 
-  const deleteRow = (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => {
+  const deleteRow = (
+    sectionKey: string,
+    subsectionKey: string,
+    rowKey: string,
+    subSubsectionKey?: string,
+  ) => {
     markDirty()
     setSections(
       sections.map((section) =>
-        section.id === sectionId
+        section.clientKey === sectionKey
           ? {
               ...section,
               subsections: section.subsections?.map((subsection) =>
-                subsection.id === subsectionId
-                  ? subSubsectionId !== undefined
+                subsection.clientKey === subsectionKey
+                  ? subSubsectionKey !== undefined
                     ? {
                         ...subsection,
                         subSubsections: subsection.subSubsections?.map((subSub) =>
-                          subSub.id === subSubsectionId
-                            ? { ...subSub, rows: subSub.rows?.filter((row) => row.id !== rowId) || [] }
+                          subSub.clientKey === subSubsectionKey
+                            ? { ...subSub, rows: subSub.rows?.filter((row) => row.clientKey !== rowKey) || [] }
                             : subSub
                         ),
                       }
                     : {
                         ...subsection,
-                        rows: subsection.rows?.filter((row) => row.id !== rowId) || [],
+                        rows: subsection.rows?.filter((row) => row.clientKey !== rowKey) || [],
                       }
                   : subsection
               ),
@@ -810,9 +826,8 @@ export function useNewCalculationState(
 
   const addNewOption = () => {
     markDirty()
-    const newOptionId = Math.max(0, ...options.map(o => o.id || 0)) + 1
     const newOption: OptionRow = {
-      id: newOptionId,
+      clientKey: newKey(),
       description: '',
       quantity: 0,
       unit: 'm2',
@@ -825,11 +840,11 @@ export function useNewCalculationState(
     setOptions([...options, newOption])
   }
 
-  const updateOptionField = (optionId: number, field: keyof OptionRow, value: string | number) => {
+  const updateOptionField = (optionKey: string, field: keyof OptionRow, value: string | number) => {
     markDirty()
     setOptions(
       options.map((option) => {
-        if (option.id !== optionId) return option
+        if (option.clientKey !== optionKey) return option
         if (field === 'customerPrice' || field === 'markupAmount' || field === 'markupPercent') {
           const numValue = (typeof value === 'number' ? value : Number(value)) || 0
           if (numValue === 0) {
@@ -847,9 +862,9 @@ export function useNewCalculationState(
     )
   }
 
-  const deleteOption = (optionId: number) => {
+  const deleteOption = (optionKey: string) => {
     markDirty()
-    setOptions(options.filter((option) => option.id !== optionId))
+    setOptions(options.filter((option) => option.clientKey !== optionKey))
   }
 
   const applyMarkupPercentToAll = (percent: number) => {
@@ -894,11 +909,11 @@ export function useNewCalculationState(
     markupPercent: percent,
   })
 
-  const applyMarkupPercentToSection = (sectionId: number, percent: number) => {
+  const applyMarkupPercentToSection = (sectionKey: string, percent: number) => {
     markDirty()
     setSections((prev) =>
       prev.map((section) =>
-        section.id !== sectionId
+        section.clientKey !== sectionKey
           ? section
           : {
               ...section,
@@ -915,16 +930,20 @@ export function useNewCalculationState(
     )
   }
 
-  const applyMarkupPercentToSubsection = (sectionId: number, subsectionId: number, percent: number) => {
+  const applyMarkupPercentToSubsection = (
+    sectionKey: string,
+    subsectionKey: string,
+    percent: number,
+  ) => {
     markDirty()
     setSections((prev) =>
       prev.map((section) =>
-        section.id !== sectionId
+        section.clientKey !== sectionKey
           ? section
           : {
               ...section,
               subsections: (section.subsections || []).map((subsection) =>
-                subsection.id !== subsectionId
+                subsection.clientKey !== subsectionKey
                   ? subsection
                   : {
                       ...subsection,
@@ -941,25 +960,25 @@ export function useNewCalculationState(
   }
 
   const applyMarkupPercentToSubSubsection = (
-    sectionId: number,
-    subsectionId: number,
-    subSubsectionId: number,
-    percent: number
+    sectionKey: string,
+    subsectionKey: string,
+    subSubsectionKey: string,
+    percent: number,
   ) => {
     markDirty()
     setSections((prev) =>
       prev.map((section) =>
-        section.id !== sectionId
+        section.clientKey !== sectionKey
           ? section
           : {
               ...section,
               subsections: (section.subsections || []).map((subsection) =>
-                subsection.id !== subsectionId
+                subsection.clientKey !== subsectionKey
                   ? subsection
                   : {
                       ...subsection,
                       subSubsections: (subsection.subSubsections || []).map((subSub) =>
-                        subSub.id !== subSubsectionId
+                        subSub.clientKey !== subSubsectionKey
                           ? subSub
                           : {
                               ...subSub,
@@ -1009,12 +1028,12 @@ export function useNewCalculationState(
           subSubsections: subSubsectionsWithAmounts,
         }
       })
-      
+
       const sectionAmount = subsectionsWithAmounts.reduce(
         (sum, subsection) => sum + subsection.amount,
         0
       )
-      
+
       return { ...section, amount: sectionAmount, subsections: subsectionsWithAmounts }
     })
   }, [sections, co2ValueById])
@@ -1169,4 +1188,3 @@ export function useNewCalculationState(
     derivedRate,
   }
 }
-

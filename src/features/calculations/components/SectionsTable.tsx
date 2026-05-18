@@ -110,49 +110,49 @@ function getDisplayNameAndIndex(name: string, baseLabel: string, fallbackIndex: 
 interface SectionsTableProps {
   sections: CalculationSection[]
   formatCurrency: (amount: number) => string
-  toggleSection: (id: number) => void
-  toggleSubsection: (sectionId: number, subsectionId: number) => void
-  toggleSubSubsection: (sectionId: number, subsectionId: number, subSubsectionId: number) => void
+  toggleSection: (sectionKey: string) => void
+  toggleSubsection: (sectionKey: string, subsectionKey: string) => void
+  toggleSubSubsection: (sectionKey: string, subsectionKey: string, subSubsectionKey: string) => void
   expandAll: () => void
   collapseAll: () => void
   addNewSection: () => void
-  addNewSubsection: (sectionId: number) => void
-  addNewSubSubsection: (sectionId: number, subsectionId: number) => void
-  addNewRow: (sectionId: number, subsectionId: number, subSubsectionId?: number) => void
-  updateSectionName: (sectionId: number, name: string) => void
-  updateSubsectionName: (sectionId: number, subsectionId: number, name: string) => void
-  updateSubSubsectionName: (sectionId: number, subsectionId: number, subSubsectionId: number, name: string) => void
-  updateRowField: (sectionId: number, subsectionId: number, rowId: number, field: keyof CalculationRow, value: string | number, subSubsectionId?: number) => void
+  addNewSubsection: (sectionKey: string) => void
+  addNewSubSubsection: (sectionKey: string, subsectionKey: string) => void
+  addNewRow: (sectionKey: string, subsectionKey: string, subSubsectionKey?: string) => void
+  updateSectionName: (sectionKey: string, name: string) => void
+  updateSubsectionName: (sectionKey: string, subsectionKey: string, name: string) => void
+  updateSubSubsectionName: (sectionKey: string, subsectionKey: string, subSubsectionKey: string, name: string) => void
+  updateRowField: (sectionKey: string, subsectionKey: string, rowKey: string, field: keyof CalculationRow, value: string | number, subSubsectionKey?: string) => void
   updateRowFormulaAndQuantity: (
-    sectionId: number,
-    subsectionId: number,
-    rowId: number,
+    sectionKey: string,
+    subsectionKey: string,
+    rowKey: string,
     formula: string,
     quantity?: number,
-    subSubsectionId?: number
+    subSubsectionKey?: string
   ) => void
-  updateRowCO2: (sectionId: number, subsectionId: number, rowId: number, value: number, subSubsectionId?: number) => void
-  openCO2Modal: (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => void
-  deleteSection: (sectionId: number) => void
-  deleteSubsection: (sectionId: number, subsectionId: number) => void
-  deleteSubSubsection: (sectionId: number, subsectionId: number, subSubsectionId: number) => void
-  deleteRow: (sectionId: number, subsectionId: number, rowId: number, subSubsectionId?: number) => void
+  updateRowCO2: (sectionKey: string, subsectionKey: string, rowKey: string, value: number, subSubsectionKey?: string) => void
+  openCO2Modal: (sectionKey: string, subsectionKey: string, rowKey: string, subSubsectionKey?: string) => void
+  deleteSection: (sectionKey: string) => void
+  deleteSubsection: (sectionKey: string, subsectionKey: string) => void
+  deleteSubSubsection: (sectionKey: string, subsectionKey: string, subSubsectionKey: string) => void
+  deleteRow: (sectionKey: string, subsectionKey: string, rowKey: string, subSubsectionKey?: string) => void
   applyMarkupPercentToAll: (percent: number) => void
-  applyMarkupPercentToSection: (sectionId: number, percent: number) => void
-  applyMarkupPercentToSubsection: (sectionId: number, subsectionId: number, percent: number) => void
+  applyMarkupPercentToSection: (sectionKey: string, percent: number) => void
+  applyMarkupPercentToSubsection: (sectionKey: string, subsectionKey: string, percent: number) => void
   applyMarkupPercentToSubSubsection: (
-    sectionId: number,
-    subsectionId: number,
-    subSubsectionId: number,
+    sectionKey: string,
+    subsectionKey: string,
+    subSubsectionKey: string,
     percent: number
   ) => void
 }
 
 type PendingMarkup =
   | { scope: 'all' }
-  | { scope: 'section'; sectionId: number; label: string }
-  | { scope: 'subsection'; sectionId: number; subsectionId: number; label: string }
-  | { scope: 'subSub'; sectionId: number; subsectionId: number; subSubsectionId: number; label: string }
+  | { scope: 'section'; sectionKey: string; label: string }
+  | { scope: 'subsection'; sectionKey: string; subsectionKey: string; label: string }
+  | { scope: 'subSub'; sectionKey: string; subsectionKey: string; subSubsectionKey: string; label: string }
 
 export function SectionsTable({
   sections,
@@ -203,16 +203,16 @@ export function SectionsTable({
         applyMarkupPercentToAll(percent)
         break
       case 'section':
-        applyMarkupPercentToSection(pendingMarkup.sectionId, percent)
+        applyMarkupPercentToSection(pendingMarkup.sectionKey, percent)
         break
       case 'subsection':
-        applyMarkupPercentToSubsection(pendingMarkup.sectionId, pendingMarkup.subsectionId, percent)
+        applyMarkupPercentToSubsection(pendingMarkup.sectionKey, pendingMarkup.subsectionKey, percent)
         break
       case 'subSub':
         applyMarkupPercentToSubSubsection(
-          pendingMarkup.sectionId,
-          pendingMarkup.subsectionId,
-          pendingMarkup.subSubsectionId,
+          pendingMarkup.sectionKey,
+          pendingMarkup.subsectionKey,
+          pendingMarkup.subSubsectionKey,
           percent
         )
         break
@@ -221,21 +221,21 @@ export function SectionsTable({
   }
 
   const handleFormulaChange = (params: {
-    sectionId: number
-    subsectionId: number
-    rowId: number
-    subSubsectionId?: number
+    sectionKey: string
+    subsectionKey: string
+    rowKey: string
+    subSubsectionKey?: string
   }) => {
     return (value: string) => {
       if (value !== '' && !FORMULA_CHARS_REGEX.test(value)) return
       const computed = evaluateArithmeticExpression(value)
       updateRowFormulaAndQuantity(
-        params.sectionId,
-        params.subsectionId,
-        params.rowId,
+        params.sectionKey,
+        params.subsectionKey,
+        params.rowKey,
         value,
         computed ?? undefined,
-        params.subSubsectionId
+        params.subSubsectionKey
       )
     }
   }
@@ -297,10 +297,10 @@ export function SectionsTable({
       {/* Sections List */}
       <div className="space-y-2">
         {sections.map((section, sectionIdx) => (
-          <div key={section.id} className="border overflow-hidden">
+          <div key={section.clientKey} className="border overflow-hidden">
             <div 
               className="w-full flex items-center justify-between p-3 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
-              onClick={() => toggleSection(section.id ?? 0)}
+              onClick={() => toggleSection(section.clientKey)}
             >
               <div className="flex items-center gap-3 flex-1">
                 <div className="hover:bg-accent p-1 transition-colors pointer-events-none">
@@ -317,7 +317,7 @@ export function SectionsTable({
                       <Input
                         type="text"
                         value={displayName}
-                        onChange={(e) => updateSectionName(section.id ?? 0, e.target.value)}
+                        onChange={(e) => updateSectionName(section.clientKey, e.target.value)}
                         className="h-7 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 w-auto min-w-[100px] max-w-full truncate"
                         onClick={(e) => e.stopPropagation()}
                         style={{ width: `${Math.min(Math.max(100, displayName.length * 8 + 20), 600)}px` }}
@@ -347,7 +347,7 @@ export function SectionsTable({
                       onSelect={() =>
                         setPendingMarkup({
                           scope: 'section',
-                          sectionId: section.id ?? 0,
+                          sectionKey: section.clientKey,
                           label: section.name,
                         })
                       }
@@ -359,7 +359,7 @@ export function SectionsTable({
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    deleteSection(section.id ?? 0)
+                    deleteSection(section.clientKey)
                   }}
                   className="h-6 w-6 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                   title="Ta bort nivå 1"
@@ -371,11 +371,11 @@ export function SectionsTable({
             {section.expanded && (
               <div className="bg-card border-t">
                 {section.subsections?.map((subsection, subsectionIdx) => (
-                  <div key={subsection.id} className="border-b last:border-b-0 border-l-4 border-l-primary/20">
+                  <div key={subsection.clientKey} className="border-b last:border-b-0 border-l-4 border-l-primary/20">
                     {/* Subsection Header */}
                     <div 
                       className="w-full flex items-center justify-between p-2 bg-background cursor-pointer hover:bg-muted/30 transition-colors pl-6"
-                      onClick={() => toggleSubsection(section.id ?? 0, subsection.id ?? 0)}
+                      onClick={() => toggleSubsection(section.clientKey, subsection.clientKey)}
                     >
                       <div className="flex items-center gap-3 flex-1">
                         <div className="hover:bg-accent p-1 transition-colors pointer-events-none">
@@ -392,7 +392,7 @@ export function SectionsTable({
                               <Input
                                 type="text"
                                 value={displayName}
-                                onChange={(e) => updateSubsectionName(section.id ?? 0, subsection.id ?? 0, e.target.value)}
+                                onChange={(e) => updateSubsectionName(section.clientKey, subsection.clientKey, e.target.value)}
                                 className="h-6 font-medium border-0 bg-transparent hover:bg-accent focus:bg-background px-2 w-auto min-w-[100px] max-w-full truncate text-sm"
                                 onClick={(e) => e.stopPropagation()}
                                 style={{ width: `${Math.min(Math.max(100, displayName.length * 7 + 20), 500)}px` }}
@@ -422,8 +422,8 @@ export function SectionsTable({
                               onSelect={() =>
                                 setPendingMarkup({
                                   scope: 'subsection',
-                                  sectionId: section.id ?? 0,
-                                  subsectionId: subsection.id ?? 0,
+                                  sectionKey: section.clientKey,
+                                  subsectionKey: subsection.clientKey,
                                   label: subsection.name,
                                 })
                               }
@@ -435,7 +435,7 @@ export function SectionsTable({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            deleteSubsection(section.id ?? 0, subsection.id ?? 0)
+                            deleteSubsection(section.clientKey, subsection.clientKey)
                           }}
                           className="h-5 w-5 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                           title="Ta bort nivå 2"
@@ -470,12 +470,12 @@ export function SectionsTable({
                           </TableHeader>
                           <TableBody>
                             {subsection.rows?.map((row) => (
-                              <TableRow key={row.id} className="hover:bg-muted/30 border-b border-border">
+                              <TableRow key={row.clientKey} className="hover:bg-muted/30 border-b border-border">
                                 <TableCell className="font-medium border-r border-border p-0 h-10 align-middle">
                                   <Input 
                                     type="text" 
                                     value={row.description} 
-                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'description', e.target.value)}
+                                    onChange={(e) => updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'description', e.target.value)}
                                     className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Benämning"
                                   />
@@ -486,9 +486,9 @@ export function SectionsTable({
                                     value={row.formula ?? ''}
                                     onChange={(e) =>
                                       handleFormulaChange({
-                                        sectionId: section.id ?? 0,
-                                        subsectionId: subsection.id ?? 0,
-                                        rowId: row.id ?? 0,
+                                        sectionKey: section.clientKey,
+                                        subsectionKey: subsection.clientKey,
+                                        rowKey: row.clientKey,
                                       })(e.target.value)
                                     }
                                     className={`!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none${row.formula && evaluateArithmeticExpression(row.formula) === null ? ' text-destructive bg-destructive/10' : ''}`}
@@ -498,14 +498,14 @@ export function SectionsTable({
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <FormattedNumberInput
                                     value={row.quantity}
-                                    onChange={(value) => updateRowFormulaAndQuantity(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, '', value)}
+                                    onChange={(value) => updateRowFormulaAndQuantity(section.clientKey, subsection.clientKey, row.clientKey, '', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
                                 <TableCell className="border-r border-border p-0 h-10 align-middle">
                                   <select 
                                     value={row.unit}
-                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'unit', e.target.value)}
+                                    onChange={(e) => updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'unit', e.target.value)}
                                     className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
                                   >
                                     {unitTypes?.map((unit) => (
@@ -518,7 +518,7 @@ export function SectionsTable({
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <FormattedNumberInput
                                     value={row.pricePerUnit}
-                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'pricePerUnit', value)}
+                                    onChange={(value) => updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'pricePerUnit', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
@@ -531,14 +531,14 @@ export function SectionsTable({
                                       onChange={(e) => {
                                         const value = Number(e.target.value)
                                         if (value >= 0 || e.target.value === '') {
-                                          updateRowCO2(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, value)
+                                          updateRowCO2(section.clientKey, subsection.clientKey, row.clientKey, value)
                                         }
                                       }}
                                       className="!h-10 text-right w-20 border-0 rounded-none focus:bg-accent focus:outline-none !py-0"
                                       placeholder="0"
                                     />
                                     <button 
-                                      onClick={() => openCO2Modal(section.id ?? 0, subsection.id ?? 0, row.id ?? 0)}
+                                      onClick={() => openCO2Modal(section.clientKey, subsection.clientKey, row.clientKey)}
                                       className="h-8 w-8 flex items-center justify-center hover:bg-accent flex-shrink-0"
                                     >
                                       <Search className="w-4 h-4" />
@@ -554,7 +554,7 @@ export function SectionsTable({
                                     onChange={(e) => {
                                       const value = Number(e.target.value)
                                       if (value >= 0 || e.target.value === '') {
-                                        updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'waste', value / 100)
+                                        updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'waste', value / 100)
                                       }
                                     }}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -567,14 +567,14 @@ export function SectionsTable({
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <FormattedNumberInput
                                     value={row.customerPrice ?? 0}
-                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'customerPrice', value)}
+                                    onChange={(value) => updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'customerPrice', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
                                 <TableCell className="text-right border-r border-border p-0 h-10 align-middle">
                                   <FormattedNumberInput
                                     value={row.markupPercent ?? 0}
-                                    onChange={(value) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupPercent', value)}
+                                    onChange={(value) => updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'markupPercent', value)}
                                     className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                   />
                                 </TableCell>
@@ -586,7 +586,7 @@ export function SectionsTable({
                                       accounts={accounts}
                                       value={row.account}
                                       onChange={(val) =>
-                                          updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'account', val)
+                                          updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'account', val)
                                       }
                                   />
                                 </TableCell>
@@ -594,14 +594,14 @@ export function SectionsTable({
                                   <Input
                                     type="text"
                                     value={row.note}
-                                    onChange={(e) => updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'note', e.target.value)}
+                                    onChange={(e) => updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'note', e.target.value)}
                                     className="!h-10 w-full text-sm border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                     placeholder="Anteckning..."
                                   />
                                 </TableCell>
                                 <TableCell className="p-0 h-10 align-middle">
                                   <button
-                                    onClick={() => deleteRow(section.id ?? 0, subsection.id ?? 0, row.id ?? 0)}
+                                    onClick={() => deleteRow(section.clientKey, subsection.clientKey, row.clientKey)}
                                     className="h-full w-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                                     title="Ta bort rad"
                                   >
@@ -615,7 +615,7 @@ export function SectionsTable({
                         </div>
                         <div className="py-2">
                           <Button
-                            onClick={() => addNewRow(section.id ?? 0, subsection.id ?? 0)}
+                            onClick={() => addNewRow(section.clientKey, subsection.clientKey)}
                             variant="outline"
                             className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                           >
@@ -626,11 +626,11 @@ export function SectionsTable({
 
                         {/* Sub-subsections */}
                         {(subsection.subSubsections || []).map((subSub, subSubIdx) => (
-                          <div key={subSub.id} className="border mt-2 ml-4">
+                          <div key={subSub.clientKey} className="border mt-2 ml-4">
                             <div
                               className="w-full flex items-center justify-between p-2 bg-muted/30 cursor-pointer hover:bg-muted/40 transition-colors"
                               onClick={() =>
-                                toggleSubSubsection(section.id ?? 0, subsection.id ?? 0, subSub.id ?? 0)
+                                toggleSubSubsection(section.clientKey, subsection.clientKey, subSub.clientKey)
                               }
                             >
                               <div className="flex items-center gap-3 flex-1">
@@ -650,9 +650,9 @@ export function SectionsTable({
                                         value={displayName}
                                         onChange={(e) =>
                                           updateSubSubsectionName(
-                                            section.id ?? 0,
-                                            subsection.id ?? 0,
-                                            subSub.id ?? 0,
+                                            section.clientKey,
+                                            subsection.clientKey,
+                                            subSub.clientKey,
                                             e.target.value
                                           )
                                         }
@@ -685,9 +685,9 @@ export function SectionsTable({
                                       onSelect={() =>
                                         setPendingMarkup({
                                           scope: 'subSub',
-                                          sectionId: section.id ?? 0,
-                                          subsectionId: subsection.id ?? 0,
-                                          subSubsectionId: subSub.id ?? 0,
+                                          sectionKey: section.clientKey,
+                                          subsectionKey: subsection.clientKey,
+                                          subSubsectionKey: subSub.clientKey,
                                           label: subSub.name,
                                         })
                                       }
@@ -699,7 +699,7 @@ export function SectionsTable({
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    deleteSubSubsection(section.id ?? 0, subsection.id ?? 0, subSub.id ?? 0)
+                                    deleteSubSubsection(section.clientKey, subsection.clientKey, subSub.clientKey)
                                   }}
                                   className="h-5 w-5 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                                   title="Ta bort nivå 3"
@@ -733,19 +733,19 @@ export function SectionsTable({
                                   </TableHeader>
                                   <TableBody>
                                     {(subSub.rows || []).map((row) => (
-                                      <TableRow key={row.id} className="hover:bg-muted/30 border-b border-border">
+                                      <TableRow key={row.clientKey} className="hover:bg-muted/30 border-b border-border">
                                         <TableCell className="font-medium border-r border-border p-0 h-10 align-middle">
                                           <Input
                                             type="text"
                                             value={row.description}
                                             onChange={(e) =>
                                               updateRowField(
-                                                section.id ?? 0,
-                                                subsection.id ?? 0,
-                                                row.id ?? 0,
+                                                section.clientKey,
+                                                subsection.clientKey,
+                                                row.clientKey,
                                                 'description',
                                                 e.target.value,
-                                                subSub.id ?? 0
+                                                subSub.clientKey
                                               )
                                             }
                                             className="!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -758,10 +758,10 @@ export function SectionsTable({
                                             value={row.formula ?? ''}
                                             onChange={(e) =>
                                               handleFormulaChange({
-                                                sectionId: section.id ?? 0,
-                                                subsectionId: subsection.id ?? 0,
-                                                rowId: row.id ?? 0,
-                                                subSubsectionId: subSub.id ?? 0,
+                                                sectionKey: section.clientKey,
+                                                subsectionKey: subsection.clientKey,
+                                                rowKey: row.clientKey,
+                                                subSubsectionKey: subSub.clientKey,
                                               })(e.target.value)
                                             }
                                             className={`!h-10 w-full border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none${row.formula && evaluateArithmeticExpression(row.formula) === null ? ' text-destructive bg-destructive/10' : ''}`}
@@ -773,12 +773,12 @@ export function SectionsTable({
                                             value={row.quantity}
                                             onChange={(value) =>
                                               updateRowFormulaAndQuantity(
-                                                section.id ?? 0,
-                                                subsection.id ?? 0,
-                                                row.id ?? 0,
+                                                section.clientKey,
+                                                subsection.clientKey,
+                                                row.clientKey,
                                                 '',
                                                 value,
-                                                subSub.id ?? 0
+                                                subSub.clientKey
                                               )
                                             }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -789,12 +789,12 @@ export function SectionsTable({
                                             value={row.unit}
                                             onChange={(e) =>
                                               updateRowField(
-                                                section.id ?? 0,
-                                                subsection.id ?? 0,
-                                                row.id ?? 0,
+                                                section.clientKey,
+                                                subsection.clientKey,
+                                                row.clientKey,
                                                 'unit',
                                                 e.target.value,
-                                                subSub.id ?? 0
+                                                subSub.clientKey
                                               )
                                             }
                                             className="h-10 w-full border-0 rounded-none bg-background px-2 py-0 text-sm focus:bg-accent focus:outline-none"
@@ -811,12 +811,12 @@ export function SectionsTable({
                                             value={row.pricePerUnit}
                                             onChange={(value) =>
                                               updateRowField(
-                                                section.id ?? 0,
-                                                subsection.id ?? 0,
-                                                row.id ?? 0,
+                                                section.clientKey,
+                                                subsection.clientKey,
+                                                row.clientKey,
                                                 'pricePerUnit',
                                                 value,
-                                                subSub.id ?? 0
+                                                subSub.clientKey
                                               )
                                             }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -832,11 +832,11 @@ export function SectionsTable({
                                                 const value = Number(e.target.value)
                                                 if (value >= 0 || e.target.value === '') {
                                                   updateRowCO2(
-                                                    section.id ?? 0,
-                                                    subsection.id ?? 0,
-                                                    row.id ?? 0,
+                                                    section.clientKey,
+                                                    subsection.clientKey,
+                                                    row.clientKey,
                                                     value,
-                                                    subSub.id ?? 0
+                                                    subSub.clientKey
                                                   )
                                                 }
                                               }}
@@ -846,10 +846,10 @@ export function SectionsTable({
                                             <button
                                               onClick={() =>
                                                 openCO2Modal(
-                                                  section.id ?? 0,
-                                                  subsection.id ?? 0,
-                                                  row.id ?? 0,
-                                                  subSub.id ?? 0
+                                                  section.clientKey,
+                                                  subsection.clientKey,
+                                                  row.clientKey,
+                                                  subSub.clientKey
                                                 )
                                               }
                                               className="h-8 w-8 flex items-center justify-center hover:bg-accent flex-shrink-0"
@@ -867,7 +867,7 @@ export function SectionsTable({
                                             onChange={(e) => {
                                               const value = Number(e.target.value)
                                               if (value >= 0 || e.target.value === '') {
-                                                updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'waste', value / 100, subSub.id ?? 0)
+                                                updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'waste', value / 100, subSub.clientKey)
                                               }
                                             }}
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -881,7 +881,7 @@ export function SectionsTable({
                                           <FormattedNumberInput
                                             value={row.customerPrice ?? 0}
                                             onChange={(value) =>
-                                              updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'customerPrice', value, subSub.id ?? 0)
+                                              updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'customerPrice', value, subSub.clientKey)
                                             }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                           />
@@ -890,7 +890,7 @@ export function SectionsTable({
                                           <FormattedNumberInput
                                             value={row.markupPercent ?? 0}
                                             onChange={(value) =>
-                                              updateRowField(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, 'markupPercent', value, subSub.id ?? 0)
+                                              updateRowField(section.clientKey, subsection.clientKey, row.clientKey, 'markupPercent', value, subSub.clientKey)
                                             }
                                             className="!h-10 w-full text-right border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
                                           />
@@ -904,12 +904,12 @@ export function SectionsTable({
                                               value={row.account}
                                               onChange={(val) =>
                                                   updateRowField(
-                                                      section.id ?? 0,
-                                                      subsection.id ?? 0,
-                                                      row.id ?? 0,
+                                                      section.clientKey,
+                                                      subsection.clientKey,
+                                                      row.clientKey,
                                                       'account',
                                                       val,
-                                                      subSub.id ?? 0
+                                                      subSub.clientKey
                                                   )
                                               }
                                           />
@@ -920,12 +920,12 @@ export function SectionsTable({
                                             value={row.note}
                                             onChange={(e) =>
                                               updateRowField(
-                                                section.id ?? 0,
-                                                subsection.id ?? 0,
-                                                row.id ?? 0,
+                                                section.clientKey,
+                                                subsection.clientKey,
+                                                row.clientKey,
                                                 'note',
                                                 e.target.value,
-                                                subSub.id ?? 0
+                                                subSub.clientKey
                                               )
                                             }
                                             className="!h-10 w-full text-sm border-0 rounded-none px-2 !py-0 focus:bg-accent focus:outline-none"
@@ -935,7 +935,7 @@ export function SectionsTable({
                                         <TableCell className="p-0 h-10 align-middle">
                                           <button
                                             onClick={() =>
-                                              deleteRow(section.id ?? 0, subsection.id ?? 0, row.id ?? 0, subSub.id ?? 0)
+                                              deleteRow(section.clientKey, subsection.clientKey, row.clientKey, subSub.clientKey)
                                             }
                                             className="h-full w-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
                                             title="Ta bort rad"
@@ -950,7 +950,7 @@ export function SectionsTable({
                                 </div>
                                 <div className="py-2 px-2">
                                   <Button
-                                    onClick={() => addNewRow(section.id ?? 0, subsection.id ?? 0, subSub.id ?? 0)}
+                                    onClick={() => addNewRow(section.clientKey, subsection.clientKey, subSub.clientKey)}
                                     variant="outline"
                                     className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                                   >
@@ -965,7 +965,7 @@ export function SectionsTable({
 
                         <div className="py-2 ml-4">
                           <Button
-                            onClick={() => addNewSubSubsection(section.id ?? 0, subsection.id ?? 0)}
+                            onClick={() => addNewSubSubsection(section.clientKey, subsection.clientKey)}
                             variant="outline"
                             className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                           >
@@ -979,7 +979,7 @@ export function SectionsTable({
                 ))}
                 <div className="p-3 border-t pl-6">
                   <Button 
-                    onClick={() => addNewSubsection(section.id ?? 0)}
+                    onClick={() => addNewSubsection(section.clientKey)}
                     variant="outline"
                     className="flex items-center gap-2 text-sm h-8 px-3 hover:text-foreground"
                   >
