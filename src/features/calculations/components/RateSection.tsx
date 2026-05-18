@@ -27,16 +27,16 @@ export function RateSection({
   co2Budget,
   totalCO2,
   bidAmount,
-  rateGoal,
-  showRateGoal,
+  // rateGoal,
+  // showRateGoal,
   selectedCustomer,
   selectedProject,
   onChangeArea,
   onChangeCo2Budget,
   onCustomerChange,
   onProjectChange,
-  onChangeRateGoal,
-  onToggleRateGoal,
+  // onChangeRateGoal,
+  // onToggleRateGoal,
 }: RateSectionProps) {
   const co2BudgetTotal = co2Budget * area
   const exceedsBudget = totalCO2 > co2BudgetTotal && co2BudgetTotal > 0
