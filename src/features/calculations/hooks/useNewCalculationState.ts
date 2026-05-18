@@ -582,7 +582,7 @@ export function useNewCalculationState(
             clientKey: newKey(),
             name: 'Nivå 2',
             amount: 0,
-            expanded: false,
+            expanded: true,
             rows: [],
             subSubsections: [],
           }
@@ -611,7 +611,7 @@ export function useNewCalculationState(
               clientKey: newKey(),
               name: 'Nivå 3',
               amount: 0,
-              expanded: false,
+              expanded: true,
               rows: [],
             }
 
@@ -769,7 +769,7 @@ export function useNewCalculationState(
       amount: 0,
       expanded: true,
       subsections: [
-        { clientKey: newKey(), name: 'Nivå 2', amount: 0, expanded: false, rows: [], subSubsections: [] },
+        { clientKey: newKey(), name: 'Nivå 2', amount: 0, expanded: true, rows: [], subSubsections: [] },
       ],
     }
     setSections([...sections, newSection])
