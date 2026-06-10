@@ -215,6 +215,7 @@ export function useNewCalculationState(
   template?: CalculationTemplate,
   existingCalculation?: CreateCalculationRequest,
   defaultProject?: { id: number; name: string } | null,
+  readOnly: boolean = false,
 ) {
   // Use template if provided, otherwise prefer existing calculation, otherwise default
   const defaultSections: CalculationSection[] = template
@@ -249,12 +250,15 @@ export function useNewCalculationState(
   } | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [dirtyVersion, setDirtyVersion] = useState(0)
+  const readOnlyRef = useRef(readOnly)
+  useEffect(() => { readOnlyRef.current = readOnly }, [readOnly])
   const markDirty = () => {
+    if (readOnlyRef.current) return
     setIsDirty(true)
     setDirtyVersion((v) => v + 1)
   }
   const markSaved = () => setIsDirty(false)
-  const lastInitializedIdRef = useRef<number | undefined>(undefined)
+  const lastInitializedKeyRef = useRef<string | undefined>(undefined)
   const { data: co2Items = [] } = useGetCO2Database()
   const co2ValueById = useMemo(() => {
     const map = new Map<number, number>()
@@ -267,8 +271,10 @@ export function useNewCalculationState(
   useEffect(() => {
     if (!existingCalculation) return
     const calcId = (existingCalculation as { id?: number }).id
-    if (calcId !== undefined && calcId === lastInitializedIdRef.current) return
-    lastInitializedIdRef.current = calcId
+    const versionId = (existingCalculation as { currentVersionId?: number }).currentVersionId
+    const initKey = `${calcId ?? ''}::${versionId ?? ''}`
+    if (initKey === lastInitializedKeyRef.current) return
+    lastInitializedKeyRef.current = initKey
 
     setSections(buildSectionsFromPayload(existingCalculation))
     setOptions(mapOptionsFromPayload(existingCalculation.optionBudgetRows))
@@ -1132,8 +1138,8 @@ export function useNewCalculationState(
         return rOption?.id !== undefined ? { ...option, id: rOption.id } : option
       })
     )
-    // Update the initialized ref so close+reopen picks up the fresh cache
-    lastInitializedIdRef.current = response.id
+    // Update the initialized key so close+reopen picks up the fresh cache
+    lastInitializedKeyRef.current = `${response.id ?? ''}::${(response as { currentVersionId?: number }).currentVersionId ?? ''}`
   }
 
   return {

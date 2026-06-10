@@ -17,7 +17,10 @@ import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 import { exportToPDF } from '@/features/calculations/utils/pdfExport'
-import { useCreateCalculation, useGetTenantIcon, useGetBookkeepingAccounts } from '../api/queries'
+import { useCreateCalculation, useCreateCostEstimateVersion, useGetCostEstimateVersions, useGetTenantIcon, useGetBookkeepingAccounts, useSetCurrentVersion } from '../api/queries'
+import { NewVersionDialog } from '@/features/calculations/components/NewVersionDialog'
+import { Button } from '@/components/ui/button'
+import { Info } from 'lucide-react'
 import { toast } from '@/components/ui/toast'
 import { useAuth } from '@/lib/useAuth'
 
@@ -30,19 +33,45 @@ function NewCalculationPage({
   onClose,
   initialCalculationName = 'Kalkylnamn',
   defaultProject,
+  viewVersionId,
+  onSelectVersion,
 }: NewCalculationProps) {
-  const state = useNewCalculationState(template, existingCalculation, defaultProject)
+  const estimateId = costEstimateId || existingCalculation?.id
+  const currentVersionId = existingCalculation?.currentVersionId
+  const viewedVersionNo = viewVersionId
+    ? existingCalculation?.loadedVersionNo
+      ?? existingCalculation?.versions?.find((v) => v.id === viewVersionId)?.versionNo
+    : undefined
+  const isReadOnly = !!viewVersionId && !!currentVersionId && viewVersionId !== currentVersionId
+
+  const state = useNewCalculationState(template, existingCalculation, defaultProject, isReadOnly)
   const createCalculation = useCreateCalculation()
+  const createCostEstimateVersion = useCreateCostEstimateVersion()
+  const setCurrentVersion = useSetCurrentVersion()
   const [calculationName, setCalculationName] = useState(initialCalculationName)
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false)
   const isSavingRef = useRef(false)
+
   const { data: tenantIcon } = useGetTenantIcon()
   const { data: bookkeepingAccounts } = useGetBookkeepingAccounts()
   const { account } = useAuth()
+  const { data: versionList } = useGetCostEstimateVersions(estimateId ? String(estimateId) : '')
+  const versionsForDropdown = (versionList ?? []).map((v) => ({
+    id: v.id,
+    versionNo: String(v.versionNo),
+    versionName: v.name ?? '',
+    amount: String(v.amount ?? ''),
+    created: '',
+    createdBy: v.createdBy ?? '',
+    createdByName: '',
+    isCurrent: !!currentVersionId && v.id === currentVersionId,
+  }))
 
   const loadingExisting = !!existingCalculationLoading
   const existingError = existingCalculationError
 
   const isDirty = state.isDirty
+  const canSaveAsVersion = !isReadOnly && !!estimateId && !isDirty
 
   React.useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -72,13 +101,13 @@ function NewCalculationPage({
   }, [calculationName])
 
   useEffect(() => {
-    if (!isDirty) return
+    if (!isDirty || isReadOnly) return
     const timer = window.setTimeout(() => {
       handleSave(calculationNameRef.current, true)
     }, 30000)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.dirtyVersion, isDirty])
+  }, [state.dirtyVersion, isDirty, isReadOnly])
 
   const handleClose = () => {
     if (isDirty) {
@@ -445,12 +474,54 @@ function NewCalculationPage({
             onExportCSV={exportToCSV}
             onExportPDF={handleExportPDF}
             onSave={handleSave}
+            onSaveAsVersion={() => setVersionDialogOpen(true)}
+            canSaveAsVersion={canSaveAsVersion}
             calculationName={calculationName}
             onCalculationNameChange={(value) => {
               setCalculationName(value)
               state.markDirty()
             }}
+            readOnly={isReadOnly}
+            versions={versionsForDropdown}
+            currentVersionId={currentVersionId}
+            loadedVersionId={existingCalculation?.loadedVersionId ?? viewVersionId}
+            onSelectVersion={onSelectVersion}
           />
+
+          {isReadOnly && (
+            <div className="border-b bg-amber-50 dark:bg-amber-950/30">
+              <div className="max-w-[2000px] mx-auto px-6 py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-sm text-amber-900 dark:text-amber-200">
+                  <Info className="w-4 h-4 shrink-0" />
+                  <span>
+                    Du visar {viewedVersionNo ? `revision ${viewedVersionNo}` : 'en tidigare revision'} av kalkylen.
+                    Detta är inte den aktuella versionen och ändringar kan inte sparas.
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={setCurrentVersion.isPending || !estimateId || !viewVersionId}
+                  onClick={async () => {
+                    if (!estimateId || !viewVersionId) return
+                    try {
+                      await setCurrentVersion.mutateAsync({
+                        costEstimateId: Number(estimateId),
+                        versionId: viewVersionId,
+                      })
+                      toast.success('Versionen är nu aktuell.')
+                      onClose()
+                    } catch (err) {
+                      console.error('Set current version failed:', err)
+                      toast.error('Kunde inte byta aktuell version.')
+                    }
+                  }}
+                >
+                  {setCurrentVersion.isPending ? 'Byter...' : 'Gör till aktuell version'}
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="max-w-[2000px] mx-auto px-6 py-8">
             <RateSection
@@ -521,10 +592,27 @@ function NewCalculationPage({
         </div>
           </div>
           
-          <CO2DatabaseModal 
-            open={state.co2ModalOpen} 
+          <CO2DatabaseModal
+            open={state.co2ModalOpen}
             onOpenChange={state.setCo2ModalOpen}
             onSelect={state.handleCO2Select}
+          />
+
+          <NewVersionDialog
+            open={versionDialogOpen}
+            onOpenChange={setVersionDialogOpen}
+            suggestedName={`Revision ${(versionList?.length ?? 0) + 1}`}
+            onSubmit={async (name) => {
+              if (!estimateId) {
+                throw new Error('Kalkylen måste sparas innan en ny version kan skapas.')
+              }
+              await createCostEstimateVersion.mutateAsync({
+                costEstimateId: Number(estimateId),
+                sourceVersionId: currentVersionId ?? 0,
+                name,
+              })
+              toast.success('Ny version skapad.')
+            }}
           />
       </motion.div>
     </>

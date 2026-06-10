@@ -113,6 +113,16 @@ export interface NewCalculationProps {
   onClose: () => void
   initialCalculationName?: string
   defaultProject?: { id: number; name: string } | null
+  /**
+   * When set, the editor opens in read-only mode showing the specified version.
+   * Hides save UI, disables autosave, and shows a banner with an option to make this version current.
+   */
+  viewVersionId?: number
+  /**
+   * Called when the user picks a different version from the in-editor dropdown.
+   * Parent should update its `viewVersionId` so the editor refetches and re-renders.
+   */
+  onSelectVersion?: (versionId: number) => void
 }
 
 
@@ -242,6 +252,8 @@ export type CreateCalculationRequest = {
 export type GetCalculationsReponse = CreateCalculationRequest & {
   id: number
   currentVersionId?: number
+  loadedVersionId?: number
+  loadedVersionNo?: number
   versionNo?: string
   versionName?: string
   versions?: CostEstimateVersion[]

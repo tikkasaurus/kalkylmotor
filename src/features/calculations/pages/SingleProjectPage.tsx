@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
@@ -17,10 +17,10 @@ import { Highlighter } from '@/components/ui/highlighter'
 import NewCalculationPage from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate, useGetTenantIcon } from '../api/queries'
+import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useGetCalculationForVersion, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate, useGetTenantIcon } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import type { GetCalculationsReponse } from '../api/types'
-import { FileText, Trash, ArrowLeft } from 'lucide-react'
+import { FileText, Trash, ArrowLeft, ChevronRight } from 'lucide-react'
 import { toast } from '@/components/ui/toast'
 
 export function SingleProjectPage() {
@@ -37,6 +37,8 @@ export function SingleProjectPage() {
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [selectedCalculation, setSelectedCalculation] = useState<{ id: number; name: string } | null>(null)
+  const [viewVersionId, setViewVersionId] = useState<number | null>(null)
+  const [expandedCalcs, setExpandedCalcs] = useState<Set<number>>(new Set())
   const [newCostEstimateId, setNewCostEstimateId] = useState<string | null>(null)
   const [copiedCalculationData, setCopiedCalculationData] = useState<GetCalculationsReponse | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
@@ -114,8 +116,24 @@ export function SingleProjectPage() {
     setShowCalculationView(false)
     setSelectedTemplate(null)
     setSelectedCalculation(null)
+    setViewVersionId(null)
     setNewCostEstimateId(null)
     setCopiedCalculationData(null)
+  }
+
+  const handleVersionClick = (calc: { id: number; name: string }, versionId: number) => {
+    setSelectedTemplate(null)
+    setSelectedCalculation({ id: calc.id, name: calc.name })
+    setViewVersionId(versionId)
+    setShowCalculationView(true)
+  }
+
+  const toggleCalc = (calcId: number) => {
+    setExpandedCalcs((prev) => {
+      const next = new Set(prev)
+      next.has(calcId) ? next.delete(calcId) : next.add(calcId)
+      return next
+    })
   }
 
   const handleCloseBudgetOverview = () => {
@@ -175,11 +193,17 @@ export function SingleProjectPage() {
   }
 
   const costEstimateId = selectedCalculation?.id ? String(selectedCalculation.id) : ''
-  const {
-    data: existingCalculationData,
-    isLoading: isLoadingCalculation,
-    error: existingCalculationError,
-  } = useGetCalculation(costEstimateId)
+  const currentCalculationQuery = useGetCalculation(viewVersionId ? '' : costEstimateId)
+  const versionCalculationQuery = useGetCalculationForVersion(costEstimateId, viewVersionId ?? undefined)
+  const existingCalculationData = viewVersionId
+    ? versionCalculationQuery.data
+    : currentCalculationQuery.data
+  const isLoadingCalculation = viewVersionId
+    ? versionCalculationQuery.isLoading
+    : currentCalculationQuery.isLoading
+  const existingCalculationError = viewVersionId
+    ? versionCalculationQuery.error
+    : currentCalculationQuery.error
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -322,35 +346,77 @@ export function SingleProjectPage() {
                 </motion.tr>
               ) : (
                 projectCalculations.map((calc) => (
-                <TableRow
-                  key={calc.id}
-                  className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors cursor-pointer"
-                  onClick={() => handleCalculationClick(calc)}
-                  onContextMenu={(e) => handleContextMenu(e, calc)}
-                >
-                  <TableCell className="text-left">
-                    <div className="font-medium">{calc.name}</div>
-                  </TableCell>
-                  <TableCell className="text-left">
-                    <Badge
-                      variant={
-                        calc.status === 'Active' ? 'default' : 'secondary'
-                      }
+                <Fragment key={calc.id}>
+                  <TableRow
+                    className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors cursor-pointer"
+                    onClick={() => handleCalculationClick(calc)}
+                    onContextMenu={(e) => handleContextMenu(e, calc)}
+                  >
+                    <TableCell className="text-left">
+                      <div className="flex items-center gap-2">
+                        {calc.versions && calc.versions.length > 0 ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleCalc(calc.id) }}
+                            className="p-0.5 rounded hover:bg-muted shrink-0"
+                          >
+                            <ChevronRight className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${expandedCalcs.has(calc.id) ? 'rotate-90' : ''}`} />
+                          </button>
+                        ) : (
+                          <span className="w-5 shrink-0" />
+                        )}
+                        <span className="font-medium">{calc.name}</span>
+                        {calc.versions && calc.versions.length > 0 && (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">{calc.versions.length} rev</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-left">
+                      <Badge
+                        variant={
+                          calc.status === 'Active' ? 'default' : 'secondary'
+                        }
+                      >
+                        {calc.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-left font-medium">{calc.versionAmount}</TableCell>
+                    <TableCell className="text-left text-muted-foreground">
+                      {calc.customerName || '-'}
+                    </TableCell>
+                    <TableCell className="text-left text-muted-foreground">
+                      {calc.created.split('T')[0]}
+                    </TableCell>
+                    <TableCell className="text-left text-muted-foreground">
+                      {calc.createdByName}
+                    </TableCell>
+                  </TableRow>
+                  {expandedCalcs.has(calc.id) && calc.versions?.map((version, idx) => (
+                    <TableRow
+                      key={version.id}
+                      className="bg-muted/10 hover:bg-muted/20 border-b cursor-pointer"
+                      onClick={() => handleVersionClick(calc, version.id)}
                     >
-                      {calc.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-left font-medium">{calc.versionAmount}</TableCell>
-                  <TableCell className="text-left text-muted-foreground">
-                    {calc.customerName || '-'}
-                  </TableCell>
-                  <TableCell className="text-left text-muted-foreground">
-                    {calc.created.split('T')[0]}
-                  </TableCell>
-                  <TableCell className="text-left text-muted-foreground">
-                    {calc.createdByName}
-                  </TableCell>
-                </TableRow>
+                      <TableCell className="text-left pl-10">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Rev {idx + 1}</span>
+                          {version.versionName && (
+                            <span className="text-sm text-muted-foreground/70">– {version.versionName}</span>
+                          )}
+                          {version.isCurrent && (
+                            <Badge variant="default" className="text-xs">Aktuell</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-left">
+                        <Badge variant="secondary">Avslutad</Badge>
+                      </TableCell>
+                      <TableCell className="text-left text-sm text-muted-foreground">{version.amount}</TableCell>
+                      <TableCell className="text-left text-sm text-muted-foreground">{calc.customerName || '-'}</TableCell>
+                      <TableCell className="text-left text-sm text-muted-foreground">{version.created.split('T')[0]}</TableCell>
+                      <TableCell className="text-left text-sm text-muted-foreground">{version.createdByName}</TableCell>
+                    </TableRow>
+                  ))}
+                </Fragment>
                 ))
               )}
             </TableBody>
@@ -407,6 +473,11 @@ export function SingleProjectPage() {
                   onClose={handleCloseCalculationView}
                   initialCalculationName={selectedCalculation.name}
                   defaultProject={currentProject}
+                  viewVersionId={viewVersionId ?? undefined}
+                  onSelectVersion={(versionId) => {
+                    const current = existingCalculationData?.currentVersionId
+                    setViewVersionId(current && versionId === current ? null : versionId)
+                  }}
                 />
               </motion.div>
             ) : null

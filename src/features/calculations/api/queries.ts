@@ -133,6 +133,34 @@ export function useGetCalculation(costEstimateId: string) {
   })
 }
 
+/**
+ * Fetch a calculation payload scoped to a specific (non-current) version.
+ * Used for read-only browsing of older versions.
+ */
+export function useGetCalculationForVersion(costEstimateId: string, versionId: number | undefined) {
+  return useQuery({
+    queryKey: ['calculation', costEstimateId, 'version', versionId],
+    queryFn: () =>
+      apiClient.get<GetCalculationsReponse>(
+        `/CostEstimate/${costEstimateId}/versions/${versionId}/calculations`
+      ),
+    enabled: !!costEstimateId && !!versionId,
+  })
+}
+
+export function useSetCurrentVersion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ costEstimateId, versionId }: { costEstimateId: number; versionId: number }) =>
+      apiClient.put(`/CostEstimate/${costEstimateId}/versions/${versionId}/set-current`, {}),
+    onSuccess: (_, { costEstimateId }) => {
+      queryClient.invalidateQueries({ queryKey: ['calculation', String(costEstimateId)] })
+      queryClient.invalidateQueries({ queryKey: ['calculations'] })
+      queryClient.invalidateQueries({ queryKey: ['versions', String(costEstimateId)] })
+    },
+  })
+}
+
 export function useInitializeCostEstimate() {
   return useMutation({
     mutationFn: (data?: InitializeCostEstimateRequest) =>
@@ -144,6 +172,60 @@ export function useCopyCostEstimate() {
   return useMutation({
     mutationFn: (costEstimateId: number) =>
       apiClient.put<CopyCostEstimateResponse>(`/CostEstimate/${costEstimateId}/copy`, {}),
+  })
+}
+
+export type CostEstimateVersionListItem = {
+  id: number
+  name: string
+  versionNo: number
+  amount: number
+  calculatedFee: number
+  feePercent: number
+  createdBy: string
+}
+
+export function useGetCostEstimateVersions(costEstimateId: string) {
+  return useQuery({
+    queryKey: ['versions', costEstimateId],
+    queryFn: () =>
+      apiClient.get<CostEstimateVersionListItem[]>(`/CostEstimate/${costEstimateId}/versions`),
+    enabled: !!costEstimateId,
+  })
+}
+
+export type CreateCostEstimateVersionRequest = {
+  sourceVersionId: number
+  name: string
+}
+
+export type CreateCostEstimateVersionResponse = {
+  id: number
+  versionNo: number
+  name: string
+  amount: number
+  calculatedFee: number
+  feePercent: number
+  createdBy: string
+}
+
+export function useCreateCostEstimateVersion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      costEstimateId,
+      sourceVersionId,
+      name,
+    }: { costEstimateId: number } & CreateCostEstimateVersionRequest) =>
+      apiClient.post<CreateCostEstimateVersionResponse>(
+        `/CostEstimate/${costEstimateId}/versions`,
+        { id: sourceVersionId, name }
+      ),
+    onSuccess: (_, { costEstimateId }) => {
+      queryClient.invalidateQueries({ queryKey: ['calculation', String(costEstimateId)] })
+      queryClient.invalidateQueries({ queryKey: ['calculations'] })
+      queryClient.invalidateQueries({ queryKey: ['versions', String(costEstimateId)] })
+    },
   })
 }
 

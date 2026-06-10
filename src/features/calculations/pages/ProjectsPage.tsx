@@ -16,7 +16,7 @@ import { Highlighter } from '@/components/ui/highlighter'
 import NewCalculationPage from './NewCalculationPage'
 import { BudgetOverviewPage } from './BudgetOverviewPage'
 import { NewCalculationModal } from '../components/NewCalculationModal'
-import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate, useGetTenantIcon } from '../api/queries'
+import { useCostEstimatesQuery, useCreateTemplate, useGetCalculation, useGetCalculationForVersion, useInitializeCostEstimate, useCopyCostEstimate, useDeleteCostEstimate, useGetTenantIcon } from '../api/queries'
 import { getTemplateById } from '@/lib/calculationTemplates'
 import type { GetCalculationsReponse } from '../api/types'
 import { FileText, Trash, ChevronRight } from 'lucide-react'
@@ -42,6 +42,7 @@ export function ProjectsPage() {
   const [showBudgetOverview, setShowBudgetOverview] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [selectedCalculation, setSelectedCalculation] = useState<{ id: number; name: string; projectId?: number; projectName?: string } | null>(null)
+  const [viewVersionId, setViewVersionId] = useState<number | null>(null)
   const [newCostEstimateId, setNewCostEstimateId] = useState<string | null>(null)
   const [copiedCalculationData, setCopiedCalculationData] = useState<GetCalculationsReponse | null>(null)
   const [animationKey, setAnimationKey] = useState(0)
@@ -161,8 +162,19 @@ export function ProjectsPage() {
     setShowCalculationView(false)
     setSelectedTemplate(null)
     setSelectedCalculation(null)
+    setViewVersionId(null)
     setNewCostEstimateId(null)
     setCopiedCalculationData(null)
+  }
+
+  const handleVersionClick = (
+    calc: { id: number; name: string; projectId?: number; projectName?: string },
+    versionId: number,
+  ) => {
+    setSelectedTemplate(null)
+    setSelectedCalculation({ id: calc.id, name: calc.name, projectId: calc.projectId, projectName: calc.projectName })
+    setViewVersionId(versionId)
+    setShowCalculationView(true)
   }
 
   const handleCloseBudgetOverview = () => {
@@ -222,11 +234,17 @@ export function ProjectsPage() {
   }
 
   const costEstimateId = selectedCalculation?.id ? String(selectedCalculation.id) : ''
-  const {
-    data: existingCalculationData,
-    isLoading: isLoadingCalculation,
-    error: existingCalculationError,
-  } = useGetCalculation(costEstimateId)
+  const currentCalculationQuery = useGetCalculation(viewVersionId ? '' : costEstimateId)
+  const versionCalculationQuery = useGetCalculationForVersion(costEstimateId, viewVersionId ?? undefined)
+  const existingCalculationData = viewVersionId
+    ? versionCalculationQuery.data
+    : currentCalculationQuery.data
+  const isLoadingCalculation = viewVersionId
+    ? versionCalculationQuery.isLoading
+    : currentCalculationQuery.isLoading
+  const existingCalculationError = viewVersionId
+    ? versionCalculationQuery.error
+    : currentCalculationQuery.error
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -460,12 +478,19 @@ export function ProjectsPage() {
                       <TableCell className="text-left text-muted-foreground">{calc.createdByName}</TableCell>
                     </TableRow>
                     {expandedCalcs.has(calc.id) && calc.versions?.map((version, idx) => (
-                      <TableRow key={version.id} className="bg-muted/10 hover:bg-muted/20 border-b">
+                      <TableRow
+                        key={version.id}
+                        className="bg-muted/10 hover:bg-muted/20 border-b cursor-pointer"
+                        onClick={() => handleVersionClick(calc, version.id)}
+                      >
                         <TableCell className="text-left pl-10">
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-muted-foreground">Rev {idx + 1}</span>
                             {version.versionName && (
                               <span className="text-sm text-muted-foreground/70">– {version.versionName}</span>
+                            )}
+                            {version.isCurrent && (
+                              <Badge variant="default" className="text-xs">Aktuell</Badge>
                             )}
                           </div>
                         </TableCell>
@@ -537,6 +562,11 @@ export function ProjectsPage() {
                       ? { id: selectedCalculation.projectId, name: selectedCalculation.projectName }
                       : null
                   }
+                  viewVersionId={viewVersionId ?? undefined}
+                  onSelectVersion={(versionId) => {
+                    const current = existingCalculationData?.currentVersionId
+                    setViewVersionId(current && versionId === current ? null : versionId)
+                  }}
                 />
               </motion.div>
             ) : null
