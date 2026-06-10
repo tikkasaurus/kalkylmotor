@@ -15,17 +15,18 @@ interface NewCalculationHeaderProps {
   onExportCSV: () => void
   onExportPDF?: (format: 'a4' | 'full') => void
   onSave?: (calculationName: string) => Promise<void> | void
-  initialCalculationName?: string
+  calculationName: string
+  onCalculationNameChange: (value: string) => void
 }
 
-export function NewCalculationHeader({ 
-  onClose, 
+export function NewCalculationHeader({
+  onClose,
   // onExportCSV,
   onExportPDF,
   onSave,
-  initialCalculationName = 'Kalkylnamn',
+  calculationName,
+  onCalculationNameChange,
 }: NewCalculationHeaderProps) {
-  const [calculationName, setCalculationName] = useState(initialCalculationName)
   const [isSaving, setIsSaving] = useState(false)
   const { data: tenantIcon } = useGetTenantIcon()
 
@@ -55,7 +56,7 @@ export function NewCalculationHeader({
               <Input
                 value={calculationName}
                 required
-                onChange={(e) => setCalculationName(e.target.value)}
+                onChange={(e) => onCalculationNameChange(e.target.value)}
                 className="!text-xl md:!text-xl font-bold h-auto py-2 px-2 border-0 bg-transparent hover:bg-accent/50 focus:bg-background focus:border focus:border-input mb-1 -ml-2 w-[500px] max-w-none"
                 placeholder="Kalkylnamn"
               />

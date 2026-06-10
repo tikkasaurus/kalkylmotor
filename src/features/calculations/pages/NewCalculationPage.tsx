@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { CO2DatabaseModal } from '@/features/co2-database/components/CO2DatabaseModal'
 import type {
@@ -34,6 +34,7 @@ function NewCalculationPage({
   const state = useNewCalculationState(template, existingCalculation, defaultProject)
   const createCalculation = useCreateCalculation()
   const [calculationName, setCalculationName] = useState(initialCalculationName)
+  const isSavingRef = useRef(false)
   const { data: tenantIcon } = useGetTenantIcon()
   const { data: bookkeepingAccounts } = useGetBookkeepingAccounts()
   const { account } = useAuth()
@@ -64,6 +65,20 @@ function NewCalculationPage({
         window.location.origin
     )
   }, [isDirty])
+
+  const calculationNameRef = useRef(calculationName)
+  useEffect(() => {
+    calculationNameRef.current = calculationName
+  }, [calculationName])
+
+  useEffect(() => {
+    if (!isDirty) return
+    const timer = window.setTimeout(() => {
+      handleSave(calculationNameRef.current, true)
+    }, 30000)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.dirtyVersion, isDirty])
 
   const handleClose = () => {
     if (isDirty) {
@@ -304,19 +319,22 @@ function NewCalculationPage({
     }
   }
 
-  const handleSave = async (calcName: string) => {
+  const handleSave = async (calcName: string, silent = false) => {
+    if (isSavingRef.current) return
     setCalculationName(calcName)
     const estimateId = costEstimateId || existingCalculation?.id;
     if (!estimateId) {
-      toast.error('Ingen kalkyl är vald.')
+      if (!silent) toast.error('Ingen kalkyl är vald.')
       return
     }
 
     const projectId = state.selectedProject?.id ?? existingCalculation?.projectId
     if (!projectId) {
-      toast.error('Du måste välja ett projekt innan kalkylen sparas.')
+      if (!silent) toast.error('Du måste välja ett projekt innan kalkylen sparas.')
       return
     }
+
+    isSavingRef.current = true
 
     // Determine if we're creating new (from template) vs copying/editing existing
     const isNewCalculation = !existingCalculation
@@ -355,7 +373,7 @@ function NewCalculationPage({
 
       state.mergeIdsFromSave(savedResponse)
       state.markSaved()
-      toast.success('Kalkylen sparades framgångsrikt!')
+      if (!silent) toast.success('Kalkylen sparades framgångsrikt!')
     } catch (error) {
       console.error('Error saving calculation:', error)
 
@@ -378,7 +396,9 @@ function NewCalculationPage({
         }
       }
 
-      toast.error(errorMessage)
+      if (!silent) toast.error(errorMessage)
+    } finally {
+      isSavingRef.current = false
     }
   }
 
@@ -425,7 +445,11 @@ function NewCalculationPage({
             onExportCSV={exportToCSV}
             onExportPDF={handleExportPDF}
             onSave={handleSave}
-            initialCalculationName={calculationName}
+            calculationName={calculationName}
+            onCalculationNameChange={(value) => {
+              setCalculationName(value)
+              state.markDirty()
+            }}
           />
 
           <div className="max-w-[2000px] mx-auto px-6 py-8">

@@ -248,7 +248,11 @@ export function useNewCalculationState(
     rowKey: string
   } | null>(null)
   const [isDirty, setIsDirty] = useState(false)
-  const markDirty = () => setIsDirty(true)
+  const [dirtyVersion, setDirtyVersion] = useState(0)
+  const markDirty = () => {
+    setIsDirty(true)
+    setDirtyVersion((v) => v + 1)
+  }
   const markSaved = () => setIsDirty(false)
   const lastInitializedIdRef = useRef<number | undefined>(undefined)
   const { data: co2Items = [] } = useGetCO2Database()
@@ -1145,6 +1149,8 @@ export function useNewCalculationState(
     co2ModalOpen,
     selectedRowForCO2,
     isDirty,
+    dirtyVersion,
+    markDirty,
     markSaved,
     mergeIdsFromSave,
     setRateGoal: wrappedSetRateGoal,
