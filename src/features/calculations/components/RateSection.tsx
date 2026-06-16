@@ -104,7 +104,7 @@ export function RateSection({
               onChange={onProjectChange}
             />
             {!selectedProject && (
-              <p className="text-xs text-destructive mt-1">Projekt måste väljas innan kalkylen sparas.</p>
+              <p className="text-sm font-medium text-destructive mt-2">Projekt måste väljas innan kalkylen sparas.</p>
             )}
           </div>
         </div>

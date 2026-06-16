@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { CO2DatabaseModal } from '@/features/co2-database/components/CO2DatabaseModal'
 import type {
@@ -17,7 +17,8 @@ import { SummaryCards } from '@/features/calculations/components/SummaryCards'
 import { SectionsTable } from '@/features/calculations/components/SectionsTable'
 import { OptionsTable } from '@/features/calculations/components/OptionsTable'
 import { exportToPDF } from '@/features/calculations/utils/pdfExport'
-import { useCreateCalculation, useCreateCostEstimateVersion, useGetCostEstimateVersions, useGetTenantIcon, useGetBookkeepingAccounts, useSetCurrentVersion } from '../api/queries'
+import { buildOptionsDiff, buildSectionsDiff } from '@/features/calculations/utils/buildDiffPayload'
+import { useCreateCalculation, useCreateCostEstimateVersion, useGetCostEstimateVersions, useGetTenantIcon, useGetBookkeepingAccounts, useSaveCalculationDiff, useSetCurrentVersion } from '../api/queries'
 import { NewVersionDialog } from '@/features/calculations/components/NewVersionDialog'
 import { Button } from '@/components/ui/button'
 import { Info } from 'lucide-react'
@@ -46,6 +47,7 @@ function NewCalculationPage({
 
   const state = useNewCalculationState(template, existingCalculation, defaultProject, isReadOnly)
   const createCalculation = useCreateCalculation()
+  const saveCalculationDiff = useSaveCalculationDiff()
   const createCostEstimateVersion = useCreateCostEstimateVersion()
   const setCurrentVersion = useSetCurrentVersion()
   const [calculationName, setCalculationName] = useState(initialCalculationName)
@@ -94,20 +96,6 @@ function NewCalculationPage({
         window.location.origin
     )
   }, [isDirty])
-
-  const calculationNameRef = useRef(calculationName)
-  useEffect(() => {
-    calculationNameRef.current = calculationName
-  }, [calculationName])
-
-  useEffect(() => {
-    if (!isDirty || isReadOnly) return
-    const timer = window.setTimeout(() => {
-      handleSave(calculationNameRef.current, true)
-    }, 30000)
-    return () => window.clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.dirtyVersion, isDirty, isReadOnly])
 
   const handleClose = () => {
     if (isDirty) {
@@ -348,6 +336,84 @@ function NewCalculationPage({
     }
   }
 
+  const buildScalarPayload = (calcName: string): Omit<CreateCalculationRequest, 'sections' | 'optionBudgetRows'> => ({
+    name: calcName,
+    co2Budget: state.co2Budget,
+    budget: state.budgetExclRate,
+    amount: state.bidAmount,
+    calculatedFeeAmount: state.fixedRate,
+    calculatedFeePercent: state.derivedRate,
+    fee: state.derivedRate,
+    feeGoal: state.rateGoal,
+    showFeeGoal: state.showRateGoal,
+    squareMeter: state.area,
+    customerId: state.selectedCustomer?.id ?? existingCalculation?.customerId,
+    customerName: state.selectedCustomer?.name ?? existingCalculation?.customerName,
+    customer: state.selectedCustomer ?? existingCalculation?.customer ?? undefined,
+    projectId: state.selectedProject?.id ?? existingCalculation?.projectId,
+    projectName: state.selectedProject?.name ?? existingCalculation?.projectName,
+  })
+
+  const mapSaveError = (error: unknown, fallback: string): string => {
+    if (error instanceof Error) {
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        return 'Nätverksfel. Kontrollera din internetanslutning och försök igen.'
+      }
+      if (error.message.includes('timeout')) return 'Tidsgränsen överskreds. Försök igen.'
+      if (error.message.includes('401') || error.message.includes('unauthorized')) {
+        return 'Du är inte behörig. Logga in igen och försök igen.'
+      }
+      if (error.message.includes('403') || error.message.includes('forbidden')) {
+        return 'Du har inte tillåtelse att spara denna kalkyl.'
+      }
+      if (error.message.includes('404')) return 'Kalkylen kunde inte hittas.'
+      if (error.message.includes('500')) return 'Serverfel. Kontakta support om problemet kvarstår.'
+    }
+    return fallback
+  }
+
+  const handleSaveDiff = async (calcName: string) => {
+    if (isSavingRef.current) return
+    setCalculationName(calcName)
+    const estimateId = costEstimateId || existingCalculation?.id
+    if (!estimateId) {
+      toast.error('Ingen kalkyl är vald.')
+      return
+    }
+    if (!existingCalculation) {
+      // No baseline to diff against — fall back to full save.
+      return handleSave(calcName)
+    }
+    const projectId = state.selectedProject?.id ?? existingCalculation?.projectId
+    if (!projectId) {
+      toast.error('Du måste välja ett projekt innan kalkylen sparas.')
+      return
+    }
+
+    isSavingRef.current = true
+    try {
+      const payload: CreateCalculationRequest = {
+        ...buildScalarPayload(calcName),
+        sections: buildSectionsDiff(state.sections, existingCalculation.sections),
+        optionBudgetRows: buildOptionsDiff(state.options, existingCalculation.optionBudgetRows),
+      }
+
+      const savedResponse = await saveCalculationDiff.mutateAsync({
+        costEstimateId: String(estimateId),
+        data: payload,
+      })
+
+      state.mergeIdsFromSave(savedResponse)
+      state.markSaved()
+      toast.success('Ändringarna sparades.')
+    } catch (error) {
+      console.error('Error saving calculation diff:', error)
+      toast.error(mapSaveError(error, 'Kunde inte spara ändringarna.'))
+    } finally {
+      isSavingRef.current = false
+    }
+  }
+
   const handleSave = async (calcName: string, silent = false) => {
     if (isSavingRef.current) return
     setCalculationName(calcName)
@@ -474,6 +540,8 @@ function NewCalculationPage({
             onExportCSV={exportToCSV}
             onExportPDF={handleExportPDF}
             onSave={handleSave}
+            onSaveDiff={handleSaveDiff}
+            canSaveDiff={!!existingCalculation}
             onSaveAsVersion={() => setVersionDialogOpen(true)}
             canSaveAsVersion={canSaveAsVersion}
             calculationName={calculationName}

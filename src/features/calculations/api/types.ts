@@ -261,11 +261,19 @@ export type GetCalculationsReponse = CreateCalculationRequest & {
 
 export type CopyCostEstimateResponse = GetCalculationsReponse;
 
+export enum DiffOperation {
+  NoOp = 0,
+  Add = 1,
+  Update = 2,
+  Delete = 3,
+}
+
 export type CalculationSectionPayload = {
   id?: number
   title: string
   subSections: CalculationSectionPayload[]
   budgetRows: BudgetRowPayload[]
+  operation?: DiffOperation
 }
 
 export type BudgetRowPayload = {
@@ -284,6 +292,7 @@ export type BudgetRowPayload = {
   markupAmount?: number | null
   markupPercent?: number | null
   revenue: number
+  operation?: DiffOperation
 }
 
 export type OptionBudgetRowPayload = {
@@ -297,4 +306,5 @@ export type OptionBudgetRowPayload = {
   markupAmount?: number | null
   markupPercent?: number | null
   revenue: number
+  operation?: DiffOperation
 }

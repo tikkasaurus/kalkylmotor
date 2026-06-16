@@ -27,6 +27,8 @@ interface NewCalculationHeaderProps {
   onExportCSV: () => void
   onExportPDF?: (format: 'a4' | 'full') => void
   onSave?: (calculationName: string) => Promise<void> | void
+  onSaveDiff?: (calculationName: string) => Promise<void> | void
+  canSaveDiff?: boolean
   onSaveAsVersion?: () => void
   canSaveAsVersion?: boolean
   calculationName: string
@@ -43,6 +45,8 @@ export function NewCalculationHeader({
   // onExportCSV,
   onExportPDF,
   onSave,
+  onSaveDiff,
+  canSaveDiff = false,
   onSaveAsVersion,
   canSaveAsVersion = false,
   calculationName,
@@ -66,6 +70,16 @@ export function NewCalculationHeader({
     try {
       setIsSaving(true)
       await onSave(calculationName)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleSaveDiff = async () => {
+    if (!onSaveDiff || isSaving) return
+    try {
+      setIsSaving(true)
+      await onSaveDiff(calculationName)
     } finally {
       setIsSaving(false)
     }
@@ -176,10 +190,43 @@ export function NewCalculationHeader({
               </Button>
             )}
             {!readOnly && (
-              <Button variant="default" onClick={handleSave} disabled={isSaving}>
-                <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Sparar...' : 'Spara'}
-              </Button>
+              <div className="inline-flex">
+                <Button
+                  variant="default"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className={onSaveDiff ? 'rounded-r-none' : ''}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSaving ? 'Sparar...' : 'Spara'}
+                </Button>
+                {onSaveDiff && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="default"
+                        disabled={isSaving}
+                        className="rounded-l-none border-l border-white/20 px-2"
+                        aria-label="Fler sparalternativ"
+                        title="Fler sparalternativ"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[240px]">
+                      <DropdownMenuItem
+                        disabled={!canSaveDiff || isSaving}
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          handleSaveDiff()
+                        }}
+                      >
+                        Spara endast ändringar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             )}
             <button
               onClick={onClose}

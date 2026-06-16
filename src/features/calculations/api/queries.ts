@@ -121,6 +121,24 @@ export function useCreateCalculation() {
 }
 
 /**
+ * Save only the changed rows for a calculation.
+ * Same request/response shape as useCreateCalculation, but rows include
+ * an `operation` field (Add/Update/Delete) and untouched rows are omitted.
+ */
+export function useSaveCalculationDiff() {
+  const queryClient = useQueryClient()
+
+  return useMutation<GetCalculationsReponse, unknown, { costEstimateId: string; data: CreateCalculationRequest }>({
+    mutationFn: ({ costEstimateId, data }: { costEstimateId: string; data: CreateCalculationRequest }) =>
+      apiClient.post<GetCalculationsReponse>(`/CostEstimate/${costEstimateId}/calculations/diff`, data),
+    onSuccess: (responseData, variables) => {
+      queryClient.setQueryData(['calculation', variables.costEstimateId], responseData)
+      queryClient.invalidateQueries({ queryKey: ['calculations'] })
+    },
+  })
+}
+
+/**
  * Fetch a calculation payload by cost estimate id
  * (same shape as the create body)
  */
