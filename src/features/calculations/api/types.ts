@@ -261,12 +261,14 @@ export type GetCalculationsReponse = CreateCalculationRequest & {
 
 export type CopyCostEstimateResponse = GetCalculationsReponse;
 
-export enum DiffOperation {
-  NoOp = 0,
-  Add = 1,
-  Update = 2,
-  Delete = 3,
-}
+export const DiffOperation = {
+  NoOp: 0,
+  Add: 1,
+  Update: 2,
+  Delete: 3,
+} as const
+
+export type DiffOperation = (typeof DiffOperation)[keyof typeof DiffOperation]
 
 export type CalculationSectionPayload = {
   id?: number
